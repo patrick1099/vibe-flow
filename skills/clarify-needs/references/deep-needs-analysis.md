@@ -82,3 +82,5 @@ vibe coder 嘴上的需求未必是真需求。没有真实证据的，往"当�
 ## 八、理论来源（只当读物，一个字不进操作指令）
 
 BMM / KAOS（目标 vs 手段）、Impact Mapping（目标→交付因果追溯）、Continuous Discovery Habits（真需求 vs 未验证的猜想）、Shape Up（Appetite 固定投入、范围可变）、Software Requirements / ISO 29148 / ISO 25010（正式底座，不整套搬）。轻量版只借骨架。
+
+**认知四象限**（Anthropic《A Field Guide to Claude Fable: Finding Your Unknowns》，Thariq Shihipar，2026-07-06，claude.com/blog/a-field-guide-to-claude-fable-finding-your-unknowns）：已知已知 / 已知未知 / 未知已知 / 未知未知，配"地图 vs 领土"（你给的 prompt vs 真实代码与现实，落差＝你的 unknowns）。**读全文的结论是它 ≈80% 在给本 skill 现有做法背书**——已知未知归访谈式追问（＝§四"只问会改变归位分级的、一次一个"）、未知已知归原型与参照物（已划界给探方案，见 `vibe-flow` §4）、且原文给每一招都配了 "when NOT to use"（＝独立背书本 skill 的缩放闸与微任务哲学）。**唯一真吸收进操作指令的是 SKILL.md 总纲那条"手段说太死 / 目标说太空"的失衡轴**（原文的 spec 平衡：太具体则该 pivot 也不 pivot，太模糊则按最佳实践瞎猜）。**未知未知那格（盲区扫描）刻意没进本 skill**——它要"读代码库"和"用户知识画像"两样输入，而本 skill 是 stack-independent、不读代码库的；宿主候选与待验路线见插件 `docs/history/2026-07-30-fable-四象限借鉴.md`。
