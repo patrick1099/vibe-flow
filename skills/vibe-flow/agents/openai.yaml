@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vibe Flow"
+  short_description: "判一次档再干活：小事要省，大事要好"
+  default_prompt: "Use $vibe-flow to size this vibe-coding request once (cheap by default, thorough only when it earns it), then scale clarification, implementation and verification to that one size."
