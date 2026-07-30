@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "vibe-flow",
   "displayName": "vibe-flow 轻量 vibe-coding 工作流",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "一套完整但不重的个人 vibe-coding 工作流,入口 skill vibe-flow 判一次档、全流程沿用:小事要省(不澄清、不建档、不搭测试框架、直接交付最小可用),大事要好(挖真需求、探方案、留意图文档、按交付形态验证、收工后剪枝扫同款)。七个 skill:vibe-flow(总入口与档位闸门)、clarify-needs(把目标/方案/偏好/约束分开——手段说太死就松开、目标说太空就钉实,落轻量 NEEDS.md,纯手动)、living-blueprint(只讲功能不讲实现的活蓝图 BLUEPRINT.md,让 AI 照意图重构)、vibe-scripts(独立 Python 脚本的四层五区分级模板)、vibe-apps(带界面/要分发的 Python 应用五层:FastAPI+pywebview+PyInstaller)、cut-scope(迭代多轮后只读剪枝,防沉没成本)、scan-field(对外扫同款两头:开工前查市面有没有现成的/该抄什么,完工后产原创度对比与升级方向)。不装 hook,不自动串联,与 superpowers 类重流程可共存但不依赖它。",
   "author": { "name": "xu" },
   "homepage": "https://github.com/patrick1099/vibe-flow",
