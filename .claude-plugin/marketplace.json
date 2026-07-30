@@ -1,0 +1,14 @@
+{
+  "name": "vibe-flow",
+  "owner": { "name": "xu" },
+  "metadata": {
+    "description": "vibe-flow 轻量 vibe-coding 工作流"
+  },
+  "plugins": [
+    {
+      "name": "vibe-flow",
+      "source": ".",
+      "description": "小事要省、大事要好的个人 vibe-coding 工作流:vibe-flow(总入口判档) + clarify-needs + living-blueprint + vibe-scripts + vibe-apps + cut-scope + scan-field 七个 skill"
+    }
+  ]
+}
