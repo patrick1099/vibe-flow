@@ -57,7 +57,14 @@
 /plugin install vibe-flow@vibe-flow
 ```
 
-入口是 `vibe-flow`；`clarify-needs` / `cut-scope` / `scan-field` / `living-blueprint` 只在你显式调用时才跑。
+入口是 `vibe-flow`。四个"回头/澄清"类 skill 都只该在你显式调用时跑，但**两种手动不是一回事**：
+
+- `clarify-needs` 是**硬手动**——frontmatter 标了 `disable-model-invocation: true`，模型根本拉不起来，只能你自己 `/vibe-flow:clarify-needs`。（`vibe-flow` 正文里也写明了这点：它不会去"调用"这个 skill，只会提示你手动调。）
+- `cut-scope` / `scan-field` / `living-blueprint` 是**约定式手动**——靠各自 description 里写明"仅由用户显式请求触发"，没上硬闸。模型仍有可能自己判断该用而拉起来。
+
+### Codex
+
+插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`。`disable-model-invocation` 是 Claude 侧的字段，**Codex 上 `clarify-needs` 的"硬手动"不生效**，它退化成和另外三个一样的约定式手动。
 
 ## 沿革
 
