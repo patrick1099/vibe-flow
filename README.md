@@ -11,7 +11,7 @@
 | skill | 环节 | 触发 | 是否改文件 |
 |---|---|---|---|
 | `vibe-flow` | 总入口：判意图 → 判档 → 路由 → 决策边界 → 验证收尾 | 建/改/扩一个脚本、工具、应用、功能 | 只改你要它改的 |
-| `clarify-needs` | 明确需求：把目标 / 方案 / 偏好 / 约束分开——**手段说太死就松开，目标说太空就钉实** | **纯手动**（`disable-model-invocation`） | 写 `docs/NEEDS.md` |
+| `clarify-needs` | 明确需求：把目标 / 方案 / 偏好 / 约束分开——**手段说太死就松开，目标说太空就钉实** | 手动，或**会长期活的项目/大改动动手前自触发**（微任务不触发） | 写 `docs/NEEDS.md` |
 | `living-blueprint` | 留意图：只讲功能不讲实现的当前全貌 | 手动，长期项目 | 写 `docs/BLUEPRINT.md` |
 | `vibe-scripts` | 实现：独立 Python 脚本的四层五区 + 分级 | 写/改独立脚本前 | 写脚本 |
 | `vibe-apps` | 实现：带界面 / 要分发的 Python 应用五层 | 搭应用脚手架前 | 写应用 |
@@ -48,7 +48,7 @@
 
 ## 与重流程框架的关系
 
-不装 hook、skill 之间不自动串联、`clarify-needs` 连模型调用都关了。需要正式 spec/plan 落盘再按计划执行（brainstorming → writing-plans → executing-plans）、TDD、工作树、并行子代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual) 那套；**本工作流不依赖它，没装也能走完全程**。
+不装 hook、skill 之间不自动串联。需要正式 spec/plan 落盘再按计划执行（brainstorming → writing-plans → executing-plans）、TDD、工作树、并行子代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual) 那套；**本工作流不依赖它，没装也能走完全程**。
 
 ## 安装
 
@@ -57,14 +57,16 @@
 /plugin install vibe-flow@vibe-flow
 ```
 
-入口是 `vibe-flow`。四个"回头/澄清"类 skill 都只该在你显式调用时跑，但**两种手动不是一回事**：
+入口是 `vibe-flow`。四个"回头/澄清"类 skill 的自动程度不一样：
 
-- `clarify-needs` 是**硬手动**——frontmatter 标了 `disable-model-invocation: true`，模型根本拉不起来，只能你自己 `/vibe-flow:clarify-needs`。（`vibe-flow` 正文里也写明了这点：它不会去"调用"这个 skill，只会提示你手动调。）
-- `cut-scope` / `scan-field` / `living-blueprint` 是**约定式手动**——靠各自 description 里写明"仅由用户显式请求触发"，没上硬闸。模型仍有可能自己判断该用而拉起来。
+- `clarify-needs` **会自触发，但带闸**——只在东西会长期活下去时起（开新项目、长期用的工具、大改动或跨会话的活、多目标纠缠），微任务/改 bug/纯问答不起。闸写在 description 里，是软约束；误伤了说一句"这个随便做一下"就跳过，也可以随时自己 `/vibe-flow:clarify-needs`。
+- `cut-scope` / `scan-field` / `living-blueprint` 是**约定式手动**——靠各自 description 里写明"仅由用户显式请求触发"。模型仍有可能自己判断该用而拉起来。
+
+> **v0.4.0 之前 `clarify-needs` 标着 `disable-model-invocation: true`，是硬手动，模型根本拉不起来。** 实际用下来这条闸太死：真正需要它的项目场景也一次都进不去，全靠人记得敲。改成"自触发 + description 限流"。
 
 ### Codex
 
-插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`。`disable-model-invocation` 是 Claude 侧的字段，**Codex 上 `clarify-needs` 的"硬手动"不生效**，它退化成和另外三个一样的约定式手动。
+插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`。
 
 ## 沿革
 
