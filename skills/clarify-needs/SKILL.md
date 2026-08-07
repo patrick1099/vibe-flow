@@ -1,7 +1,6 @@
 ---
 name: clarify-needs
-description: Use when a vibe-coding request bundles a desired outcome together with a proposed solution, a preference, or a hard constraint; when stated "requirements" keep expanding or look bigger than the time/effort available; when it's unclear whether something is a goal, a means, a preference, or a real constraint; when the user hands you a tech solution but not the underlying why; or when returning to a project to check reality against docs/NEEDS.md. 中文触发：厘清真实需求、别把手段当目标、别把偏好当约束、防需求膨胀、深挖/严格分析需求、回头看这项目做到哪了。Stack-independent.
-disable-model-invocation: true
+description: "Load BEFORE writing any code, when a vibe-coding request bundles a desired outcome together with a proposed solution, a preference, or a hard constraint; when stated \"requirements\" keep expanding or look bigger than the time/effort available; when it's unclear whether something is a goal, a means, a preference, or a real constraint; when the user hands you a tech solution but not the underlying why; or when returning to a project to check reality against docs/NEEDS.md. SELF-INVOKE ONLY for work that will live on — starting a new project, a long-lived tool, a large or cross-session change, two or more tangled goals. Do NOT self-invoke for throwaway micro-scripts, one-off edits, bug fixes, or direct questions (the user can still run it manually there). 中文触发：开新项目或大改动、动手前先厘清真实需求、别把手段当目标、别把偏好当约束、防需求膨胀、深挖/严格分析需求、回头看这项目做到哪了。Stack-independent."
 ---
 
 # clarify-needs：把真需求挖出来，别被方案和偏好带跑
@@ -27,7 +26,9 @@ vibe coder 抛来的"需求"，常把**目标、方案、偏好、约束混在�
 ## 何时用 / 不用
 
 - **用**：请求里方案/偏好/约束混着目标；需求越聊越多；分不清某条是目标还是手段；用户给了技术方案但没说为什么；回头想知道"这项目做到哪了"。
-- **微任务（跑完即弃的微脚本、一句话能干完的小活）**：默认不必触发本 skill；若用户已手动 `/clarify-needs`，也**只锚一句真需求就开干**，别起全套（起了就是过度工程）。
+- **自触发的闸**：本 skill 可以自己起，但**只在东西会长期活下去时起**——开新项目、要长期用的工具、大改动或跨会话的活、两个以上纠缠的目标。起之前先说一句为什么要多问这一轮。
+- **微任务（跑完即弃的微脚本、一句话能干完的小活、改 bug、只是回答问题）**：**不要自触发**；若用户已手动 `/clarify-needs`，也**只锚一句真需求就开干**，别起全套（起了就是过度工程）。
+- **用户喊停优先于一切**："别问了直接做 / 这个随便做一下" → 立刻收，最多再问最要命的一个问题。
 
 ---
 
@@ -120,6 +121,8 @@ vibe coder 抛来的"需求"，常把**目标、方案、偏好、约束混在�
 - 偷偷删核心目标/最低验收，假装项目做完了。
 
 ## 版本记
+
+v0.6.0（2026-08-07）：**摘掉 `disable-model-invocation: true`，改成自触发 + description 限流。** 硬闸的实际效果不是"低频"而是零——模型连 skill 列表里都看不到它，真正需要它的项目场景一次也进不去，全靠人记得敲。代价是小活可能被误伤，用两道软闸压：description 里写死「只在东西会长期活下去时自触发，微任务/改 bug/纯问答不起」，正文 §何时用 加"自触发的闸"与"用户喊停优先"两条。同步改了 `vibe-flow` §4 路由（原文写着"你无法自己启动它"，反向压制）和它的反模式清单。
 
 v0.5.0（2026-07-30）：总纲加**"手段说太死 / 目标说太空"的失衡轴**——把原来"混在一层"这个对称说法换成有方向的不对称，并点明三步（挖目标 / 偏好vs约束 / 验收翻译）各治哪一头。借自 Anthropic 认知四象限那篇的 spec 平衡论（**纯换框架，零新机制**；其余三格已被现有做法覆盖或已划界给探方案，未知未知那格刻意不收）。理由与不收的部分见 `references/deep-needs-analysis.md` §八 与插件 `docs/history/2026-07-30-fable-四象限借鉴.md`。
 
