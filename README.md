@@ -1,36 +1,57 @@
 # vibe-flow
 
-一套**完整但不重**的个人 vibe-coding 工作流。
+一套完整但不重的个人 vibe-coding 工作流。承重的只有一个显式档位：**小事要省，大事要好。**
 
-> 先明确需求，再判这是小事还是大事：**小事要省，大事要好。**
+省的是流程，不是质量；好的是该厚的地方厚，不是每次走满。重流程框架的病不在「太严谨」，
+在于只有一档，所有事一律走满。
 
-省的是流程，不是质量；好的是该厚的地方厚，不是每次走满。重流程框架的病不是"太严谨"，是**只有一档**——所有事一律走满。这套东西的承重设计就是**有档位**：入口 skill `vibe-flow` 判一次档，澄清厚度、探不探方案、建不建文档、实现纪律、验证强度、收工后要不要回头，全是这一次判定的下游。
+## 装
+
+```
+/plugin marketplace add patrick1099/vibe-flow
+/plugin install vibe-flow@vibe-flow
+```
+
+入口是 `vibe-flow`。它判一次档，澄清厚度、探不探方案、建不建文档、实现纪律、验证强度、
+收工后要不要回头，全是这一次判定的下游。
+
+## 判档判的是什么
+
+```
+「帮我写个脚本把串口日志转成 csv」
+  → 省档。不澄清、不建文档、最小可用,写完拿代表性输入跑一遍
+
+「我要做个抓包分析工具,做完发给同事用」
+  → 好档。命中「给别人」→ 先挖需求分清偏好与约束、给 2–3 个方案让你挑、
+    落 NEEDS.md、按交付形态实际用一遍再交
+```
+
+命中任一即好档，五条都是不必深挖需求就能知道的外部事实，所以判档不用等澄清做完：
+
+- 会再用：不是跑完即弃
+- 不可逆：删除 / 覆盖 / 迁移数据 / 联网上传 / 发出去收不回
+- 给别人：要分发，或别人会依赖它
+- 跨会话：一次做不完
+- 多目标纠缠：两个以上独立目标或用户
+
+默认省档，升到好档必须说得出理由。你一句话可以直接定档，优先于以上判据：「这个随便做一下」
+→ 省档；「这个要做好」→ 好档。
 
 ## 七个 skill
 
 | skill | 环节 | 触发 | 是否改文件 |
 |---|---|---|---|
 | `vibe-flow` | 总入口：判意图 → 判档 → 路由 → 决策边界 → 验证收尾 | 建/改/扩一个脚本、工具、应用、功能 | 只改你要它改的 |
-| `clarify-needs` | 明确需求：把目标 / 方案 / 偏好 / 约束分开——**手段说太死就松开，目标说太空就钉实** | 手动，或**会长期活的项目/大改动动手前自触发**（微任务不触发） | 写 `docs/NEEDS.md` |
+| `clarify-needs` | 明确需求：把目标 / 方案 / 偏好 / 约束分开 | 手动，或会长期活的项目/大改动动手前自触发 | 写 `docs/NEEDS.md` |
 | `living-blueprint` | 留意图：只讲功能不讲实现的当前全貌 | 手动，长期项目 | 写 `docs/BLUEPRINT.md` |
 | `vibe-scripts` | 实现：独立 Python 脚本的四层五区 + 分级 | 写/改独立脚本前 | 写脚本 |
 | `vibe-apps` | 实现：带界面 / 要分发的 Python 应用五层 | 搭应用脚手架前 | 写应用 |
-| `cut-scope` | 回头剪枝：冷眼核对真实需求 vs 已膨胀的设计 | 手动，迭代多轮后 | **只读**，只给方向 |
-| `scan-field` | 对外扫同款**两头**：开工前查市面有没有 / 完工后产原创度对比 + 升级方向 | 手动，或由 vibe-flow §3 路由 | 只产结论；回头那头产对比文档 |
+| `cut-scope` | 回头剪枝：冷眼核对真实需求 vs 已膨胀的设计 | 手动，迭代多轮后 | 只读，只给方向 |
+| `scan-field` | 对外扫同款两头：开工前查市面有没有 / 完工后产原创度对比 | 手动，或由 vibe-flow 路由 | 只产结论 |
 
-## 档位怎么判
-
-**默认省档；升到好档必须说得出理由。** 命中任一即好档：
-
-- **会再用**——不是跑完即弃
-- **不可逆**——删除 / 覆盖 / 迁移数据 / 联网上传 / 发出去收不回
-- **给别人**——要分发，或别人会依赖它
-- **跨会话**——一次做不完
-- **多目标纠缠**——两个以上独立目标或用户
-
-这五条**故意都是不必深挖需求就能知道的外部事实**，所以判档不用等澄清做完。
-
-**你一句话可以直接定档**，优先于以上判据："这个随便做一下" → 省档；"这个要做好" → 好档。
+`clarify-needs` 会自触发但带闸，只在东西会长期活下去时起（开新项目、长期用的工具、大改动或
+跨会话的活、多目标纠缠），微任务 / 改 bug / 纯问答不起。闸写在 description 里，是软约束；
+误伤了说一句「这个随便做一下」就跳过。其余三个回头类 skill 是约定式手动。
 
 ## 环节与档位对照
 
@@ -44,30 +65,26 @@
 | 验证 | 代表性输入跑通 | 按交付形态实际使用 ＋ 针对性测试 |
 | 收工后 | 无 | 膨胀了剪枝 / 完工了扫同款 / 更新蓝图 |
 
-**不命中的环节完全不提。** 这是路由图，不是阶段清单——把它当必经阶段依次跑，就退回了它要取代的那种流程。
+不命中的环节完全不提。这是路由图，不是阶段清单：把它当必经阶段依次跑，就退回了它要取代的
+那种流程。
 
 ## 与重流程框架的关系
 
-不装 hook、skill 之间不自动串联。需要正式 spec/plan 落盘再按计划执行（brainstorming → writing-plans → executing-plans）、TDD、工作树、并行子代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual) 那套；**本工作流不依赖它，没装也能走完全程**。
-
-## 安装
-
-```
-/plugin marketplace add patrick1099/vibe-flow
-/plugin install vibe-flow@vibe-flow
-```
-
-入口是 `vibe-flow`。四个"回头/澄清"类 skill 的自动程度不一样：
-
-- `clarify-needs` **会自触发，但带闸**——只在东西会长期活下去时起（开新项目、长期用的工具、大改动或跨会话的活、多目标纠缠），微任务/改 bug/纯问答不起。闸写在 description 里，是软约束；误伤了说一句"这个随便做一下"就跳过，也可以随时自己 `/vibe-flow:clarify-needs`。
-- `cut-scope` / `scan-field` / `living-blueprint` 是**约定式手动**——靠各自 description 里写明"仅由用户显式请求触发"。模型仍有可能自己判断该用而拉起来。
-
-> **v0.4.0 之前 `clarify-needs` 标着 `disable-model-invocation: true`，是硬手动，模型根本拉不起来。** 实际用下来这条闸太死：真正需要它的项目场景也一次都进不去，全靠人记得敲。改成"自触发 + description 限流"。
-
-### Codex
+不装 hook，skill 之间不自动串联。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
+代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual)。
+本工作流不依赖它，没装也能走完全程。
 
 插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`。
 
 ## 沿革
 
-本插件由两个前身合并而成（2026-07-30）：`vibe-flow` / `vibe-scripts` / `vibe-apps` 原在 [xu-skills](https://github.com/patrick1099/xu-skills)，`clarify-needs` / `living-blueprint` / `cut-scope` / `scan-field` 原是 [true-north](https://github.com/patrick1099/true-north) 四件套。合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`；更早的设计记录见 `docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。
+本插件由两个前身合并而成（2026-07-30）：`vibe-flow` / `vibe-scripts` / `vibe-apps` 原在
+[xu-skills](https://github.com/patrick1099/xu-skills)，`clarify-needs` / `living-blueprint` /
+`cut-scope` / `scan-field` 原是 [true-north](https://github.com/patrick1099/true-north) 四件套。
+
+v0.4.0 之前 `clarify-needs` 标着 `disable-model-invocation: true`，是硬手动，模型根本拉不
+起来。实际用下来这条闸太死：真正需要它的项目场景也一次都进不去，全靠人记得敲。改成自触发
+加 description 限流。
+
+合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`，更早的设计记录见
+`docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。
