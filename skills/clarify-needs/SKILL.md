@@ -1,6 +1,6 @@
 ---
 name: clarify-needs
-description: "Load BEFORE writing any code, when a vibe-coding request bundles a desired outcome together with a proposed solution, a preference, or a hard constraint; when stated \"requirements\" keep expanding or look bigger than the time/effort available; when it's unclear whether something is a goal, a means, a preference, or a real constraint; when the user hands you a tech solution but not the underlying why; or when returning to a project to check reality against docs/NEEDS.md. SELF-INVOKE ONLY for work that will live on — starting a new project, a long-lived tool, a large or cross-session change, two or more tangled goals. Do NOT self-invoke for throwaway micro-scripts, one-off edits, bug fixes, or direct questions (the user can still run it manually there). 中文触发：开新项目或大改动、动手前先厘清真实需求、别把手段当目标、别把偏好当约束、防需求膨胀、深挖/严格分析需求、回头看这项目做到哪了。Stack-independent."
+description: "Load BEFORE writing any code, when a vibe-coding request bundles a desired outcome together with a proposed solution, a preference, or a hard constraint; when stated \"requirements\" keep expanding or look bigger than the time/effort available; when it's unclear whether something is a goal, a means, a preference, or a real constraint; when the user hands you a tech solution but not the underlying why; or when returning to a project to check reality against docs/NEEDS.md. SELF-INVOKE ONLY when this piece of work is big and its requirement is genuinely unclear or tangled — a new project or tool, a whole new feature area, two or more tangled goals, requirements that keep expanding. Do NOT self-invoke for clear small changes (even on long-lived tools), throwaway micro-scripts, bug fixes, or direct questions (the user can still run it manually there). 中文触发：开新项目或大改动、动手前先厘清真实需求、别把手段当目标、别把偏好当约束、防需求膨胀、深挖/严格分析需求、回头看这项目做到哪了。Stack-independent."
 ---
 
 # clarify-needs：把真需求挖出来，别被方案和偏好带跑
@@ -26,7 +26,7 @@ vibe coder 抛来的"需求"，常把**目标、方案、偏好、约束混在�
 ## 何时用 / 不用
 
 - **用**：请求里方案/偏好/约束混着目标；需求越聊越多；分不清某条是目标还是手段；用户给了技术方案但没说为什么；回头想知道"这项目做到哪了"。
-- **自触发的闸**：本 skill 可以自己起，但**只在东西会长期活下去时起**——开新项目、要长期用的工具、大改动或跨会话的活、两个以上纠缠的目标。起之前先说一句为什么要多问这一轮。
+- **自触发的闸**：本 skill 可以自己起，但**只在这次要做的事够大、且需求本身不清或纠缠时起**——开新项目 / 新工具、新加一整块功能、两个以上纠缠的目标、需求越聊越多。长期工具上的明确小改不起（项目活多久不让这次改动变厚，判档见 `vibe-flow` §2）。起之前先说一句为什么要多问这一轮。
 - **微任务（跑完即弃的微脚本、一句话能干完的小活、改 bug、只是回答问题）**：**不要自触发**；若用户已手动 `/clarify-needs`，也**只锚一句真需求就开干**，别起全套（起了就是过度工程）。
 - **用户喊停优先于一切**："别问了直接做 / 这个随便做一下" → 立刻收，最多再问最要命的一个问题。
 
@@ -116,7 +116,7 @@ vibe coder 抛来的"需求"，常把**目标、方案、偏好、约束混在�
 
 ## 反模式
 
-- 需求还没厘清就逼用户拍技术方案；或反过来剥夺用户对方案的批准权。
+- 需求还没厘清就逼用户拍技术方案；或反过来，把会改变用户使用体验、数据或范围的选择不问用户就定了。用户批准的是目标和使用后果，技术方案由 AI 和决策者负责（见 `vibe-flow` §4 决策边界）。
 - 把用户嘴上的需求 / 顺手给的方案当真需求，照单全收。
 - 手段冒充目标、偏好冒充约束没识别就往下做。
 - 用术语/架构名/档位名跟用户讲（听不懂 = 白讲）。

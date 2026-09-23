@@ -17,14 +17,25 @@ def human(text="改一下"):
     return {"type": "user", "origin": {"kind": "human"}, "message": {"role": "user", "content": text}}
 
 
-def edit(path, tool="Edit"):
-    return {"type": "assistant", "message": {"role": "assistant", "content": [
-        {"type": "tool_use", "name": tool, "input": {"file_path": str(path)}}]}}
+_ids = iter(range(10**6))
 
 
-def tool_result():
-    return {"type": "user", "message": {"role": "user", "content": [
-        {"type": "tool_result", "tool_use_id": "x", "content": "ok"}]}}
+def edit(path, tool="Edit", ok=True):
+    """一次写文件调用 + 它的结果，返回两行记录。"""
+    tid = f"toolu_{next(_ids)}"
+    call = {"type": "assistant", "message": {"role": "assistant", "content": [
+        {"type": "tool_use", "id": tid, "name": tool, "input": {"file_path": str(path)}}]}}
+    result = {"type": "user", "message": {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": tid, "is_error": not ok,
+         "content": "ok" if ok else "<tool_use_error>String to replace not found</tool_use_error>"}]}}
+    return [call, result]
+
+
+def flatten(rows):
+    out = []
+    for r in rows:
+        out.extend(r if isinstance(r, list) else [r])
+    return out
 
 
 class DocGateTest(unittest.TestCase):
@@ -43,7 +54,7 @@ class DocGateTest(unittest.TestCase):
 
     def run_gate(self, rows, active=False):
         tr = self.root / "transcript.jsonl"
-        tr.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows), encoding="utf-8")
+        tr.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in flatten(rows)), encoding="utf-8")
         env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))
         proc = subprocess.run(
             [sys.executable, str(GATE)],
@@ -62,7 +73,7 @@ class DocGateTest(unittest.TestCase):
 
     def test_toolkit_missing_docs_blocks(self):
         core = self.toolkit(with_docs=False)
-        out = self.run_gate([human(), edit(core), tool_result()])
+        out = self.run_gate([human(), edit(core)])
         self.assertEqual(out["decision"], "block")
         self.assertIn("BLUEPRINT.md", out["reason"])
         self.assertIn("CHANGELOG.md", out["reason"])
@@ -77,6 +88,16 @@ class DocGateTest(unittest.TestCase):
         core = self.toolkit(with_docs=True)
         cl = self.root / "tk/docs/CHANGELOG.md"
         self.assertIsNone(self.run_gate([human(), edit(core), edit(cl)]))
+
+    def test_failed_changelog_edit_does_not_count(self):
+        core = self.toolkit(with_docs=True)
+        cl = self.root / "tk/docs/CHANGELOG.md"
+        out = self.run_gate([human(), edit(core), edit(cl, ok=False)])
+        self.assertIn("都没动", out["reason"])
+
+    def test_failed_code_edit_is_not_a_change(self):
+        core = self.toolkit(with_docs=True)
+        self.assertIsNone(self.run_gate([human(), edit(core, ok=False)]))
 
     def test_stop_hook_active_passes(self):
         core = self.toolkit(with_docs=False)

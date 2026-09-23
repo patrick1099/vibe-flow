@@ -18,7 +18,7 @@ description: Use when building a personal Python tool/app that has a UI, will be
 | 跑完即弃 / 命令行 / 单文件 | **vibe-scripts** |
 | 有界面 / 要发给别人(exe) / 要长期活或可能变网站 | **本 skill** |
 
-**流程前置**：先由 `vibe-flow` 判档，再决定是否需要澄清或探方案。带界面 / 要分发的应用基本都落**好档**，但好档不等于走满——目标清楚的小应用仍可直接落地；只有严重歧义、用户明确要求或高风险设计才展开完整的方案对比。
+**流程前置**：先由 `vibe-flow` 判档，再决定是否需要澄清或探方案。新建一个应用通常是好档（范围大），但好档不等于走满——目标清楚的小应用仍可直接落地；已有应用上的明确小改按省档走。低耦合、文档、谁拍板这三类规矩以 `vibe-flow` §4–§6 为准，本 skill 只给本栈的落法。
 
 ## 技术栈（定死，不再选）
 
@@ -80,16 +80,16 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 ## 设计记录（意图驱动）
 
-按 `vibe-flow` §6 的规则留文档：**应用一律带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md` ＋ `docs/HANDOFF.md`**（格式与维护见 `living-blueprint`），出生时建，行为变了同一轮更新蓝图和 CHANGELOG，活没做完就收尾时更新 HANDOFF；跨会话且需求仍在演化时另加 `docs/NEEDS.md`。
+按 `vibe-flow` §6 的规则留文档：**应用一律带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`**，有没做完的活时再加 `docs/HANDOFF.md`（做完删掉），需求仍在演化时另加 `docs/NEEDS.md`。格式与维护见 `living-blueprint`。
 
 ## 脚手架（建目录）
 
 ```
 mytool/
-├── AGENTS.md              # 交接入口：先读顺序/命令/代码地图/坑 + 下方架构约束段（不另建 CLAUDE.md）
+├── AGENTS.md              # 交接入口：先读顺序/命令/代码地图/坑 + 下方架构约束段
 ├── docs/BLUEPRINT.md      # 当前功能全貌（living-blueprint）
 ├── docs/CHANGELOG.md      # 为什么变更，只追加（living-blueprint）
-├── docs/HANDOFF.md        # 进度快照，覆盖式；做完清空成一行（living-blueprint）
+├── docs/HANDOFF.md        # 可选：只在有没做完的活时存在，做完删掉（living-blueprint）
 ├── core/*.py              # 纯逻辑, 可 pytest, 对"谁"无状态
 ├── core/<轴>/ 或 adapters/<轴>/   # 可选：某条轴出现第二个成员时才建（纯规则进 core，碰 IO 进 adapters）
 ├── api/server.py          # FastAPI 薄适配
@@ -126,6 +126,6 @@ mytool/
 - 为了小体积去上 Tauri/Rust（小体积是审美，已放弃）
 - 默认就上 React/Vue + node 构建
 - 没有 `docs/BLUEPRINT.md` / `docs/CHANGELOG.md`，或行为改了没跟着更新
-- 没有 `AGENTS.md`，或另建了项目级 CLAUDE.md
+- 没有 `AGENTS.md`
 - 同一类成员的名单写死在 core / api / web 多处；前端硬编码成员列表
 - 一个成员出错让整个接口报错

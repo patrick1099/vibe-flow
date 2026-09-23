@@ -1,6 +1,6 @@
 ---
 name: living-blueprint
-description: Use when creating or changing a personal script or app above micro size, or when handing work to a new session / another AI — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Projects with their own folder also get AGENTS.md (auto-loaded entry: reading order, run/test/build commands, code map, pitfalls) and docs/HANDOFF.md (overwrite-style progress snapshot: in flight, half-done, next step, waiting on the user) so the next session or AI can pick up. Create BLUEPRINT and CHANGELOG when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、交接给新会话或别的 AI、HANDOFF 进度快照、AGENTS.md 入口、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
+description: Use when creating or changing a personal script or app above micro size, or when handing work to a new session / another AI — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Projects with their own folder also get AGENTS.md (auto-loaded entry: reading order, run/test/build commands, code map, pitfalls) and, only while work is unfinished, docs/HANDOFF.md (overwrite-style progress snapshot: in flight, half-done, next step, waiting on the user; deleted when the work is done) so the next session or AI can pick up. Create BLUEPRINT and CHANGELOG when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、交接给新会话或别的 AI、HANDOFF 进度快照、AGENTS.md 入口、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
 ---
 
 # living-blueprint：活蓝图、变更记录与交接
@@ -24,8 +24,8 @@ description: Use when creating or changing a personal script or app above micro 
 - **必用**：微脚本以外的所有个人脚本和应用，不分档（规则源头在 `vibe-flow` §6）。出生时两份一起建，之后随改动维护。
 - **不用**：微脚本（定义以 `vibe-scripts` 定级表为准：<100 行、单一功能、IO 形式单一）——头部契约行（结构 / 用途 / 用法 / 原始需求）就是它的功能描述。公司固件 / 产品代码按该仓库规范。
 - **放哪**：有自己目录的放 `docs/BLUEPRINT.md`、`docs/CHANGELOG.md`；和别的脚本共处一个目录的单文件脚本，用同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `<脚本名>.CHANGELOG.md`。
-- **按体量写**：标准级脚本的蓝图一屏以内，用不上的节写一行「无」。
-- **交接两件套按体量**：有自己目录的项目（工具包级脚本、所有应用）必带 `AGENTS.md`；`HANDOFF.md` 所有非微脚本都要，单文件脚本用旁挂 `<脚本名>.HANDOFF.md`，它的「怎么干活」由头部 `结构:` 那行代替 AGENTS.md。
+- **按体量写**：标准级脚本的蓝图一屏以内，用不上的节直接省略。
+- **交接两件套按体量**：有自己目录的项目（工具包级脚本、所有应用）必带 `AGENTS.md`；`HANDOFF.md` 只在有没做完的活时存在、做完删掉，单文件脚本用旁挂 `<脚本名>.HANDOFF.md`；单文件脚本的「怎么干活」由头部 `结构:` 那行代替 AGENTS.md。
 
 ## 与邻居划界（别串味）
 
@@ -122,14 +122,14 @@ description: Use when creating or changing a personal script or app above micro 
 # <项目名>
 
 ## 先读
-1. docs/HANDOFF.md —— 现在做到哪了
+1. docs/HANDOFF.md —— 现在做到哪了（没有这个文件 = 没有进行中的工作）
 2. docs/BLUEPRINT.md —— 它是什么、行为契约
-3. docs/CHANGELOG.md —— 最近几条，和所有「没选的路」
+3. docs/CHANGELOG.md —— 最近 5 条；要改哪块，再搜那块相关的「没选的路」
 
 ## 命令
 - 跑：<一条命令>
 - 测：<一条命令>
-- 打包：<一条命令；没有写「无」>
+- 打包：<一条命令；没有就删掉这行>
 
 ## 代码地图（改哪类东西去哪）
 | 要改的 | 去哪 |
@@ -142,11 +142,11 @@ description: Use when creating or changing a personal script or app above micro 
 
 - 分支 skill 自带的架构约束段（如 `vibe-apps` 那段）也写在这里。
 - 不写功能（归蓝图）、不写进度（归 HANDOFF）、不写历史（归 CHANGELOG）。
-- 项目级只建 AGENTS.md，不另建 CLAUDE.md，两个平台读同一份。
+- 项目级只建 AGENTS.md，两个平台读同一份。只有当前环境的 Claude Code 确实不读 AGENTS.md 时，才加一个内容只有一行 `@AGENTS.md` 的 CLAUDE.md 引过去，别把正文复制进 CLAUDE.md。
 
-### HANDOFF.md —— 进度快照，覆盖式
+### HANDOFF.md —— 进度快照，只在有没做完的活时存在
 
-放 `docs/HANDOFF.md`（单文件脚本用旁挂 `<脚本名>.HANDOFF.md`）。像蓝图一样整篇覆盖，只写当下，一屏以内：
+放 `docs/HANDOFF.md`（单文件脚本用旁挂 `<脚本名>.HANDOFF.md`）。像蓝图一样整篇覆盖，只写当下，一屏以内；用不上的行直接省略：
 
 ```markdown
 # 交接 · <日期>
@@ -155,19 +155,19 @@ description: Use when creating or changing a personal script or app above micro 
 **已完成**：<只列指向 CHANGELOG 的条目标题，不重复内容>
 **做了一半**：<哪些、卡在哪、当前是什么状态（未提交？分支？临时文件在哪？）>
 **下一步**：<接手的人第一件该做的事，具体到能直接开工>
-**等用户拍板**：<没定的问题，和各选项；没有写「无」>
-**别碰**：<暂时不能动的东西和原因；没有写「无」>
+**等用户拍板**：<没定的问题，和各选项>
+**别碰**：<暂时不能动的东西和原因>
 ```
 
 - **什么时候写**：活没做完就要结束会话、要交给别的 AI、或用户说「先到这」时，当轮覆盖更新。
-- **做完就清空**：整件事收尾时，成果进蓝图和 CHANGELOG，HANDOFF 只留一行「当前无进行中的工作 · <日期>」。**不许让它变成第二份 CHANGELOG**——它只描述此刻，过去的事一概不留。
+- **做完就删**：整件事收尾时，成果进蓝图和 CHANGELOG，删掉 HANDOFF 文件——没有这个文件就表示没有进行中的工作。**不许让它变成第二份 CHANGELOG**——它只描述此刻，过去的事一概不留。
 - **写给零上下文的人**：接手的可能是另一个 AI，它没看过这次对话。路径写全、状态写实（「改了没提交」「测试红着」），别写「按刚才说的做」。
 
 ## 触发与维护（跟着改动走，不等用户开口）
 
-- **读**：新会话重新上手、或要重构时，按 AGENTS.md 第一段的顺序读：`HANDOFF.md` → `BLUEPRINT.md` → `CHANGELOG.md` 最近几条和所有「没选的路」。
+- **读**：新会话重新上手、或要重构时，按 AGENTS.md 第一段的顺序读：`HANDOFF.md`（如有）→ `BLUEPRINT.md` → `CHANGELOG.md` 最近 5 条；要改哪块，再搜 CHANGELOG 里那块相关的「没选的路」。不通读全部历史——CHANGELOG 只会越来越长。
 - **建**：工具出生（第一次交付）时两份一起建，CHANGELOG 第一条记为什么要做它。
-- **交接**：活没做完就要结束会话、或要交给别的 AI 时，同一轮覆盖 `HANDOFF.md`；整件事做完时清空成一行。命令、代码地图、坑变了就改 `AGENTS.md`。
+- **交接**：活没做完就要结束会话、或要交给别的 AI 时，同一轮建立或覆盖 `HANDOFF.md`；整件事做完时删掉它。命令、代码地图、坑变了就改 `AGENTS.md`。
 - **更新**：在**同一轮**里改，不等用户说「更新蓝图」——该改没改，`vibe-flow` §8 判这轮没完成。「必须带两份」指两份始终存在，不是每轮两份都要有改动：
   - 功能、I/O 契约或硬约束变了 → 蓝图覆盖对应小节，CHANGELOG 加一条；
   - 修了用户碰到过的 bug、改了用户嫌弃的体验，但蓝图本来就写着正确预期 → 只在 CHANGELOG 加一条；
@@ -195,9 +195,9 @@ description: Use when creating or changing a personal script or app above micro 
 
 - 微脚本以外的脚本 / 应用交付时没有 BLUEPRINT.md 和 CHANGELOG.md
 - 有自己目录的项目没有 AGENTS.md，或 AGENTS.md 里没写阅读顺序——新会话找不到蓝图
-- 活没做完就结束会话，HANDOFF.md 没更新；或事情做完了 HANDOFF 还留着旧进度
+- 活没做完就结束会话，HANDOFF.md 没更新；或事情做完了 HANDOFF 还留着
 - HANDOFF 越写越长、堆历史，变成第二份 CHANGELOG
-- 项目级另建 CLAUDE.md（统一只写 AGENTS.md）
+- 项目级 CLAUDE.md 里复制一份 AGENTS.md 的正文（最多只放一行 `@AGENTS.md`）
 - 行为改了却等用户说「更新蓝图」才动——两份文档跟着改动走
 - CHANGELOG 只写「改了什么」不写「为什么」；「起因」用自己的转述代替用户原话；漏了「没选的路」
 - CHANGELOG 回头改写旧条目（判断错了就在顶部新写一条推翻它）

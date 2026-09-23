@@ -33,25 +33,30 @@ def _is_human_prompt(row):
     return isinstance(content, str) and not content.lstrip().startswith("<")
 
 
+def _content_items(row):
+    content = (row.get("message") or {}).get("content")
+    return [x for x in content if isinstance(x, dict)] if isinstance(content, list) else []
+
+
 def turn_written_paths(rows):
+    """本轮成功写过的文件：失败的调用（is_error）和没有结果的调用都不算。"""
     start = 0
     for i, row in enumerate(rows):
         if _is_human_prompt(row):
             start = i + 1
-    paths = []
+    calls = []
+    ok_ids = set()
     for row in rows[start:]:
-        if row.get("type") != "assistant":
-            continue
-        for item in (row.get("message") or {}).get("content") or []:
-            if not isinstance(item, dict) or item.get("type") != "tool_use":
-                continue
-            if item.get("name") not in WRITE_TOOLS:
-                continue
-            inp = item.get("input") or {}
-            p = inp.get("file_path") or inp.get("notebook_path")
-            if p:
-                paths.append(p)
-    return paths
+        for item in _content_items(row):
+            kind = item.get("type")
+            if row.get("type") == "assistant" and kind == "tool_use" and item.get("name") in WRITE_TOOLS:
+                inp = item.get("input") or {}
+                p = inp.get("file_path") or inp.get("notebook_path")
+                if p:
+                    calls.append((item.get("id"), p))
+            elif row.get("type") == "user" and kind == "tool_result" and not item.get("is_error"):
+                ok_ids.add(item.get("tool_use_id"))
+    return [p for tool_id, p in calls if tool_id in ok_ids]
 
 
 def read_rows(transcript_path):
