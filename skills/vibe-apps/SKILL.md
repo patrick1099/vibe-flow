@@ -58,6 +58,16 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 **判据**：core 里任何函数都能在 pytest 里直接构造输入调用、不碰全局——能做到，门就开着。这跟"core 要可 pytest"是同一件事，不额外花钱，也正是 vibe-scripts「Core 纯函数不 IO」纪律的放大版。**分寸**：只是别把单用户假设焊进 core，不是现在就建多用户/登录（YAGNI）。
 
+## core 里的变化轴（可插拔）
+
+五层管的是上下分层；横向还有一类耦合五层管不到：**同一类会增删的成员**（数据源、导出格式、设备型号、第三方平台）。规矩在 `vibe-flow` §5「低耦合底线」，落到本栈：
+
+- **放哪按成员碰不碰 IO 分**：纯规则类成员（格式转换、设备型号规则）放 `core/<轴>/`；碰网络、文件、设备、第三方平台的成员放 `adapters/<轴>/`，通过参数注入 core——core 不碰 IO 这条不因为可插拔而破例。
+- `<轴>/__init__.py` 放唯一的注册表，只登记名字、惰性加载成员（写法同 `vibe-scripts`「工具包级的变化轴」）；成员用属性自己声明能力。
+- `api/` 和 `web/` 需要成员列表时，走一个 `/api/<轴>` 端点从注册表取，前端不写死名单。
+- 遍历成员时单个成员加载或运行出错，只标它自己不可用，接口照常返回其余成员的结果。
+- 只有一个成员时不建 `<轴>/` 目录，代码留在普通业务模块里聚成一处；第二个出现时再收成注册表。
+
 ## 换零件规则
 
 - **同语言换零件**（FastAPI↔Django、pywebview↔别的窗口库、原生 HTML↔React）= 便宜，core 和 web 不动。
@@ -70,15 +80,17 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 ## 设计记录（意图驱动）
 
-按 `vibe-flow` §6 的规则留文档：单会话小应用不强制建文档；跨会话且需求仍在演化时用 `docs/NEEDS.md`；长期维护、以后会按意图重构时，用 `living-blueprint` 建并维护 `docs/BLUEPRINT.md`。
+按 `vibe-flow` §6 的规则留文档：**应用一律带 `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`**（格式与维护见 `living-blueprint`），出生时建、行为变了同一轮更新；跨会话且需求仍在演化时另加 `docs/NEEDS.md`。
 
 ## 脚手架（建目录）
 
 ```
 mytool/
 ├── CLAUDE.md              # 下方 vibe-apps 架构约束段
-├── docs/BLUEPRINT.md      # 长期维护时由 living-blueprint 建；小应用可无
+├── docs/BLUEPRINT.md      # 当前功能全貌（living-blueprint）
+├── docs/CHANGELOG.md      # 为什么变更，只追加（living-blueprint）
 ├── core/*.py              # 纯逻辑, 可 pytest, 对"谁"无状态
+├── core/<轴>/ 或 adapters/<轴>/   # 可选：某条轴出现第二个成员时才建（纯规则进 core，碰 IO 进 adapters）
 ├── api/server.py          # FastAPI 薄适配
 ├── web/{index.html,app.js,style.css}   # fetch 调 api; CDN 引 Pico.css
 ├── tests/test_*.py        # pytest 测 core
@@ -112,4 +124,6 @@ mytool/
 - 用 pywebview 专有 JS 桥（不可移植、没法浏览器调）
 - 为了小体积去上 Tauri/Rust（小体积是审美，已放弃）
 - 默认就上 React/Vue + node 构建
-- 长期维护项目没有可供后续会话读取的当前需求/蓝图
+- 没有 `docs/BLUEPRINT.md` / `docs/CHANGELOG.md`，或行为改了没跟着更新
+- 同一类成员的名单写死在 core / api / web 多处；前端硬编码成员列表
+- 一个成员出错让整个接口报错

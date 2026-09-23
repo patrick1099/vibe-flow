@@ -1,13 +1,17 @@
 ---
 name: living-blueprint
-description: Use when an AI-built tool/project will live and evolve and you want a single always-current "what it does" doc so AI can refactor from intent without being anchored to the old implementation — 工具活蓝图 BLUEPRINT.md、只讲功能不讲实现、覆盖式当前全貌、行为契约、重构不被旧实现绑架。任何会长期迭代的项目可用(例:vibe-apps 必用、vibe-scripts 建议)。≠ UI 设计系统 DESIGN.md、≠ ADR 历史决策日志。纯手动触发。Stack-independent.
+description: Use when creating or changing a personal script or app above micro size — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Create both when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
 ---
 
-# living-blueprint：工具的「活蓝图」
+# living-blueprint：工具的「活蓝图」＋「变更记录」
 
 ## 总纲
 
 > 一份**永远当前、只讲功能不讲实现**的工具全貌 `BLUEPRINT.md`。新会话读它就懂整个工具；想重构时，AI 照它**直接开做，不被旧实现的固有思维绑架**。
+>
+> 配一份**只追加、专讲为什么**的 `CHANGELOG.md`。蓝图是覆盖式的，删掉的功能会从蓝图里消失；「试过、为什么撤了」只能靠它留下来，否则下次重构 AI 会把否掉的方案当新点子再加回来。
+
+两份分工：**蓝图说现在是什么，CHANGELOG 说怎么变成这样、中间丢掉了什么，git 管代码改了哪几行。** 三处不重复。
 
 维护一份 BLUEPRINT 谁都会，本 skill 的价值是那套**纪律**：只写可观察行为、覆盖式当前真相、显式授权重构丢弃旧实现、提炼非流水账——没纪律的文档会退化成夹带实现、自相矛盾的流水账。**与技术栈无关。**
 
@@ -15,15 +19,18 @@ description: Use when an AI-built tool/project will live and evolve and you want
 
 ## 何时用 / 不用
 
-- **用**：任何会长期存活、会被重构/迭代的工具/项目（例：vibe-apps 必用、vibe-scripts 建议用）。
-- **不用**：跑完即弃的微脚本——建 BLUEPRINT.md 是过度工程。
+- **必用**：微脚本以外的所有个人脚本和应用，不分档（规则源头在 `vibe-flow` §6）。出生时两份一起建，之后随改动维护。
+- **不用**：微脚本（定义以 `vibe-scripts` 定级表为准：<100 行、单一功能、IO 形式单一）——头部契约行（结构 / 用途 / 用法 / 原始需求）就是它的功能描述。公司固件 / 产品代码按该仓库规范。
+- **放哪**：有自己目录的放 `docs/BLUEPRINT.md`、`docs/CHANGELOG.md`；和别的脚本共处一个目录的单文件脚本，用同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `<脚本名>.CHANGELOG.md`。
+- **按体量写**：标准级脚本的蓝图一屏以内，用不上的节写一行「无」。
 
 ## 与邻居划界（别串味）
 
 | 对象 | 它是什么 | 本 skill 的不同 |
 |---|---|---|
 | spec / plan 类文档（如 `superpowers-manual` 产出的 dated spec/plan） | 每次改动的详细「怎么做」+ 历史，散在时间线 | 不替代；坐其上，只留「当前功能全貌」。重构先读蓝图把握 what，再让 spec/代码管 how |
-| ADR | 不可变、带编号的历史「为什么」 | 不记历史、只记现状、覆盖式。要不可变决策日志请用 ADR 类 skill |
+| ADR | 不可变、带编号的架构决策「为什么」 | 蓝图不记历史；历史归同 skill 的 CHANGELOG，且只记用户感觉得到的变化，不是每个架构决策都记 |
+| git 提交历史 | 代码改了哪几行、何时改 | CHANGELOG 不重复 diff，只记行为层面的变化和原因；要找对应提交用 `git log` / `git blame` |
 | DESIGN.md（市面 UI 设计系统那种） | 配色/字体/组件的视觉规范 | 完全不同物种。这是**功能架构**——故我方文件用 `BLUEPRINT.md`、不用 `DESIGN.md`，躲开那片红海 |
 | CLAUDE.md | 给 AI 的工作规约（how to work here） | 蓝图是工具的功能现状（what it is），不是干活规矩 |
 
@@ -56,6 +63,7 @@ description: Use when an AI-built tool/project will live and evolve and you want
 - 硬约束（重构必须守），分两类：
   - **运行约束**：如 离线运行 / 单文件 / 必须吃某格式 …
   - **可移植架构约束**：换语言仍成立的原则，如 逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥。**只收跨语言仍成立的原则，不收具名代码分层**——`core/api/web/app.py` 那种语言特定结构归 CLAUDE.md/spec，不进蓝图。
+  - **变化轴**：以后会增删的那几类东西（平台、格式、数据源……），每条写成一句验收：「加或去掉一个 <成员>，只动它自己的适配器和注册表；一个 <成员> 出错只影响它自己。」这是换语言仍成立的约束，要进蓝图（规则见 `vibe-flow` §5「低耦合底线」）。
 - 重构自由声明：**以上未列出的一切均为实现细节，重构可随意更改。**
 
 ## 5. 功能痛点 / 易错点
@@ -67,12 +75,49 @@ description: Use when an AI-built tool/project will live and evolve and you want
 1. **行为契约**：功能一律写成「给它 X → 它做 Y / 你看到 Z」的**可观察行为**，与实现无关。AI 拿它重写只需对齐行为，怎么实现随它。
 2. **硬约束 / 自由声明分离**：显式列出少数「必须守」的，再补一句「其余皆实现细节，可自由改」。这句**主动授权** AI 丢掉旧实现——否则再功能向的文档 AI 也默认沿用旧结构。
 
-## 触发与维护（纯手动）
+## CHANGELOG.md（只追加，专讲为什么）
 
-- **读**：新会话重新上手、或要重构时，先读 `docs/BLUEPRINT.md`。（可在项目 CLAUDE.md 加一句「开场先读 BLUEPRINT.md」，不强制。）
-- **写/更新**：**只在用户说「更新蓝图 / 记一下 X」时才覆盖更新**对应小节。不设 hook、不搞「拍板即自动更新」的仪式。
-- **覆盖式**：正文永远当前真相；旧描述被推翻就**直接改写、不留历史**（历史归 ADR/spec）。
-- **提炼非流水账**：记功能与行为，不逐字抄对话、不记实现过程。
+### 记什么、不记什么
+
+判据只有一条：**用户感觉得到吗？**
+
+- **记**：可观察行为变了（加 / 删 / 改功能、改 I/O 格式）；修了用户碰到过的 bug；改了用户嫌弃的体验；出生那一条（为什么要做这个工具，引原始需求）。
+- **不记**：只在代码里发现、用户从没感知过的问题；纯重构、改格式、改注释——这些交给 git。
+
+### 每条的格式
+
+**新条目插在文件顶部**（最近的最先看到），旧条目不动。**「为什么」是主体**，要写透；「改成」只写行为，不写代码怎么改（代码去看 commit）。一条十行左右，写长了没人读。
+
+```markdown
+## 2026-09-23 <一句话：变了什么>
+
+**起因**：用户看到了什么 / 碰到了什么、怎么发现的。能引用户原话就直接引，
+别转述——原话才是真实原因，转述会失真、会往好听了写。
+只引和这次变更相关的最小片段；仓库要公开的，客户名、路径、凭据一律脱敏。
+**根因**：（bug 类必填）为什么会这样。体验类写「哪里别扭、为什么别扭」。
+**改成**：现在的可观察行为。
+**没选的路**：考虑过但否掉的方案，和否掉的理由。没有就写「无」，不许省掉这一行。
+**影响**：用户要不要做什么、旧数据 / 旧配置还能不能用。没有写「无」。
+```
+
+不挂 commit 号：同一次提交里写的条目拿不到自己的 hash，要找对应提交用 `git log` / `git blame`。
+
+**「没选的路」必填**：以后 AI 重构时最容易犯的错，就是把当初否掉的方案当新点子提出来。这一行专门堵这个口子。
+
+### 旧条目不改写
+
+旧条目一经写下就不改。后来发现当初的判断错了，**新写一条**说明推翻了哪条、为什么，不回头改旧条——被推翻的过程本身就是要留下的历史。
+
+## 触发与维护（跟着改动走，不等用户开口）
+
+- **读**：新会话重新上手、或要重构时，先读 `BLUEPRINT.md`，再扫一眼 `CHANGELOG.md` 最近几条和所有「没选的路」。
+- **建**：工具出生（第一次交付）时两份一起建，CHANGELOG 第一条记为什么要做它。
+- **更新**：在**同一轮**里改，不等用户说「更新蓝图」——该改没改，`vibe-flow` §8 判这轮没完成。「必须带两份」指两份始终存在，不是每轮两份都要有改动：
+  - 功能、I/O 契约或硬约束变了 → 蓝图覆盖对应小节，CHANGELOG 加一条；
+  - 修了用户碰到过的 bug、改了用户嫌弃的体验，但蓝图本来就写着正确预期 → 只在 CHANGELOG 加一条；
+  - 纯内部重构、用户没感知过的问题 → 交给 git，两份都不动。
+- **覆盖式**（只对蓝图）：正文永远当前真相；旧描述被推翻就**直接改写、不留历史**（历史归 CHANGELOG）。
+- **提炼非流水账**：记功能与行为，不逐字抄对话、不记实现过程（CHANGELOG 的「起因」引用户原话除外）。
 
 ### 更新方式：subagent 蒸馏（大改）/ inline（小改）
 
@@ -92,15 +137,19 @@ description: Use when an AI-built tool/project will live and evolve and you want
 
 ## 反模式
 
-- 没建 BLUEPRINT.md 就开写长期项目
+- 微脚本以外的脚本 / 应用交付时没有 BLUEPRINT.md 和 CHANGELOG.md
+- 行为改了却等用户说「更新蓝图」才动——两份文档跟着改动走
+- CHANGELOG 只写「改了什么」不写「为什么」；「起因」用自己的转述代替用户原话；漏了「没选的路」
+- CHANGELOG 回头改写旧条目（判断错了就在顶部新写一条推翻它）
+- 把 git 能记的（纯重构、改格式、用户没感知的内部修复）塞进 CHANGELOG
 - 蓝图里写实现（怎么算/内部数据结构/用了啥库）——只该写可观察行为与 I/O 契约
 - 把语言特定的具名代码分层（如 core/api/web/app.py 五层）写进蓝图——那是绑语言的实现结构，归 CLAUDE.md/spec；蓝图只收换语言仍成立的架构原则
 - 漏写 I/O/数据契约（输入输出格式/文件/接口字段）→ 换语言重写对不齐，蓝图当不成地基
 - 只往里堆、不覆盖旧描述 → 正文自相矛盾、夹带过时功能
 - 漏掉「硬约束 / 自由声明」→ AI 重构时默认沿用旧实现
-- 把它当 ADR 用（要不可变历史日志请用 ADR 类 skill）
+- 把历史写进蓝图（历史归 CHANGELOG）
 - 逐字抄对话当蓝图（要提炼意图与行为）
-- 给跑完即弃的微脚本也套（过度工程）
+- 给跑完即弃的微脚本也套（过度工程，头部契约行就够）
 
 ## 致谢
 

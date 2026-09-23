@@ -19,13 +19,13 @@ description: Use when writing or modifying any standalone Python script or small
 |---|---|---|
 | 微脚本 | <100 行、单一功能、IO 形式单一 | 纯函数 + `main()` 两段即可，**禁止**套四层五区（过度工程同样浪费 token）|
 | 标准（默认）| 有子命令，或有变体（厂商/格式/版本），或有可替换 IO | 单文件四层五区，见下 |
-| 工具包 | >400 行，或第 3 个 Adapter 出现 | 机械拆为 `cli.py / core.py / ports.py / adapters/`，依赖方向不变 |
+| 工具包 | >400 行，或第 3 个 Adapter 出现 | 机械拆为 `cli.py / core.py / ports.py / adapters/<轴>/<成员>.py`，依赖方向不变，见下「工具包级的变化轴」 |
 
 拿不准时按标准级写。从标准级长成工具包是机械动作：五个区各自变成文件。
 
-与 `vibe-flow` 档位的对应：**省档**落微 / 标准级，**好档**才考虑工具包级（判档在 `vibe-flow` §2，本 skill 不重判）。
+与 `vibe-flow` 档位的对应：**省档**落微 / 标准级，**好档**才考虑工具包级（判档在 `vibe-flow` §2，本 skill 不重判）。**低耦合底线不分级**（规矩在 `vibe-flow` §5「低耦合底线」）：微脚本也要逻辑和 IO 分开，只是做到「纯函数 ＋ `main()`」就够。
 
-**工具包级 / 会长期迭代的脚本**：建议配合 **`living-blueprint`** 维护 `docs/BLUEPRINT.md`（工具活蓝图，只讲功能不讲实现，纯手动触发）（微/标准级跑完即弃的通常不必）。
+**文档（硬性，见 `living-blueprint`）**：微脚本用头部契约行代替；标准级和工具包级必须带 `BLUEPRINT.md` ＋ `CHANGELOG.md`。独立目录的放 `docs/`，和别的脚本共处一个目录的放同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `<脚本名>.CHANGELOG.md`。
 
 ## 四层五区模板（标准级）
 
@@ -67,6 +67,37 @@ COMMANDS = {"parse": cmd_parse, "send": cmd_send}
 3. **Core 区纯函数**：不 open、不 import serial、不 print。算出数据返回，打印归 App 层。纯函数可直接被 `--self-test` 和未来 AI 单独验证。
 4. **头部四行契约**（结构/用途/用法/原始需求）必写：`结构:` 行让未来 AI 会话免通读直达分区；`原始需求:` 行是重生成锚点。
 
+## 工具包级的变化轴（多文件时可插拔怎么落）
+
+单文件时「一切扩展点都是表」一张 dict 就够；拆成多文件后，同一类成员（平台、厂商、格式、后端）最容易散：名单在 A 文件写一遍、B 文件 `if x in (...)` 再判一遍，拔一个成员就要全仓扫。落法：
+
+```python
+# adapters/platforms/__init__.py —— 这条轴唯一的名单；只登记名字，不在这里导入成员
+import importlib
+PLATFORMS = ("alpha", "beta")
+
+def load(name):
+    return importlib.import_module(f"{__name__}.{name}")
+
+def load_all():
+    ok, bad = {}, {}
+    for name in PLATFORMS:
+        try:
+            ok[name] = load(name)
+        except Exception as e:          # 一个成员导入失败只标它自己
+            bad[name] = repr(e)
+    return ok, bad
+
+# adapters/platforms/alpha.py —— 成员的一切都在这一个文件里
+CAPS = {"views", "links"}          # 能力由成员自己声明
+def check(ctx) -> list[str]: ...  # 返回问题列表，不抛到上层
+```
+
+- **名单只有一份**：别处需要成员列表（CLI 的 `choices`、循环、校验），一律从注册表取，不许再手写一遍。
+- **按能力分支问成员**：`if "links" in p.CAPS`，禁止 `if name in ("alpha", "beta")`。
+- **故障隔离**：注册表惰性加载，一个成员导入失败不影响注册表本身。聚合类命令用 `load_all()`，把 `bad` 里的成员报成“不可用 ＋ 原因”，其余照常跑，退出码按汇总结果定；用户点名要的成员加载失败，就明确报错、非零退出。
+- **结构测试**（好档必带）：① 往注册表塞一个假成员，CLI 选项和聚合命令都能看到它；② 让一个成员导入时抛错，其余成员和聚合命令照常工作。
+
 ## 六模式速查
 
 | 需求特征 | 模式 | 形态 | 适用度 |
@@ -95,6 +126,9 @@ COMMANDS = {"parse": cmd_parse, "send": cmd_send}
 - 真 Adapter 没有配对的 mock Adapter
 - 微脚本套四层五区全套
 - 头部没有 `结构:` 契约行
+- 工具包里同一类成员的名单手写在多处，或按名单 `if name in (...)` 分支
+- 一个成员（适配器）出错让整条命令崩掉；注册表顶层一次性导入全部成员
+- 标准级以上交付时没有 `BLUEPRINT.md` / `CHANGELOG.md`
 
 ## 环境约定
 
