@@ -2,10 +2,10 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "vibe-flow",
   "displayName": "vibe-flow 轻量 vibe-coding 工作流",
-  "version": "0.8.0",
-  "description": "一套完整但不重的个人 vibe-coding 工作流,入口 skill vibe-flow 判一次档、全流程沿用;低耦合与变化轴可插拔是不分档的底线:小事要省(不澄清、不搭测试框架、直接交付最小可用),大事要好(挖真需求、探方案、留意图文档、按交付形态验证、收工后剪枝扫同款)。七个 skill:vibe-flow(总入口与档位闸门)、clarify-needs(把目标/方案/偏好/约束分开——手段说太死就松开、目标说太空就钉实,落轻量 NEEDS.md,有流程的把运行模型画成图出本地网页让你挑错(流程用 D2,分层架构用 HTML 片段),项目级自触发、微任务不触发)、living-blueprint(微脚本以外必带的两份文档:只讲功能不讲实现的活蓝图 BLUEPRINT.md,和专讲为什么变更的 CHANGELOG.md)、vibe-scripts(独立 Python 脚本的四层五区分级模板)、vibe-apps(带界面/要分发的 Python 应用五层:FastAPI+pywebview+PyInstaller)、cut-scope(迭代多轮后只读剪枝,防沉没成本)、scan-field(对外扫同款两头:开工前查市面有没有现成的/该抄什么,完工后产原创度对比与升级方向)。唯一的 hook 是 Claude Code 上的文档闸(改了 vibe 项目代码而 BLUEPRINT/CHANGELOG 缺失或没动时拦一次),skill 不自动串联,与 superpowers 类重流程可共存但不依赖它。",
+  "version": "0.9.0",
+  "description": "一套完整但不重的个人 vibe-coding 工作流,入口 skill vibe-flow 判一次档、全流程沿用;低耦合与变化轴可插拔是不分档的底线:小事要省(不澄清、不搭测试框架、直接交付最小可用),大事要好(挖真需求、探方案、留意图文档、按交付形态验证、收工后剪枝扫同款)。七个 skill:vibe-flow(总入口与档位闸门)、clarify-needs(把目标/方案/偏好/约束分开——手段说太死就松开、目标说太空就钉实,落轻量 NEEDS.md,有流程的把运行模型画成图出本地网页让你挑错(流程用 D2,分层架构用 HTML 片段),项目级自触发、微任务不触发)、living-blueprint(微脚本以外必带的文档:只讲功能不讲实现的活蓝图 BLUEPRINT.md、专讲为什么变更的 CHANGELOG.md,以及让新会话或别的 AI 能接着干的交接入口 AGENTS.md 与进度快照 HANDOFF.md)、vibe-scripts(独立 Python 脚本的四层五区分级模板)、vibe-apps(带界面/要分发的 Python 应用五层:FastAPI+pywebview+PyInstaller)、cut-scope(迭代多轮后只读剪枝,防沉没成本)、scan-field(对外扫同款两头:开工前查市面有没有现成的/该抄什么,完工后产原创度对比与升级方向)。唯一的 hook 是 Claude Code 上的文档闸(改了 vibe 项目代码而 BLUEPRINT/CHANGELOG 缺失或没动时拦一次),skill 不自动串联,与 superpowers 类重流程可共存但不依赖它。",
   "author": { "name": "xu" },
   "homepage": "https://github.com/patrick1099/vibe-flow",
   "repository": "https://github.com/patrick1099/vibe-flow",
-  "keywords": ["vibe-coding", "workflow", "routing", "right-sizing", "clarification", "requirements", "needs-analysis", "living-blueprint", "design-intent", "scope-cutting", "yagni", "over-engineering", "prior-art", "market-scan", "python", "scripting", "gui", "pywebview", "fastapi", "desktop-app", "verification", "manual", "stack-independent", "low-coupling", "pluggable", "changelog", "stop-hook"]
+  "keywords": ["vibe-coding", "workflow", "routing", "right-sizing", "clarification", "requirements", "needs-analysis", "living-blueprint", "design-intent", "scope-cutting", "yagni", "over-engineering", "prior-art", "market-scan", "python", "scripting", "gui", "pywebview", "fastapi", "desktop-app", "verification", "manual", "stack-independent", "low-coupling", "pluggable", "changelog", "stop-hook", "handoff", "agents-md"]
 }

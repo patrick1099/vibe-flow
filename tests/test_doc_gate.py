@@ -105,10 +105,18 @@ class DocGateTest(unittest.TestCase):
         self.assertIsNone(self.run_gate([human(), edit(s), edit(cl)]))
 
     def test_vibe_apps_marker_detected(self):
-        self.write("app/CLAUDE.md", "## 架构约束（vibe-apps）\n五层")
-        api = self.write("app/api/server.py", "")
-        out = self.run_gate([human(), edit(api)])
-        self.assertEqual(out["decision"], "block")
+        for name in ("AGENTS.md", "CLAUDE.md"):
+            with self.subTest(name=name):
+                self.write(f"app_{name}/{name}", "## 架构约束（vibe-apps）\n五层")
+                api = self.write(f"app_{name}/api/server.py", "")
+                out = self.run_gate([human(), edit(api)])
+                self.assertEqual(out["decision"], "block")
+
+    def test_handoff_write_does_not_satisfy_gate(self):
+        core = self.toolkit(with_docs=True)
+        ho = self.write("tk/docs/HANDOFF.md", "# 交接")
+        out = self.run_gate([human(), edit(core), edit(ho)])
+        self.assertIn("都没动", out["reason"])
 
     def test_bad_transcript_path_passes(self):
         env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))

@@ -80,15 +80,16 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 ## 设计记录（意图驱动）
 
-按 `vibe-flow` §6 的规则留文档：**应用一律带 `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`**（格式与维护见 `living-blueprint`），出生时建、行为变了同一轮更新；跨会话且需求仍在演化时另加 `docs/NEEDS.md`。
+按 `vibe-flow` §6 的规则留文档：**应用一律带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md` ＋ `docs/HANDOFF.md`**（格式与维护见 `living-blueprint`），出生时建，行为变了同一轮更新蓝图和 CHANGELOG，活没做完就收尾时更新 HANDOFF；跨会话且需求仍在演化时另加 `docs/NEEDS.md`。
 
 ## 脚手架（建目录）
 
 ```
 mytool/
-├── CLAUDE.md              # 下方 vibe-apps 架构约束段
+├── AGENTS.md              # 交接入口：先读顺序/命令/代码地图/坑 + 下方架构约束段（不另建 CLAUDE.md）
 ├── docs/BLUEPRINT.md      # 当前功能全貌（living-blueprint）
 ├── docs/CHANGELOG.md      # 为什么变更，只追加（living-blueprint）
+├── docs/HANDOFF.md        # 进度快照，覆盖式；做完清空成一行（living-blueprint）
 ├── core/*.py              # 纯逻辑, 可 pytest, 对"谁"无状态
 ├── core/<轴>/ 或 adapters/<轴>/   # 可选：某条轴出现第二个成员时才建（纯规则进 core，碰 IO 进 adapters）
 ├── api/server.py          # FastAPI 薄适配
@@ -99,14 +100,14 @@ mytool/
 └── build.spec             # PyInstaller
 ```
 
-**CLAUDE.md 追加 vibe-apps 架构约束段**：
+**AGENTS.md 写入 vibe-apps 架构约束段**（AGENTS.md 其余几段的骨架见 `living-blueprint`「交接」）：
 ```markdown
 ## 架构约束（vibe-apps）
 五层：core(纯逻辑可 pytest, 对"谁"无状态) / api(FastAPI 薄适配) / web(HTML+fetch) / app.py(拼装) / pywebview(壳)。
 逻辑只放 core；api 只做 HTTP↔core 翻译；web 不含业务逻辑。
 前端默认原生 HTML/CSS/JS + CDN CSS，零构建无 npm；通信走 HTTP，不用 pywebview 专有桥。
 ```
-（这五层是 **Python 特定实现结构**，属本 CLAUDE.md。其中**换语言仍成立的原则**——逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥——另写进 `BLUEPRINT.md` 第 4 节「硬约束·可移植架构约束」，见 `living-blueprint`；蓝图不收具名五层。）
+（这五层是 **Python 特定实现结构**，属本 AGENTS.md。其中**换语言仍成立的原则**——逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥——另写进 `BLUEPRINT.md` 第 4 节「硬约束·可移植架构约束」，见 `living-blueprint`；蓝图不收具名五层。）
 
 ## 原生文件/目录选择（webview 里拿不到本地绝对路径）
 
@@ -125,5 +126,6 @@ mytool/
 - 为了小体积去上 Tauri/Rust（小体积是审美，已放弃）
 - 默认就上 React/Vue + node 构建
 - 没有 `docs/BLUEPRINT.md` / `docs/CHANGELOG.md`，或行为改了没跟着更新
+- 没有 `AGENTS.md`，或另建了项目级 CLAUDE.md
 - 同一类成员的名单写死在 core / api / web 多处；前端硬编码成员列表
 - 一个成员出错让整个接口报错

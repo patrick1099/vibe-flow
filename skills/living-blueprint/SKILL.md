@@ -1,9 +1,9 @@
 ---
 name: living-blueprint
-description: Use when creating or changing a personal script or app above micro size — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Create both when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
+description: Use when creating or changing a personal script or app above micro size, or when handing work to a new session / another AI — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Projects with their own folder also get AGENTS.md (auto-loaded entry: reading order, run/test/build commands, code map, pitfalls) and docs/HANDOFF.md (overwrite-style progress snapshot: in flight, half-done, next step, waiting on the user) so the next session or AI can pick up. Create BLUEPRINT and CHANGELOG when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、交接给新会话或别的 AI、HANDOFF 进度快照、AGENTS.md 入口、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
 ---
 
-# living-blueprint：工具的「活蓝图」＋「变更记录」
+# living-blueprint：活蓝图、变更记录与交接
 
 ## 总纲
 
@@ -13,9 +13,11 @@ description: Use when creating or changing a personal script or app above micro 
 
 两份分工：**蓝图说现在是什么，CHANGELOG 说怎么变成这样、中间丢掉了什么，git 管代码改了哪几行。** 三处不重复。
 
+要交接（新开会话接着做、换别的 AI 接手）还差两样，见下「交接」一节：**`AGENTS.md` 说怎么在这干活、先读什么，`HANDOFF.md` 说现在做到哪了。** 新会话只会自动加载 AGENTS.md，不会自己去找蓝图——入口不写阅读顺序，蓝图写得再好也没人读。
+
 维护一份 BLUEPRINT 谁都会，本 skill 的价值是那套**纪律**：只写可观察行为、覆盖式当前真相、显式授权重构丢弃旧实现、提炼非流水账——没纪律的文档会退化成夹带实现、自相矛盾的流水账。**与技术栈无关。**
 
-**地基判据（决定一行该不该进蓝图）**：蓝图是**黑盒验收规格**——两份不同语言/框架的实现，都符合蓝图才算「同一个工具」。判一行归属就问：**「换一种语言从头重写，这条它必须照做才算同一个工具吗？」** 必须照做 → 进蓝图（行为契约 / I/O 契约 / 硬约束）；只是当前实现**碰巧**这么组织 → 不进（归 CLAUDE.md/spec）。
+**地基判据（决定一行该不该进蓝图）**：蓝图是**黑盒验收规格**——两份不同语言/框架的实现，都符合蓝图才算「同一个工具」。判一行归属就问：**「换一种语言从头重写，这条它必须照做才算同一个工具吗？」** 必须照做 → 进蓝图（行为契约 / I/O 契约 / 硬约束）；只是当前实现**碰巧**这么组织 → 不进（归 AGENTS.md/spec）。
 
 ## 何时用 / 不用
 
@@ -23,6 +25,7 @@ description: Use when creating or changing a personal script or app above micro 
 - **不用**：微脚本（定义以 `vibe-scripts` 定级表为准：<100 行、单一功能、IO 形式单一）——头部契约行（结构 / 用途 / 用法 / 原始需求）就是它的功能描述。公司固件 / 产品代码按该仓库规范。
 - **放哪**：有自己目录的放 `docs/BLUEPRINT.md`、`docs/CHANGELOG.md`；和别的脚本共处一个目录的单文件脚本，用同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `<脚本名>.CHANGELOG.md`。
 - **按体量写**：标准级脚本的蓝图一屏以内，用不上的节写一行「无」。
+- **交接两件套按体量**：有自己目录的项目（工具包级脚本、所有应用）必带 `AGENTS.md`；`HANDOFF.md` 所有非微脚本都要，单文件脚本用旁挂 `<脚本名>.HANDOFF.md`，它的「怎么干活」由头部 `结构:` 那行代替 AGENTS.md。
 
 ## 与邻居划界（别串味）
 
@@ -32,7 +35,8 @@ description: Use when creating or changing a personal script or app above micro 
 | ADR | 不可变、带编号的架构决策「为什么」 | 蓝图不记历史；历史归同 skill 的 CHANGELOG，且只记用户感觉得到的变化，不是每个架构决策都记 |
 | git 提交历史 | 代码改了哪几行、何时改 | CHANGELOG 不重复 diff，只记行为层面的变化和原因；要找对应提交用 `git log` / `git blame` |
 | DESIGN.md（市面 UI 设计系统那种） | 配色/字体/组件的视觉规范 | 完全不同物种。这是**功能架构**——故我方文件用 `BLUEPRINT.md`、不用 `DESIGN.md`，躲开那片红海 |
-| CLAUDE.md | 给 AI 的工作规约（how to work here） | 蓝图是工具的功能现状（what it is），不是干活规矩 |
+| AGENTS.md | 给 AI 的工作规约（how to work here），会话启动自动加载 | 蓝图是工具的功能现状（what it is），不是干活规矩；AGENTS.md 是交接入口，负责把人引到蓝图 |
+| HANDOFF.md | 进行中的工作快照（where we are） | 蓝图只写已落地的行为，不写做了一半的；做完的东西从 HANDOFF 挪进蓝图 / CHANGELOG |
 
 ## BLUEPRINT.md（一份文件，五节）
 
@@ -62,7 +66,7 @@ description: Use when creating or changing a personal script or app above micro 
 ## 4. 硬约束 + 重构自由声明
 - 硬约束（重构必须守），分两类：
   - **运行约束**：如 离线运行 / 单文件 / 必须吃某格式 …
-  - **可移植架构约束**：换语言仍成立的原则，如 逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥。**只收跨语言仍成立的原则，不收具名代码分层**——`core/api/web/app.py` 那种语言特定结构归 CLAUDE.md/spec，不进蓝图。
+  - **可移植架构约束**：换语言仍成立的原则，如 逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥。**只收跨语言仍成立的原则，不收具名代码分层**——`core/api/web/app.py` 那种语言特定结构归 AGENTS.md/spec，不进蓝图。
   - **变化轴**：以后会增删的那几类东西（平台、格式、数据源……），每条写成一句验收：「加或去掉一个 <成员>，只动它自己的适配器和注册表；一个 <成员> 出错只影响它自己。」这是换语言仍成立的约束，要进蓝图（规则见 `vibe-flow` §5「低耦合底线」）。
 - 重构自由声明：**以上未列出的一切均为实现细节，重构可随意更改。**
 
@@ -108,10 +112,62 @@ description: Use when creating or changing a personal script or app above micro 
 
 旧条目一经写下就不改。后来发现当初的判断错了，**新写一条**说明推翻了哪条、为什么，不回头改旧条——被推翻的过程本身就是要留下的历史。
 
+## 交接：AGENTS.md（入口）＋ HANDOFF.md（进度）
+
+### AGENTS.md —— 放项目根，只写不常变的
+
+会话启动时自动加载的只有它，所以它是交接的**入口**。一屏以内，固定四段：
+
+```markdown
+# <项目名>
+
+## 先读
+1. docs/HANDOFF.md —— 现在做到哪了
+2. docs/BLUEPRINT.md —— 它是什么、行为契约
+3. docs/CHANGELOG.md —— 最近几条，和所有「没选的路」
+
+## 命令
+- 跑：<一条命令>
+- 测：<一条命令>
+- 打包：<一条命令；没有写「无」>
+
+## 代码地图（改哪类东西去哪）
+| 要改的 | 去哪 |
+|---|---|
+| <加一个 X> | <文件 / 注册表位置> |
+
+## 坑
+- <这个项目特有、不写就会踩的：编码、写文件的方式、环境变量、平台差异……>
+```
+
+- 分支 skill 自带的架构约束段（如 `vibe-apps` 那段）也写在这里。
+- 不写功能（归蓝图）、不写进度（归 HANDOFF）、不写历史（归 CHANGELOG）。
+- 项目级只建 AGENTS.md，不另建 CLAUDE.md，两个平台读同一份。
+
+### HANDOFF.md —— 进度快照，覆盖式
+
+放 `docs/HANDOFF.md`（单文件脚本用旁挂 `<脚本名>.HANDOFF.md`）。像蓝图一样整篇覆盖，只写当下，一屏以内：
+
+```markdown
+# 交接 · <日期>
+
+**在做**：<一句话：手上这件事是什么、为什么做>
+**已完成**：<只列指向 CHANGELOG 的条目标题，不重复内容>
+**做了一半**：<哪些、卡在哪、当前是什么状态（未提交？分支？临时文件在哪？）>
+**下一步**：<接手的人第一件该做的事，具体到能直接开工>
+**等用户拍板**：<没定的问题，和各选项；没有写「无」>
+**别碰**：<暂时不能动的东西和原因；没有写「无」>
+```
+
+- **什么时候写**：活没做完就要结束会话、要交给别的 AI、或用户说「先到这」时，当轮覆盖更新。
+- **做完就清空**：整件事收尾时，成果进蓝图和 CHANGELOG，HANDOFF 只留一行「当前无进行中的工作 · <日期>」。**不许让它变成第二份 CHANGELOG**——它只描述此刻，过去的事一概不留。
+- **写给零上下文的人**：接手的可能是另一个 AI，它没看过这次对话。路径写全、状态写实（「改了没提交」「测试红着」），别写「按刚才说的做」。
+
 ## 触发与维护（跟着改动走，不等用户开口）
 
-- **读**：新会话重新上手、或要重构时，先读 `BLUEPRINT.md`，再扫一眼 `CHANGELOG.md` 最近几条和所有「没选的路」。
+- **读**：新会话重新上手、或要重构时，按 AGENTS.md 第一段的顺序读：`HANDOFF.md` → `BLUEPRINT.md` → `CHANGELOG.md` 最近几条和所有「没选的路」。
 - **建**：工具出生（第一次交付）时两份一起建，CHANGELOG 第一条记为什么要做它。
+- **交接**：活没做完就要结束会话、或要交给别的 AI 时，同一轮覆盖 `HANDOFF.md`；整件事做完时清空成一行。命令、代码地图、坑变了就改 `AGENTS.md`。
 - **更新**：在**同一轮**里改，不等用户说「更新蓝图」——该改没改，`vibe-flow` §8 判这轮没完成。「必须带两份」指两份始终存在，不是每轮两份都要有改动：
   - 功能、I/O 契约或硬约束变了 → 蓝图覆盖对应小节，CHANGELOG 加一条；
   - 修了用户碰到过的 bug、改了用户嫌弃的体验，但蓝图本来就写着正确预期 → 只在 CHANGELOG 加一条；
@@ -138,12 +194,16 @@ description: Use when creating or changing a personal script or app above micro 
 ## 反模式
 
 - 微脚本以外的脚本 / 应用交付时没有 BLUEPRINT.md 和 CHANGELOG.md
+- 有自己目录的项目没有 AGENTS.md，或 AGENTS.md 里没写阅读顺序——新会话找不到蓝图
+- 活没做完就结束会话，HANDOFF.md 没更新；或事情做完了 HANDOFF 还留着旧进度
+- HANDOFF 越写越长、堆历史，变成第二份 CHANGELOG
+- 项目级另建 CLAUDE.md（统一只写 AGENTS.md）
 - 行为改了却等用户说「更新蓝图」才动——两份文档跟着改动走
 - CHANGELOG 只写「改了什么」不写「为什么」；「起因」用自己的转述代替用户原话；漏了「没选的路」
 - CHANGELOG 回头改写旧条目（判断错了就在顶部新写一条推翻它）
 - 把 git 能记的（纯重构、改格式、用户没感知的内部修复）塞进 CHANGELOG
 - 蓝图里写实现（怎么算/内部数据结构/用了啥库）——只该写可观察行为与 I/O 契约
-- 把语言特定的具名代码分层（如 core/api/web/app.py 五层）写进蓝图——那是绑语言的实现结构，归 CLAUDE.md/spec；蓝图只收换语言仍成立的架构原则
+- 把语言特定的具名代码分层（如 core/api/web/app.py 五层）写进蓝图——那是绑语言的实现结构，归 AGENTS.md/spec；蓝图只收换语言仍成立的架构原则
 - 漏写 I/O/数据契约（输入输出格式/文件/接口字段）→ 换语言重写对不齐，蓝图当不成地基
 - 只往里堆、不覆盖旧描述 → 正文自相矛盾、夹带过时功能
 - 漏掉「硬约束 / 自由声明」→ AI 重构时默认沿用旧实现

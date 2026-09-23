@@ -88,13 +88,14 @@ def _dir_is_project_root(d):
     # 只认 BLUEPRINT.md：CHANGELOG.md 太常见，公司仓也可能有，不能当 vibe 标记
     if (d / "docs" / "BLUEPRINT.md").exists():
         return True
-    claude_md = d / "CLAUDE.md"
-    if claude_md.is_file():
-        try:
-            if APPS_MARK in claude_md.read_text(encoding="utf-8", errors="replace"):
-                return True
-        except OSError:
-            pass
+    for name in ("AGENTS.md", "CLAUDE.md"):  # CLAUDE.md 兼容 0.9.0 之前建的应用
+        f = d / name
+        if f.is_file():
+            try:
+                if APPS_MARK in f.read_text(encoding="utf-8", errors="replace"):
+                    return True
+            except OSError:
+                pass
     pys = sorted(d.glob("*.py"))[:MAX_PY_SCAN]
     return any(header_marker(p) == "toolkit" for p in pys)
 

@@ -25,7 +25,7 @@ description: Use when writing or modifying any standalone Python script or small
 
 与 `vibe-flow` 档位的对应：**省档**落微 / 标准级，**好档**才考虑工具包级（判档在 `vibe-flow` §2，本 skill 不重判）。**低耦合底线不分级**（规矩在 `vibe-flow` §5「低耦合底线」）：微脚本也要逻辑和 IO 分开，只是做到「纯函数 ＋ `main()`」就够。
 
-**文档（硬性，见 `living-blueprint`）**：微脚本用头部契约行代替；标准级和工具包级必须带 `BLUEPRINT.md` ＋ `CHANGELOG.md`。独立目录的放 `docs/`，和别的脚本共处一个目录的放同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `<脚本名>.CHANGELOG.md`。
+**文档（硬性，见 `living-blueprint`）**：微脚本用头部契约行代替；标准级和工具包级必须带 `BLUEPRINT.md` ＋ `CHANGELOG.md`，跨会话没做完时还要 `HANDOFF.md`。独立目录的放 `docs/`，和别的脚本共处一个目录的放同名旁挂文件 `<脚本名>.BLUEPRINT.md` / `.CHANGELOG.md` / `.HANDOFF.md`。**工具包级另带项目根 `AGENTS.md`**，下面的「改动菜单」照项目实际填进它的代码地图；单文件脚本由头部 `结构:` 行代替 AGENTS.md。
 
 ## 四层五区模板（标准级）
 

@@ -75,9 +75,25 @@
 这一条有闸：插件带一个 Stop hook（`hooks/doc_gate.py`）。本轮用 Write / Edit 改了 vibe 项目的
 代码时，缺文档就拦下要求补齐；两份都没动就拦一次，让 AI 说清「行为变了没有、要不要记」，回应后
 放行——它只逼 AI 不许默不作声地跳过，判断仍归 AI，免得为过闸写假条目。认不认得出是 vibe 项目
-靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard` 或 `toolkit`、CLAUDE.md
-里的「架构约束（vibe-apps）」段；没有标记的仓库（比如公司代码）一律不管。盲区：经 Bash 里的
+靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard` 或 `toolkit`、AGENTS.md
+（或旧项目的 CLAUDE.md）里的「架构约束（vibe-apps）」段；没有标记的仓库（比如公司代码）一律不管。盲区：经 Bash 里的
 脚本落盘的改动、子代理的改动看不到。
+
+## 交接
+
+新开会话接着做、换别的 AI 接手，光有蓝图不够：蓝图只讲「是什么」，不讲「怎么在这干活」和
+「做到哪了」，而且新会话只自动加载 AGENTS.md，不会自己去找蓝图。所以再加两份：
+
+- `AGENTS.md`（有自己目录的项目，放根目录）：交接入口。第一段写阅读顺序（HANDOFF → BLUEPRINT →
+  CHANGELOG），然后是跑 / 测 / 打包命令、代码地图、项目特有的坑。项目级只建它，不另建 CLAUDE.md。
+- `docs/HANDOFF.md`：进度快照，覆盖式、一屏以内——在做什么、做了一半的卡在哪、下一步、等你拍板的、
+  别碰的。活没做完就结束会话时更新；整件事做完清空成一行，不让它变成第二份 CHANGELOG。
+
+四份各管一件：AGENTS 管怎么干活，HANDOFF 管做到哪，BLUEPRINT 管是什么，CHANGELOG 管为什么。
+
+Claude Code 默认只读 CLAUDE.md。想让它读项目的 AGENTS.md，要么启用内置的 agents-md 并把
+`instructionFiles` 设成 `claude-md-and-agents-md`，要么在项目里放一个只有一行 `@AGENTS.md` 的
+CLAUDE.md。Codex 原生读 AGENTS.md。
 
 ## 环节与档位对照
 
@@ -87,7 +103,7 @@
 | 明确需求 | 不澄清，或只问一个问题 | 挖目标 / 分清偏好与约束 / 翻译验收；有流程的画「它跑起来是什么样」图 |
 | 探方案 | 不探，直接做 | 多条路给 2–3 个方案 + 取舍；界面类出原型让你挑；多模块的画「我打算怎么搭」图 |
 | 实现 | 最小可用；守低耦合底线，不预建插口 | 按分支的完整纪律；三点设计里列变化轴 |
-| 留文档 | 微脚本：头部契约行；其余：`BLUEPRINT.md` ＋ `CHANGELOG.md` | 同左；需求仍演化时＋`NEEDS.md` |
+| 留文档 | 微脚本：头部契约行；其余：`BLUEPRINT.md` ＋ `CHANGELOG.md` ＋ `HANDOFF.md`，有目录的＋`AGENTS.md` | 同左；需求仍演化时＋`NEEDS.md` |
 | 验证 | 代表性输入跑通 ＋ 拔插自查 | 按交付形态实际使用 ＋ 针对性测试 ＋ 结构测试 |
 | 收工后 | 无 | 膨胀了剪枝 / 完工了扫同款 |
 
