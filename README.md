@@ -72,6 +72,13 @@
 改了你嫌弃的体验，就在同一轮里记进 CHANGELOG；功能本身变了再同步蓝图。不然不算完成。代码改了
 哪几行交给 git。
 
+这一条有闸：插件带一个 Stop hook（`hooks/doc_gate.py`）。本轮用 Write / Edit 改了 vibe 项目的
+代码时，缺文档就拦下要求补齐；两份都没动就拦一次，让 AI 说清「行为变了没有、要不要记」，回应后
+放行——它只逼 AI 不许默不作声地跳过，判断仍归 AI，免得为过闸写假条目。认不认得出是 vibe 项目
+靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard` 或 `toolkit`、CLAUDE.md
+里的「架构约束（vibe-apps）」段；没有标记的仓库（比如公司代码）一律不管。盲区：经 Bash 里的
+脚本落盘的改动、子代理的改动看不到。
+
 ## 环节与档位对照
 
 | 环节 | 省档（默认） | 好档 |
@@ -89,11 +96,12 @@
 
 ## 与重流程框架的关系
 
-不装 hook，skill 之间不自动串联。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
+skill 之间不自动串联，唯一的 hook 是上面那道文档闸。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
 代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual)。
 本工作流不依赖它，没装也能走完全程。
 
-插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`。
+插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`；文档闸是 Claude Code 的 Stop
+hook，Codex 上不生效，那边只靠 `vibe-flow` §8 的文字规矩。
 
 ## 沿革
 

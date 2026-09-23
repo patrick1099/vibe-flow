@@ -1,0 +1,122 @@
+"""hooks/doc_gate.py 的端到端测试：造假项目 + 假对话记录，跑真实脚本看输出。
+
+运行：py -3 -m unittest discover -s tests
+"""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+GATE = Path(__file__).resolve().parents[1] / "hooks" / "doc_gate.py"
+
+
+def human(text="改一下"):
+    return {"type": "user", "origin": {"kind": "human"}, "message": {"role": "user", "content": text}}
+
+
+def edit(path, tool="Edit"):
+    return {"type": "assistant", "message": {"role": "assistant", "content": [
+        {"type": "tool_use", "name": tool, "input": {"file_path": str(path)}}]}}
+
+
+def tool_result():
+    return {"type": "user", "message": {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": "x", "content": "ok"}]}}
+
+
+class DocGateTest(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def write(self, rel, text=""):
+        p = self.root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+        return p
+
+    def run_gate(self, rows, active=False):
+        tr = self.root / "transcript.jsonl"
+        tr.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows), encoding="utf-8")
+        env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))
+        proc = subprocess.run(
+            [sys.executable, str(GATE)],
+            input=json.dumps({"transcript_path": str(tr), "stop_hook_active": active}),
+            capture_output=True, text=True, encoding="utf-8", env=env)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        return json.loads(proc.stdout) if proc.stdout.strip() else None
+
+    def toolkit(self, with_docs):
+        self.write("tk/cli.py", "# 结构: vibe-scripts/toolkit\n")
+        core = self.write("tk/core.py", "def f(): pass\n")
+        if with_docs:
+            self.write("tk/docs/BLUEPRINT.md", "# bp")
+            self.write("tk/docs/CHANGELOG.md", "# cl")
+        return core
+
+    def test_toolkit_missing_docs_blocks(self):
+        core = self.toolkit(with_docs=False)
+        out = self.run_gate([human(), edit(core), tool_result()])
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("BLUEPRINT.md", out["reason"])
+        self.assertIn("CHANGELOG.md", out["reason"])
+
+    def test_code_changed_docs_untouched_blocks(self):
+        core = self.toolkit(with_docs=True)
+        out = self.run_gate([human(), edit(core)])
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("都没动", out["reason"])
+
+    def test_changelog_touched_passes(self):
+        core = self.toolkit(with_docs=True)
+        cl = self.root / "tk/docs/CHANGELOG.md"
+        self.assertIsNone(self.run_gate([human(), edit(core), edit(cl)]))
+
+    def test_stop_hook_active_passes(self):
+        core = self.toolkit(with_docs=False)
+        self.assertIsNone(self.run_gate([human(), edit(core)], active=True))
+
+    def test_edits_before_last_prompt_ignored(self):
+        core = self.toolkit(with_docs=True)
+        self.assertIsNone(self.run_gate([human("上一轮"), edit(core), human("这一轮只聊天")]))
+
+    def test_unmarked_code_ignored(self):
+        c = self.write("fw/src/main.c", "int main(void){return 0;}\n")
+        self.write("fw/docs/CHANGELOG.md", "# 公司仓自己的 changelog")
+        self.assertIsNone(self.run_gate([human(), edit(c)]))
+
+    def test_micro_script_ignored(self):
+        s = self.write("scripts/tiny.py", "# 结构: vibe-scripts/micro\n")
+        self.assertIsNone(self.run_gate([human(), edit(s, "Write")]))
+
+    def test_standard_script_uses_sibling_docs(self):
+        s = self.write("scripts/tool.py", "# 结构: vibe-scripts/standard\n")
+        out = self.run_gate([human(), edit(s)])
+        self.assertIn("tool.BLUEPRINT.md", out["reason"])
+        self.write("scripts/tool.BLUEPRINT.md")
+        self.write("scripts/tool.CHANGELOG.md")
+        cl = self.root / "scripts/tool.CHANGELOG.md"
+        self.assertIsNone(self.run_gate([human(), edit(s), edit(cl)]))
+
+    def test_vibe_apps_marker_detected(self):
+        self.write("app/CLAUDE.md", "## 架构约束（vibe-apps）\n五层")
+        api = self.write("app/api/server.py", "")
+        out = self.run_gate([human(), edit(api)])
+        self.assertEqual(out["decision"], "block")
+
+    def test_bad_transcript_path_passes(self):
+        env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))
+        proc = subprocess.run([sys.executable, str(GATE)],
+                              input=json.dumps({"transcript_path": str(self.root / "nope.jsonl")}),
+                              capture_output=True, text=True, encoding="utf-8", env=env)
+        self.assertEqual((proc.returncode, proc.stdout), (0, ""))
+
+
+if __name__ == "__main__":
+    unittest.main()

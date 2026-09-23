@@ -228,7 +228,7 @@ ai-room ask --to opencode --permission workspace-write --cwd <项目根> --relat
 - 修了用户碰到过的 bug、改了用户嫌弃的体验，但蓝图本来就写着正确的预期：只在 `CHANGELOG.md` 加一条。
 - 纯内部重构、用户从没感知过的问题：交给 git，两份都不动。
 
-该改的没在同一轮里改，就不算完成。
+该改的没在同一轮里改，就不算完成。Claude Code 上有 Stop hook（本插件 `hooks/doc_gate.py`）兜底：本轮改了 vibe 项目代码而文档缺失或没动，会拦一次要你判断；被拦时照上面三种情形如实判，纯内部改动就说一句为什么不用记，别为过闸写假条目。
 
 完成时简洁报告：
 
