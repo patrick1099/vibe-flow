@@ -105,24 +105,36 @@ def _dir_is_project_root(d):
     return any(header_marker(p) == "toolkit" for p in pys)
 
 
+def _docs_in(d):
+    return d / "docs" / "BLUEPRINT.md", d / "docs" / "CHANGELOG.md"
+
+
 def find_project(file_path, stop_at=None):
-    """返回 (项目根, BLUEPRINT 路径, CHANGELOG 路径)；不是 vibe 项目返回 None。"""
+    """返回 (项目根, BLUEPRINT 路径, CHANGELOG 路径, 布局)；不是 vibe 项目返回 None。
+
+    布局：project = 项目根 docs/；sibling = 脚本旁挂文件；unknown = 标准级脚本还没文档、
+    也看不出归属——不猜，让提醒把两个位置都列出来。
+    """
     p = Path(file_path)
+    marker = header_marker(p)
+    if marker == "standard":
+        # 已有布局优先：旁挂文档在就沿用；目录有 AGENTS.md 或 docs/ 文档就是独占目录
+        sib_bp, sib_cl = p.with_name(p.stem + ".BLUEPRINT.md"), p.with_name(p.stem + ".CHANGELOG.md")
+        if sib_bp.exists() or sib_cl.exists():
+            return p.parent, sib_bp, sib_cl, "sibling"
+        doc_bp, doc_cl = _docs_in(p.parent)
+        if doc_bp.exists() or doc_cl.exists() or (p.parent / "AGENTS.md").is_file():
+            return p.parent, doc_bp, doc_cl, "project"
     home = _norm(stop_at or Path.home())
     d = p.parent
     while True:
         if d.is_dir() and _dir_is_project_root(d):
-            return d, d / "docs" / "BLUEPRINT.md", d / "docs" / "CHANGELOG.md"
+            return (d, *_docs_in(d), "project")
         if (d / ".git").exists() or _norm(d) == home or d.parent == d:
             break
         d = d.parent
-    if header_marker(p) == "standard":
-        # 同目录没有别的 .py = 独占目录，文档进 docs/；否则和别的脚本挤在一起，用旁挂文件
-        if not any(q.name != p.name for q in p.parent.glob("*.py")):
-            return p.parent, p.parent / "docs" / "BLUEPRINT.md", p.parent / "docs" / "CHANGELOG.md"
-        return (p.parent,
-                p.with_name(p.stem + ".BLUEPRINT.md"),
-                p.with_name(p.stem + ".CHANGELOG.md"))
+    if marker == "standard":
+        return p.parent, p.with_name(p.stem + ".BLUEPRINT.md"), p.with_name(p.stem + ".CHANGELOG.md"), "unknown"
     return None
 
 
@@ -137,9 +149,9 @@ def evaluate(paths, stop_at=None):
         found = find_project(raw, stop_at)
         if not found:
             continue
-        root, bp, cl = found
+        root, bp, cl, layout = found
         key = (_norm(bp), _norm(cl))
-        projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "code": []})
+        projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "layout": layout, "code": []})
         projects[key]["code"].append(raw)
 
     issues = []
@@ -157,7 +169,13 @@ def render_reason(issues):
     lines = ["[vibe-flow 文档闸] 本轮改了下面这些 vibe 项目的代码："]
     for kind, proj, missing in issues:
         where = proj["root"]
-        if kind == "missing":
+        if kind == "missing" and proj["layout"] == "unknown":
+            script = Path(proj["code"][0])
+            lines.append(f"- {script}：还没有 BLUEPRINT / CHANGELOG，位置看不出来，按这个脚本的实际归属选（vibe-flow §6）："
+                         f"独占这个目录 → 建 {where / 'AGENTS.md'} 和 {where / 'docs'} 下的两份；"
+                         f"和别的脚本共处 → 建旁挂 {script.stem}.BLUEPRINT.md / {script.stem}.CHANGELOG.md。"
+                         "出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
+        elif kind == "missing":
             lines.append(f"- {where}：缺 {' / '.join(missing)}。按 living-blueprint 补齐"
                          f"（应在 {proj['bp'].parent}），出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
         else:

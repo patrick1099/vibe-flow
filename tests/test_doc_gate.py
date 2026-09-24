@@ -116,12 +116,37 @@ class DocGateTest(unittest.TestCase):
         s = self.write("scripts/tiny.py", "# 结构: vibe-scripts/micro\n")
         self.assertIsNone(self.run_gate([human(), edit(s, "Write")]))
 
-    def test_standard_script_alone_in_dir_uses_docs_folder(self):
+    def test_standard_script_without_any_layout_lists_both_places(self):
         s = self.write("solo/tool.py", "# 结构: vibe-scripts/standard\n")
         out = self.run_gate([human(), edit(s)])
-        self.assertIn("solo", out["reason"])
-        self.assertNotIn("tool.BLUEPRINT.md", out["reason"])
+        self.assertIn("位置看不出来", out["reason"])
+        self.assertIn("tool.BLUEPRINT.md", out["reason"])
         self.assertIn("docs", out["reason"])
+
+    def test_existing_sibling_docs_kept_when_neighbours_move(self):
+        s = self.write("shared/tool.py", "# 结构: vibe-scripts/standard\n")
+        self.write("shared/tool.BLUEPRINT.md")
+        self.write("shared/tool.CHANGELOG.md")
+        out = self.run_gate([human(), edit(s)])
+        self.assertIn("都没动", out["reason"])
+        self.assertNotIn("缺", out["reason"])
+
+    def test_agents_md_marks_own_dir_even_with_test_file(self):
+        s = self.write("proj/tool.py", "# 结构: vibe-scripts/standard\n")
+        self.write("proj/test_tool.py", "")
+        self.write("proj/AGENTS.md", "# proj")
+        out = self.run_gate([human(), edit(s)])
+        self.assertIn("docs", out["reason"])
+        self.assertNotIn("tool.BLUEPRINT.md", out["reason"])
+        self.write("proj/docs/BLUEPRINT.md")
+        cl = self.write("proj/docs/CHANGELOG.md")
+        self.assertIsNone(self.run_gate([human(), edit(s), edit(cl)]))
+
+    def test_non_python_neighbour_does_not_decide_layout(self):
+        s = self.write("mixed/tool.py", "# 结构: vibe-scripts/standard\n")
+        self.write("mixed/other.ps1", "")
+        out = self.run_gate([human(), edit(s)])
+        self.assertIn("位置看不出来", out["reason"])
 
     def test_standard_script_uses_sibling_docs(self):
         self.write("scripts/other.py", "print(1)\n")
