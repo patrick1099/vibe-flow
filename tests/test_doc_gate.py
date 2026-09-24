@@ -116,7 +116,15 @@ class DocGateTest(unittest.TestCase):
         s = self.write("scripts/tiny.py", "# 结构: vibe-scripts/micro\n")
         self.assertIsNone(self.run_gate([human(), edit(s, "Write")]))
 
+    def test_standard_script_alone_in_dir_uses_docs_folder(self):
+        s = self.write("solo/tool.py", "# 结构: vibe-scripts/standard\n")
+        out = self.run_gate([human(), edit(s)])
+        self.assertIn("solo", out["reason"])
+        self.assertNotIn("tool.BLUEPRINT.md", out["reason"])
+        self.assertIn("docs", out["reason"])
+
     def test_standard_script_uses_sibling_docs(self):
+        self.write("scripts/other.py", "print(1)\n")
         s = self.write("scripts/tool.py", "# 结构: vibe-scripts/standard\n")
         out = self.run_gate([human(), edit(s)])
         self.assertIn("tool.BLUEPRINT.md", out["reason"])

@@ -117,6 +117,9 @@ def find_project(file_path, stop_at=None):
             break
         d = d.parent
     if header_marker(p) == "standard":
+        # 同目录没有别的 .py = 独占目录，文档进 docs/；否则和别的脚本挤在一起，用旁挂文件
+        if not any(q.name != p.name for q in p.parent.glob("*.py")):
+            return p.parent, p.parent / "docs" / "BLUEPRINT.md", p.parent / "docs" / "CHANGELOG.md"
         return (p.parent,
                 p.with_name(p.stem + ".BLUEPRINT.md"),
                 p.with_name(p.stem + ".CHANGELOG.md"))
