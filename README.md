@@ -77,13 +77,29 @@
 `docs/` 并带 `AGENTS.md`，和别的脚本共处的用同名旁挂文件。什么时候改哪份见 `living-blueprint`，
 哪些项目要哪些文件以入口 `vibe-flow` §6 为准。代码改了哪几行交给 git。
 
-这一条有闸：插件带一个 Stop hook（`hooks/doc_gate.py`）。本轮用 Write / Edit 改了 vibe 项目的
-代码时，缺文档就拦下要求补齐；两份都没动就拦一次，让 AI 说清「行为变了没有、要不要记」，回应后
-放行——它只逼 AI 不许默不作声地跳过，判断仍归 AI，免得为过闸写假条目。认不认得出是 vibe 项目
-靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard` 或 `toolkit`、AGENTS.md
-（或旧项目的 CLAUDE.md）里的「架构约束（vibe-apps）」段；没有标记的仓库（比如公司代码）一律不管。
-文档该放哪先看已有布局（旁挂文件、`docs/`、`AGENTS.md`），看不出来就把两个位置都列出来，不猜。
-盲区：经 Bash 里的脚本落盘的改动、子代理的改动看不到。
+这一条有闸，Claude Code 和 Codex 都能用。Claude Code 的 Stop hook（`hooks/doc_gate.py`）从
+本轮记录里找成功的 Write / Edit；Codex 入口（`hooks/doc_gate_codex.py`）用 PostToolUse 收集本轮
+成功的 `apply_patch` 文件，在 Stop 时检查。两边共用 `doc_gate.py` 的项目识别、文档位置判定和提醒，
+缺文档或两份都没动时只拦一次，让 AI 说清「行为变了没有、要不要记」，回应后放行。判断仍归 AI，
+免得为过闸写假条目。
+
+认不认得出是 vibe 项目靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard`
+或 `toolkit`、AGENTS.md（或旧项目的 CLAUDE.md）里的「架构约束（vibe-apps）」段；没有标记的仓库
+（比如公司代码）一律不管。文档该放哪先看已有布局（旁挂文件、`docs/`、`AGENTS.md`），看不出来就
+把两个位置都列出来，不猜。
+
+Codex 的配置随插件分发：`.codex-plugin/plugin.json` 指向 `hooks/codex.json`，不用改用户的全局
+`config.toml`。新装或钩子定义变化后，须先在 Codex 中审阅并信任钩子（CLI 用 `/hooks`）；未信任、
+hooks 功能被关闭或管理员禁用插件钩子时不会执行。当前在桌面引擎 `0.155.0-alpha.16.3` 验证。
+机制和分发规则见 [Codex Hooks](https://learn.chatgpt.com/docs/hooks) 与
+[插件钩子文档](https://developers.openai.com/plugins/build/plugins#bundled-mcp-servers-and-lifecycle-hooks)。
+
+Codex 只在插件数据目录暂存文件路径，按会话、回合和工具调用隔离，Stop 或 Interrupt 后清理本轮记录；
+不读取会话日志，也不把用户原有的 git 改动算成本轮修改。边界：两边都不识别经 shell / Python 脚本
+落盘的改动；Codex 也不收集其他 MCP 写文件工具。子代理的改动不汇总到主会话，本闸只在主会话 Stop
+检查。闸内部出错时提示错误并放行。
+
+回归测试：`py -3 -m unittest discover -s tests -v`。
 
 ## 交接
 
@@ -123,12 +139,13 @@ CLAUDE.md。Codex 原生读 AGENTS.md。
 
 ## 与重流程框架的关系
 
-skill 之间不自动串联，唯一的 hook 是上面那道文档闸。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
+skill 之间不自动串联，自动钩子只用于上面那道文档闸。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
 代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual)。
 本工作流不依赖它，没装也能走完全程。
 
-插件同时注册给 Codex，但只有入口 skill 带 `agents/openai.yaml`；文档闸是 Claude Code 的 Stop
-hook，Codex 上不生效，那边只靠 `vibe-flow` §8 的文字规矩。
+插件同时支持 Claude Code 和 Codex，只有入口 skill 带 `agents/openai.yaml`。两端的文档闸分别接入
+各自的 hook 事件，共用一份判定逻辑；Codex 需使用支持插件钩子的版本并完成钩子信任，`vibe-flow` §8
+说明被拦后如何判断。
 
 ## 沿革
 

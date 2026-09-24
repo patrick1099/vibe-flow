@@ -1,0 +1,42 @@
+{
+  "description": "Record successful patches and ask once per turn whether vibe documentation needs updating.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
