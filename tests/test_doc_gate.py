@@ -179,6 +179,25 @@ class DocGateTest(unittest.TestCase):
                               capture_output=True, text=True, encoding="utf-8", env=env)
         self.assertEqual((proc.returncode, proc.stdout), (0, ""))
 
+    def _raw_gate(self, payload):
+        env = {k: v for k, v in os.environ.items() if k not in ("PYTHONIOENCODING", "PYTHONUTF8")}
+        env["VIBE_FLOW_DOC_GATE_HOME"] = str(self.root)
+        return subprocess.run([sys.executable, str(GATE)], input=payload, capture_output=True, env=env)
+
+    def test_raw_utf8_stdin_with_chinese_and_escapes(self):
+        # Claude Code 发的是未转义的 UTF-8；Windows 管道默认按 GBK 解码会吃掉 \" 前的反斜杠
+        payload = json.dumps({"stop_hook_active": False,
+                              "cwd": "C:\\MyProjects\\Kunlun-新架构-debug",
+                              "last_assistant_message": "改动见 `a\\b`，结论：\"已放行\"。"},
+                             ensure_ascii=False).encode("utf-8")
+        proc = self._raw_gate(payload)
+        self.assertEqual((proc.returncode, proc.stderr.decode("utf-8", "replace")), (0, ""))
+
+    def test_internal_error_message_is_utf8(self):
+        proc = self._raw_gate(b"{")
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("内部错误", proc.stderr.decode("utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

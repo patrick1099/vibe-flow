@@ -210,7 +210,9 @@ def main():
 
 if __name__ == "__main__":
     try:
+        sys.stdin.reconfigure(encoding="utf-8")
         sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
         sys.exit(main())
     except Exception as e:
         sys.stderr.write(f"vibe-flow doc_gate 内部错误（已放行）：{e!r}\n")
