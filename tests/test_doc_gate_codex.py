@@ -236,6 +236,42 @@ class CodexDocGateTest(unittest.TestCase):
         env.pop("PLUGIN_DATA")
         self.assertIsNotNone(self.run_gate(self.event("Stop"), env=env))
 
+    def captured_patch(self):
+        fixture = ROOT / "tests/fixtures/codex-0.155.0-alpha.16.3-post-tool-use.json"
+        raw = fixture.read_bytes()
+        data = json.loads(raw)
+        original = data["cwd"]
+        target = self.root / "captured"
+        self.write("captured/docs/BLUEPRINT.md", "# bp")
+        self.write("captured/docs/CHANGELOG.md", "# cl")
+        self.write("captured/src/probe.json", '{"value": 1}\n')
+        for container, key in ((data, "tool_response"), (data["tool_input"], "command")):
+            container[key] = container[key].replace(original.replace("\\", "/"), target.as_posix())
+            container[key] = container[key].replace(original, str(target))
+        data["cwd"] = str(target)
+        return data
+
+    def test_real_engine_receipt_triggers_document_gate(self):
+        data = self.captured_patch()
+        self.assertIsNone(self.run_gate(data))
+        out = self.stop(session_id=data["session_id"], turn_id=data["turn_id"])
+        self.assertIsNotNone(out, "The captured successful patch must trigger the document gate")
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("都没动", out["reason"])
+
+    def test_wrapped_nonzero_exit_does_not_count(self):
+        data = self.captured_patch()
+        data["tool_response"] = data["tool_response"].replace("Exit code: 0", "Exit code: 1", 1)
+        self.run_gate(data)
+        self.assertIsNone(self.stop(session_id=data["session_id"], turn_id=data["turn_id"]))
+
+    def test_wrapped_receipt_with_changed_document_passes(self):
+        data = self.captured_patch()
+        self.run_gate(data)
+        self.patch(self.root / "captured/docs/CHANGELOG.md",
+                   session_id=data["session_id"], turn_id=data["turn_id"])
+        self.assertIsNone(self.stop(session_id=data["session_id"], turn_id=data["turn_id"]))
+
     def test_plugin_uses_separate_portable_hook_file(self):
         manifest = json.loads((ROOT / ".codex-plugin/plugin.json").read_text(encoding="utf-8"))
         other = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))

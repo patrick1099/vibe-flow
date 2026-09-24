@@ -90,7 +90,9 @@
 
 Codex 的配置随插件分发：`.codex-plugin/plugin.json` 指向 `hooks/codex.json`，不用改用户的全局
 `config.toml`。新装或钩子定义变化后，须先在 Codex 中审阅并信任钩子（CLI 用 `/hooks`）；未信任、
-hooks 功能被关闭或管理员禁用插件钩子时不会执行。当前在桌面引擎 `0.155.0-alpha.16.3` 验证。
+hooks 功能被关闭或管理员禁用插件钩子时不会执行。当前在桌面引擎 `0.155.0-alpha.16.3` 实测真实
+`apply_patch` 回执。Windows 在 workspace-write + elevated 配置下，插件钩子以宿主用户运行，
+`py -3` 可正常启动；工具沙箱里找不到用户 Python 的限制不影响此入口。
 机制和分发规则见 [Codex Hooks](https://learn.chatgpt.com/docs/hooks) 与
 [插件钩子文档](https://developers.openai.com/plugins/build/plugins#bundled-mcp-servers-and-lifecycle-hooks)。
 
@@ -98,8 +100,12 @@ Codex 只在插件数据目录暂存文件路径，按会话、回合和工具�
 不读取会话日志，也不把用户原有的 git 改动算成本轮修改。边界：两边都不识别经 shell / Python 脚本
 落盘的改动；Codex 也不收集其他 MCP 写文件工具。子代理的改动不汇总到主会话，本闸只在主会话 Stop
 检查。闸内部出错时提示错误并放行。
+**写文件不经 `apply_patch` 的环境，这道 Codex 闸不会触发**，例如装了透明加密软件、约定用 Python
+写文件的机器；文档仍需按规则主动判断。
 
 回归测试：`py -3 -m unittest discover -s tests -v`。
+[真实回执及采集记录](tests/fixtures/)来自隔离环境中的原生补丁工具，包含 `Exit code / Wall time / Output`
+前缀；解析器在整段输出中定位成功行，并排除非零退出码。
 
 ## 交接
 

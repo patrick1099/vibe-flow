@@ -1,0 +1,43 @@
+{
+  "engine_version": "codex-cli 0.155.0-alpha.16.3",
+  "capture_method": "Temporary plugin command hook writes sys.stdin.buffer.read() with Path.write_bytes. After capture, path prefixes and account names were replaced with placeholders; all other sample bytes are unchanged.",
+  "tool_execution": "native apply_patch; local response server only supplies the tool call",
+  "sandbox_mode": "workspace-write",
+  "windows_sandbox": "elevated",
+  "hook_command": "py -3 \"${PLUGIN_ROOT}/hooks/probe_capture.py\"",
+  "hook_user": "bob",
+  "tool_sandbox_user": "CodexSandboxOffline",
+  "python_version": "3.14.6",
+  "fixture_verified_in_hook_and_after_turn": true,
+  "fixture_content": "{\"value\": 1}\n",
+  "before_fix": {
+    "successful_paths": [],
+    "reminder_seen": false
+  },
+  "effective_sandbox_policy": {
+    "type": "workspace-write",
+    "network_access": false,
+    "exclude_tmpdir_env_var": false,
+    "exclude_slash_tmp": false
+  },
+  "after_fix": {
+    "real_apply_patch_wrote_expected_content": true,
+    "post_tool_use_observed": true,
+    "reminder_seen_by_engine": true,
+    "stop_hook_active_sequence": [
+      false,
+      true
+    ],
+    "model_requests": 3,
+    "turn_records_cleaned": true
+  },
+  "isolation": "Fresh CODEX_HOME and project inside the authorized workspace; user config unchanged. Hook trust bypass applied only to vetted test hooks, while effective tool sandbox remained workspace-write.",
+  "permission_evidence": "sandbox_policy is copied from the engine turn_context; hook permission_mode is not used to infer the tool sandbox.",
+  "reproduction": [
+    "Install the source plugin into a fresh CODEX_HOME.",
+    "Set sandbox_mode=workspace-write and [windows] sandbox=elevated.",
+    "Append a py -3 debug handler to the temporary installed plugin PostToolUse event; save stdin bytes before parsing.",
+    "A loopback response server emits an apply_patch tool call; the real engine executes it and creates a JSON fixture.",
+    "Verify content inside the hook and after turn completion; observe the Stop continuation before and after the fix."
+  ]
+}

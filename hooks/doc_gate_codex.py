@@ -6,6 +6,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import uuid
@@ -34,9 +35,15 @@ def successful_paths(data):
             return []
         response = response.get("stdout", response.get("output"))
     lines = response.splitlines() if isinstance(response, str) else []
-    if not lines or lines[0] != SUCCESS:
+    try:
+        success_at = lines.index(SUCCESS)
+    except ValueError:
         return []
-    names = [line[2:] for line in lines[1:]
+    for line in lines[:success_at]:
+        status = re.fullmatch(r"Exit code:\s*(-?\d+)", line)
+        if status and int(status.group(1)) != 0:
+            return []
+    names = [line[2:] for line in lines[success_at + 1:]
              if len(line) > 2 and line[:2] in {"A ", "M ", "D "}]
     if not names:
         return []
