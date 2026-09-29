@@ -177,5 +177,14 @@ v0.4.0 之前 `clarify-needs` 标着 `disable-model-invocation: true`，是硬�
 「按小事做」就降回来，于是把拿不准的那部分挪到好档。没选的路：让用户按项目手动调 superpowers-manual 的
 重流程——判断责任又回到了判断不了的人身上；「重」也不因拿不准而上，只认明确的不可逆。
 
+0.14.0（2026-09-29）vibe-apps 松了三处。一是删掉 Rust/Tauri 远期路线：用户说"我大部分软件都是自用，却因为
+'未来可能换 tauri'降低了目前的使用体验，不划算"。二是默认样式从 Pico.css 换成 Tailwind 浏览器版 + DaisyUI：
+同一界面两版对比，Pico 那版朴素到枯燥，而 AI 最熟的是 Tailwind；仍然零构建，库文件放进 `web/vendor/`
+本地引用，断网也有样式。三是吸纳 Google 的 DESIGN.md 当界面规范。吸纳外部方法定了一条规矩：上游原文
+放进 skill 的 `vendor/`，由 `scripts/sync_upstream.py` 拉取，skill 正文只指向文件、不复述内容——上游
+更新时跑一次脚本即可，不用重读、重写 skill。没选的路：每次用都现拉（用户要的是"能在更新时拉取"，
+不是每次联网）；把规范摘要写进 skill（上游一改摘要就过时）；同步脚本做成插件级（目前只有一个上游，
+等第二个出现再提）。
+
 合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`，更早的设计记录见
 `docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。

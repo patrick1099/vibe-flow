@@ -1,0 +1,13 @@
+{
+  "design-md": {
+    "repo": "google-labs-code/design.md",
+    "ref": "main",
+    "commit": "9bf8eae67128b6cc55ad9bf86665767deb4c11cd",
+    "synced_at": "2026-09-29",
+    "files": {
+      "design-md/spec.md": "8f297a7bd38cf08bde06c96f5eea2ebfcd9930a8bc1dfe964f8e8dec894e691a",
+      "design-md/LICENSE": "1bdd03995456d191707e379eb06ceac20cf30d520bec90c97c2b6d220906c66e",
+      "design-md/cli-package.json": "9cd26dae8342295b88dad6df3432f732f38c215f401f49af61068211cf2015b9"
+    }
+  }
+}

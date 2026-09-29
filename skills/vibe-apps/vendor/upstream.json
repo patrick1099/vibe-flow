@@ -1,0 +1,11 @@
+{
+  "design-md": {
+    "repo": "google-labs-code/design.md",
+    "ref": "main",
+    "files": {
+      "docs/spec.md": "design-md/spec.md",
+      "LICENSE": "design-md/LICENSE",
+      "packages/cli/package.json": "design-md/cli-package.json"
+    }
+  }
+}

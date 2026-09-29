@@ -1,8 +1,13 @@
 # vibe-apps 栈权衡 & 改进候选（决策笔记）
 
-> 状态：**决策输入，未定案，未改任何 skill 文件。** 记录 2026-07-07 一场从
-> "vibe-scripts 和 vibe-apps 是否功能重合" 展开的讨论 + 实测数据，供后续决定
-> 要不要动 `skills/vibe-apps/SKILL.md`。
+> **当前决定（2026-09-29，vibe-flow 0.14.0）**：
+> - **放弃 Rust/Tauri 路线**。自用为主，不为远期迁移牺牲当前体验；下文 §5 结论句、§6#1/#6、§7 首条、§8 全节关于 Tauri/PyO3 的内容**均为历史，不再指导 skill**。
+> - **前端默认 Tailwind 浏览器版 + DaisyUI**（取代 Pico.css），库文件本地化，仍零构建无 npm；§6#5「React 档张力」据此定为不留 React 档。
+> - **界面规范用 DESIGN.md**，上游原文由 `skills/vibe-apps/scripts/sync_upstream.py` 拉取。
+> - 现行规则以 `skills/vibe-apps/SKILL.md` 为准，本笔记只留历史与实测数据。
+>
+> 原状态（2026-07-07）：决策输入，未定案。记录一场从
+> "vibe-scripts 和 vibe-apps 是否功能重合" 展开的讨论 + 实测数据。
 
 ## 0. 缘起与第一个结论：两个 skill 不重合
 
@@ -80,7 +85,9 @@ uvicorn 0.50 / pywebview 6.2 / pyinstaller 6.21 / UPX 4.2.4。
 
 ⟹ **好看优先 → 前端锁 HTML → Qt/Slint 出局 → 只在 pywebview(Python，易调/可变网站/~2s) 与 Tauri(Rust，小快/难调) 间选后端语言。**
 
-## 6. 给 vibe-apps 的改进候选（均未采纳）
+> 〔历史〕2026-09-29 已定 pywebview，Tauri 不再考虑。
+
+## 6. 给 vibe-apps 的改进候选（2026-07-07 时均未采纳；#5 已于 2026-09-29 定案，#1/#6 随 Tauri 路线作废）
 
 1. **"反 Rust/Tauri" 换硬理由**：现文案挂在"换语言=core 要整个重写=永远贵"这根柱子上；而
    - living-blueprint 记录活蓝图（What）后，"重写成本"被削弱（不再逆向猜代码）；
@@ -89,16 +96,18 @@ uvicorn 0.50 / pywebview 6.2 / pyinstaller 6.21 / UPX 4.2.4。
 2. **补 onefile vs onedir 指引**：小包默认 **onefile**（单文件方便、体积≈、+0.5s）；仅当包变大(重库)才 onedir 避解压税。
 3. **补"启动敏感 → 轻依赖档"提示**：Python 启动地板 ~1.9s 源自 FastAPI+pydantic import；真在乎启动可考虑裸 Starlette / stdlib（**未实测，预测 ~1s**，见 §7）。
 4. **HTML 前端理由升级**：把"好看 + AI 设计生态(v0/Artifacts/shadcn/Tailwind)"写成选 HTML 的现代硬理由（比现有的"零构建+可调"更有说服力、且随 AI 生态增值）。
-5. **React 档张力（待定）**：最强 AI 设计工具是 React+Tailwind+npm，与 vibe-apps"零构建无 npm"冲突；纯 HTML 的 AI 生成仍好用(Tailwind 可走 CDN)，但够不到 shadcn 那批组件级工具。是否给 vibe-apps 留"React 档"待定。
+5. **React 档张力（待定）**：最强 AI 设计工具是 React+Tailwind+npm，与 vibe-apps"零构建无 npm"冲突；纯 HTML 的 AI 生成仍好用(Tailwind 可走 CDN)，但够不到 shadcn 那批组件级工具。是否给 vibe-apps 留"React 档"待定。〔2026-09-29 已定：不留 React 档，默认改为 Tailwind 浏览器版 + DaisyUI，本地化引用。〕
 6. **明确邻栈边界**：Qt/Slint/Tauri **不是 vibe-apps 变体**，是"离开 Python 时"的邻栈。可在 skill 加一句"何时该离开 vibe-apps"的边界说明 + 指向本表。
 
 ## 7. 未决 & 未做
 
-- **pywebview vs Tauri**：后端 Python(好调/可变网站) vs Rust(小快/难调)——按具体工具"最不能丢哪一角"定，未定。
+- ~~**pywebview vs Tauri**：后端 Python(好调/可变网站) vs Rust(小快/难调)——按具体工具"最不能丢哪一角"定，未定。~~ 〔2026-09-29 已定 pywebview。〕
 - **轻依赖档实测**：裸 Starlette/stdlib 版是否真能把 ~1.9s 拉到 ~1s、zip 再掉一两 MB——**预测未验证**，可再打一次对照。
-- **是否真的动 skill**：**已定，见 §8。** 结论：不建迁移 skill，只写本决策记录 + vibe-apps 一处精度修。
+- **是否真的动 skill**：2026-07-07 定为不建迁移 skill，只写本决策记录 + vibe-apps 一处精度修（见 §8）。〔2026-09-29 那处精度修已撤回，vibe-apps 0.14.0 改动见文首。〕
 
-## 8. 分发 & Rust 迁移的决策（2026-07-07 定稿）
+## 8. 分发 & Rust 迁移的决策（2026-07-07 定稿，2026-09-29 作废）
+
+> 〔历史〕本节整节作废：2026-09-29 放弃 Rust/Tauri 路线，理由是软件大多自用，不值得为远期迁移牺牲当前体验。§8.4 的「档 0：PyInstaller 打 exe」仍是现行做法，其余只作记录。
 
 承接 §6#1/#6 那批候选。一场从"前后端已分离 → Tauri 好接入"展开的讨论，落定了一套"如何架构成通往 Rust/Tauri 的坡道"的决策。
 
@@ -150,7 +159,7 @@ uvicorn 0.50 / pywebview 6.2 / pyinstaller 6.21 / UPX 4.2.4。
 - **活样板 = `pydantic_core`**：pydantic v2 就是把 v1 纯 Python 校验热点用 PyO3 换成 Rust、Python API 一字不变——也正是拖慢我们 ~1.9s 启动、且 Nuitka 编译不动的那个 `.pyd`。它本身就是"Python 核心逐模块迁 Rust 且调用方无感"的成品。
 - **Nuitka**（编译器，非打包器）：能编纯 Python import 那片，但砍不动已是 Rust 扩展的 pydantic_core → 对我们那 ~1.9s 地板大概率**部分胜、砸不穿**，还吃"迭代"那一角（分钟级 C 编译 + 工具链）。不是银弹。
 
-### 8.6 已落地的改动
+### 8.6 已落地的改动（〔历史〕0.14.0 已全部撤回：换零件规则不再提 Rust，禁止行改为「默认零构建」）
 
 - **vibe-apps `换零件规则`**：把"→Rust=永远贵、core 整个重写"改成"kept-clean core 可 PyO3 **逐模块**迁、耐用件可早写 Rust"，指回本节。
 - **未加**"第三 payoff"注解（前端可搬 Tauri / core 可 PyO3 化）到 vibe-apps 各铁律——避免 skill 变胖，且不改行为；理由留在本 doc。
