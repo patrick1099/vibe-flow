@@ -71,7 +71,8 @@ def run(check):
                           "synced_at": datetime.date.today().isoformat(),
                           "files": {d: f["sha256"] for d, f in files.items()}}
     if not check:
-        LOCK.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        LOCK.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+                        newline="\n")
     outdated = [f"{e['name']}:{d}" for e in report for d, f in e["files"].items() if f["changed"]]
     return {"mode": "check" if check else "sync", "outdated" if check else "updated": outdated,
             "entries": report}
