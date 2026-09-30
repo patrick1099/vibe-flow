@@ -61,7 +61,7 @@ description: Use when writing or modifying any standalone Python script or small
 | 加厂商/格式变体 | 对应 Strategy 表 | +1 表项 +1 函数 |
 | 改算法/解析逻辑 | 3 区目标函数 | 该函数本身 |
 
-独占目录的工具包，把这张表按项目实际填进 `AGENTS.md` 的代码地图。
+独占目录的工具包，只把这张表里搜不出来的几行（比如「加一种格式去哪张表」）写进 `AGENTS.md` 的「约定」段；文件和函数在哪让 AI 现查，不抄成代码地图。
 
 ## 环境约定
 

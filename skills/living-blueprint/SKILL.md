@@ -1,6 +1,6 @@
 ---
 name: living-blueprint
-description: Use when creating or changing a personal script or app above micro size, or when handing work to a new session / another AI — every one must carry two docs, BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent) and CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths). Projects with their own folder also get AGENTS.md (auto-loaded entry: reading order, run/test/build commands, code map, pitfalls) and, only while work is unfinished, docs/HANDOFF.md (overwrite-style progress snapshot: in flight, half-done, next step, waiting on the user; deleted when the work is done) so the next session or AI can pick up. Create BLUEPRINT and CHANGELOG when the tool is born; in the same turn as any change, update BLUEPRINT when behavior / I/O / hard constraints change, and add a CHANGELOG entry whenever behavior changes or a user-hit bug / bad UX is fixed. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、交接给新会话或别的 AI、HANDOFF 进度快照、AGENTS.md 入口、重构不被旧实现绑架。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
+description: How to write a personal script's or app's docs — BLUEPRINT.md (always-current "what it does", no implementation, so AI can refactor from intent), CHANGELOG.md (append-only "why it changed": the trigger, root cause, what it became, and the rejected paths), AGENTS.md (auto-loaded entry: reading order, commands, pitfalls) and docs/HANDOFF.md (progress snapshot that exists only while work is unfinished). Load it INSIDE the doc-keeping fork that vibe-flow §8 dispatches when a batch of changes is done — that fork inherits the conversation and writes the docs; the main agent doing the implementation does NOT load this skill and does not touch docs while working. Also load it when the user explicitly asks to write or restructure these docs, or when no context-inheriting subagent is available. 工具活蓝图 BLUEPRINT.md + 变更记录 CHANGELOG.md、只讲功能不讲实现、覆盖式当前全貌、记录为什么变更、交接给新会话或别的 AI、HANDOFF 进度快照、AGENTS.md 入口、重构不被旧实现绑架；由收工时派出的 fork 加载执行，干活的主 agent 不加载。微脚本用头部契约行代替,不建。≠ UI 设计系统 DESIGN.md。Stack-independent.
 ---
 
 # living-blueprint：活蓝图、变更记录与交接
@@ -15,6 +15,18 @@ description: Use when creating or changing a personal script or app above micro 
 | `HANDOFF.md` | 现在做到哪了 | 只在有没做完的活时存在，覆盖式，做完删掉 |
 
 代码改了哪几行归 git，四份都不重复它。**哪些项目要哪些文件、放哪，见 `vibe-flow` §6**；本 skill 管每份写什么、什么时候改。**建文件或调整某份的结构时，读 `references/templates.md` 拿模板。**
+
+## 谁来写：收工时派出的 fork
+
+读到这里的你，多半就是那个 fork：主 agent 干完一批活，按 `vibe-flow` §8 把文档交给你。你继承了整段对话，所以意图直接从对话里取——用户要什么、为什么改、原话怎么说、哪些路被否了——不需要主 agent 另写简报。
+
+- **只写这几份文档**：本项目按 §6 该有的那几份（`BLUEPRINT` / `CHANGELOG` / `AGENTS.md` / `HANDOFF`，旁挂布局就是旁挂的那几份）。写入方式不限（本机若有透明加密，照环境规矩走 Python 等白名单进程写），但不改代码、不生成别的文件、不跑有其他副作用的命令；主 agent 回来会比对代码有没有被动过。
+- **覆盖到这批改动的最终状态**：以磁盘上的当前代码为准，对话里中途被推翻的方案不写进蓝图（进 CHANGELOG 的「没选的路」）。
+- **判断该改哪份**按下面「什么时候改」的三种情形；一份都不用改就不改，别为了留痕写假条目。
+- **汇报不超过三行**：改了哪些文件，或为什么这批不用记。拿不准的意图写进汇报让主 agent 补一句，不要猜着写。
+- 对话被压缩过、意图看不全时，以代码和现有文档为准。
+
+没有能继承上下文的子 agent 时（别的平台或环境），主 agent 自己按本 skill 改，规矩相同。
 
 ## BLUEPRINT.md：只讲功能，不讲实现
 
@@ -40,7 +52,7 @@ description: Use when creating or changing a personal script or app above micro 
 
 ## AGENTS.md：交接入口
 
-会话启动只自动加载它，新会话不会自己去找蓝图，所以**第一段必须是阅读顺序**。之后是命令、代码地图、坑；分支 skill 的架构约束段也写这里（如 `vibe-apps` 那段）。不写功能（归蓝图）、不写进度（归 HANDOFF）、不写历史（归 CHANGELOG）。命令、代码地图、坑变了就改它。
+会话启动只自动加载它，新会话不会自己去找蓝图，所以**第一段必须是阅读顺序**。之后是命令、坑，以及**搜不出来的约定**（比如「加一种格式去哪张表」、跨目录的入口关系，几行就够）；分支 skill 的架构约束段也写这里（如 `vibe-apps` 那段）。不写完整代码地图——目录树和符号 AI 用搜索、LSP 现查，写下来只会过时，还要每次跟着改。不写功能（归蓝图）、不写进度（归 HANDOFF）、不写历史（归 CHANGELOG）。命令、坑、约定变了就改它。它每个会话都会整份加载，保持一屏以内。
 
 项目级只建 AGENTS.md，两个平台读同一份。只有当前环境的 Claude Code 确实不读 AGENTS.md 时，才加一个内容只有一行 `@AGENTS.md` 的 CLAUDE.md，别把正文复制进去。
 
@@ -52,20 +64,20 @@ description: Use when creating or changing a personal script or app above micro 
 
 ## 什么时候读、什么时候改
 
-- **读**：新会话上手或要重构时，按 AGENTS.md 第一段：`HANDOFF.md`（如有）→ `BLUEPRINT.md` → `CHANGELOG.md` 最近 5 条；要改哪块，再搜那块相关的「没选的路」。不通读全部历史。
+- **读**（主 agent）：新会话上手时，按 AGENTS.md 第一段先看 `HANDOFF.md`（如有）。要动哪块，读 `BLUEPRINT.md` 里那块的行为契约，再搜 `CHANGELOG.md` 里那块相关的「没选的路」；整体重构才通读蓝图。CHANGELOG 不默认翻最近几条，也不通读。
 - **建**：工具出生（第一次交付）时蓝图和 CHANGELOG 一起建，CHANGELOG 第一条记为什么要做它。
-- **改**：在**同一轮**里改，不等用户说「更新蓝图」。「必须带两份」指两份始终存在，不是每轮都要有改动：
+- **改**：每批改动做完、交付之前，由 fork 改（见上文「谁来写」），不等用户说「更新蓝图」。「必须带两份」指两份始终存在，不是每批都要有改动：
   - 功能、I/O 契约或硬约束变了 → 蓝图覆盖对应小节，CHANGELOG 加一条；
   - 修了用户碰到过的 bug、改了用户嫌弃的体验，蓝图本来就写着正确预期 → 只在 CHANGELOG 加一条；
   - 纯内部重构、用户没感知过的问题 → 交给 git，都不动。
 
-### 大改用 subagent 蒸馏，小改 inline
+### fork 怎么写：三源、三条死命令
 
-刚泡完实现细节的主 agent 容易把 how 写进蓝图。大改时派一个 fresh subagent 当防实现泄漏的防火墙，它也顺带把又大又吵的对话消化在一次性上下文里。
+fork 和主 agent 一样泡过实现细节，最容易犯的错是把 how 写进蓝图。
 
-- **三源并用**：现有 `BLUEPRINT.md`（基底）＋ 本次对话（意图源：用户想要什么、为什么——代码常表达不出意图，且可能正是要被重构掉的旧实现）＋ 当前代码（现实源：哪些意图真落地了）。
+- **三源并用**：现有 `BLUEPRINT.md`（基底）＋ 继承来的对话（意图源：用户想要什么、为什么——代码常表达不出意图，且可能正是要被重构掉的旧实现）＋ 当前代码（现实源：哪些意图真落地了）。
 - **三条死命令**：① 只写可观察行为与 I/O 契约，不写实现；② 只收最终拍板的意图，弃掉对话中途被否的废案；③ 覆盖式对账，标出「意图 ≠ 当前代码」处（那是下次重构的缺口）。
-- 对话记录不在就退化到「代码 ＋ 主 agent 一句话简报」；只加一个功能、记一条痛点的小改，主 agent 直接 inline，别为一行字起 subagent。
+- 小改也一样交给 fork，主 agent 不 inline：省下的是主 agent 的上下文，不是这几行字。
 
 ## 与邻居划界
 

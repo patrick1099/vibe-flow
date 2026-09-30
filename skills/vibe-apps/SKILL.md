@@ -91,13 +91,13 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 ## 设计记录（意图驱动）
 
-应用独占一个目录，按 `vibe-flow` §6 带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`，有没做完的活时再加 `docs/HANDOFF.md`；写法见 `living-blueprint`。
+应用独占一个目录，按 `vibe-flow` §6 带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`，有没做完的活时再加 `docs/HANDOFF.md`。这几份由收工时派出的 fork 按 `living-blueprint` 写（`vibe-flow` §8），实现者不写；唯一例外是下面脚手架里 AGENTS.md 的架构约束段。
 
 ## 脚手架（建目录）
 
 ```
 mytool/
-├── AGENTS.md              # 交接入口：先读顺序/命令/代码地图/坑 + 下方架构约束段
+├── AGENTS.md              # 交接入口：先读顺序/命令/坑/搜不出来的约定 + 下方架构约束段
 ├── docs/BLUEPRINT.md      # 当前功能全貌（living-blueprint）
 ├── docs/CHANGELOG.md      # 为什么变更，只追加（living-blueprint）
 ├── docs/HANDOFF.md        # 可选：只在有没做完的活时存在，做完删掉（living-blueprint）
@@ -114,7 +114,7 @@ mytool/
 └── build.spec             # PyInstaller
 ```
 
-**AGENTS.md 写入 vibe-apps 架构约束段**（AGENTS.md 其余几段的骨架见 `living-blueprint`「交接」）：
+**搭脚手架时，实现者把下面这段 vibe-apps 架构约束写进 AGENTS.md**：它是固定模板，也是文档闸认出 vibe-apps 项目的标记，所以随目录一起建，不等收工。AGENTS.md 其余几段和 BLUEPRINT、CHANGELOG 由收工时的 fork 补（骨架见 `living-blueprint` 的 `references/templates.md`）：
 ```markdown
 ## 架构约束（vibe-apps）
 五层：core(纯逻辑可 pytest, 对"谁"无状态) / api(FastAPI 薄适配) / web(HTML+fetch) / app.py(拼装) / pywebview(壳)。
@@ -122,7 +122,7 @@ mytool/
 前端默认原生 HTML/JS + Tailwind 浏览器版 + DaisyUI，库文件放 web/vendor/ 本地引用，零构建无 npm；通信走 HTTP，不用 pywebview 专有桥。
 有 DESIGN.md 时，颜色只改 DESIGN.md 再导出 web/theme.css，不手改 theme.css。
 ```
-（这五层是 **Python 特定实现结构**，属本 AGENTS.md。其中**换语言仍成立的原则**——逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥——另写进 `BLUEPRINT.md` 第 4 节「硬约束·可移植架构约束」，见 `living-blueprint`；蓝图不收具名五层。）
+（这五层是 **Python 特定实现结构**，属本 AGENTS.md。其中**换语言仍成立的原则**——逻辑与 UI/框架解耦、逻辑层可独立测试、通信走标准协议不用专有桥——由 fork 另写进 `BLUEPRINT.md` 第 4 节「硬约束·可移植架构约束」，见 `living-blueprint`；蓝图不收具名五层。）
 
 ## 原生文件/目录选择（webview 里拿不到本地绝对路径）
 

@@ -3,14 +3,17 @@ import concurrent.futures
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 GATE = ROOT / "hooks" / "doc_gate_codex.py"
 SUCCESS = "Success. Updated the following files:\n"
+STALE = "停在这批代码改动之前"
 
 
 class CodexDocGateTest(unittest.TestCase):
@@ -18,9 +21,11 @@ class CodexDocGateTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(prefix="vibe codex 测试-")
         self.root = Path(self.tmp.name)
         self.state = self.root / "plugin-data"
-        self.env = dict(os.environ, PLUGIN_DATA=str(self.state), VIBE_FLOW_DOC_GATE_HOME=str(self.root))
+        self.env = dict(os.environ, PLUGIN_DATA=str(self.state), VIBE_FLOW_DOC_GATE_HOME=str(self.root),
+                        GIT_CEILING_DIRECTORIES=str(self.root.parent))
         self.env.pop("CLAUDE_PLUGIN_DATA", None)
         self.seq = 0
+        self.long_ago = time.time() - 3600
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -31,12 +36,18 @@ class CodexDocGateTest(unittest.TestCase):
         p.write_text(text, encoding="utf-8")
         return p
 
+    def doc(self, name, text="# doc"):
+        """已经存在很久的文档：mtime 早于本测试里的任何代码改动。"""
+        p = self.write(name, text)
+        os.utime(p, (self.long_ago, self.long_ago))
+        return p
+
     def project(self, name="项目", docs=True):
         self.write(name + "/cli.py", "# 结构: vibe-scripts/toolkit\n")
         core = self.write(name + "/src/core.py", "def f(): pass\n")
         if docs:
-            self.write(name + "/docs/BLUEPRINT.md", "# bp")
-            self.write(name + "/docs/CHANGELOG.md", "# cl")
+            self.doc(name + "/docs/BLUEPRINT.md", "# bp")
+            self.doc(name + "/docs/CHANGELOG.md", "# cl")
         return core
 
     def event(self, kind, **fields):
@@ -53,7 +64,11 @@ class CodexDocGateTest(unittest.TestCase):
         return json.loads(proc.stdout) if proc.stdout.strip() else None
 
     def patch(self, *paths, response=None, patch="", **fields):
+        """一次成功的 apply_patch；列出的文件顺带把 mtime 刷到现在，模拟真的写过。"""
         self.seq += 1
+        for p in paths:
+            if Path(p).exists():
+                os.utime(p, None)
         data = self.event("PostToolUse", tool_name="apply_patch", tool_use_id=f"call-{self.seq}",
                           tool_input={"command": patch},
                           tool_response=response if response is not None else
@@ -61,6 +76,11 @@ class CodexDocGateTest(unittest.TestCase):
         data.update(fields)
         self.assertIsNone(self.run_gate(data))
         return data
+
+    def prompt(self, **fields):
+        data = self.event("UserPromptSubmit", prompt="改一下")
+        data.update(fields)
+        self.assertIsNone(self.run_gate(data))
 
     def stop(self, **fields):
         data = self.event("Stop", stop_hook_active=False)
@@ -75,11 +95,19 @@ class CodexDocGateTest(unittest.TestCase):
 
     def test_untouched_documents_block(self):
         self.patch(self.project())
-        self.assertIn("都没动", self.stop()["reason"])
+        self.assertIn(STALE, self.stop()["reason"])
 
     def test_successful_document_write_passes(self):
         self.patch(self.project())
         self.patch(self.root / "项目/docs/CHANGELOG.md")
+        self.assertIsNone(self.stop())
+
+    def test_documents_updated_by_subagent_pass(self):
+        # 子 agent 的写入不经主会话的 apply_patch；磁盘上文档比代码新就算跟上
+        core = self.project()
+        self.patch(core)
+        later = core.stat().st_mtime + 5
+        os.utime(self.root / "项目/docs/BLUEPRINT.md", (later, later))
         self.assertIsNone(self.stop())
 
     def test_missing_blueprint_blocks_even_when_changelog_touched(self):
@@ -98,7 +126,7 @@ class CodexDocGateTest(unittest.TestCase):
         self.patch(core)
         self.patch(response={"output": SUCCESS + "M 项目/docs/CHANGELOG.md\n",
                              "metadata": {"exit_code": 1}})
-        self.assertIn("都没动", self.stop()["reason"])
+        self.assertIn(STALE, self.stop()["reason"])
 
     def test_error_flags_and_absent_results_are_ignored(self):
         self.project()
@@ -131,10 +159,11 @@ class CodexDocGateTest(unittest.TestCase):
         self.assertIsNone(self.stop())
 
     def test_consumed_turn_does_not_block_twice(self):
+        self.prompt()
         self.patch(self.project())
         self.assertIsNotNone(self.stop())
         self.assertIsNone(self.stop())
-        self.assertEqual(list(self.state.rglob("*.json")), [])
+        self.assertEqual([p for p in self.state.rglob("*") if p.is_file()], [])
 
     def test_turns_are_isolated(self):
         self.patch(self.project())
@@ -178,7 +207,7 @@ class CodexDocGateTest(unittest.TestCase):
 
     def test_handoff_does_not_satisfy_gate(self):
         self.patch(self.project(), self.write("项目/docs/HANDOFF.md", "ongoing"))
-        self.assertIn("都没动", self.stop()["reason"])
+        self.assertIn(STALE, self.stop()["reason"])
 
     def test_parallel_tools_keep_all_records(self):
         paths = [self.project(name=f"project-{i}") for i in range(4)]
@@ -199,6 +228,7 @@ class CodexDocGateTest(unittest.TestCase):
 
     def test_interrupt_cleans_only_this_turn(self):
         core = self.project()
+        self.prompt()
         self.patch(core)
         self.patch(core, turn_id="turn-2")
         self.run_gate(self.event("Interrupt"))
@@ -223,6 +253,11 @@ class CodexDocGateTest(unittest.TestCase):
         next(self.state.rglob("*.json")).write_text("not JSON", encoding="utf-8")
         self.run_gate(self.event("Stop"), code=1)
 
+    def test_corrupt_turn_start_reports_nonblocking_error(self):
+        self.prompt()
+        next(self.state.rglob("turn-start")).write_text('{"at": "soon"}', encoding="utf-8")
+        self.run_gate(self.event("Stop"), code=1)
+
     def test_bad_input_reports_nonblocking_error(self):
         proc = subprocess.run([sys.executable, str(GATE)], input="broken JSON",
                               capture_output=True, text=True, encoding="utf-8", env=self.env)
@@ -236,14 +271,52 @@ class CodexDocGateTest(unittest.TestCase):
         env.pop("PLUGIN_DATA")
         self.assertIsNotNone(self.run_gate(self.event("Stop"), env=env))
 
+    # ---------- git 扫描：经 shell / Python 落盘、不走 apply_patch 的改动 ----------
+
+    def git_project(self):
+        if not shutil.which("git"):
+            self.skipTest("git 不可用")
+        core = self.project()
+        git = ["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid"]
+        subprocess.run(git + ["init", "-q"], cwd=self.root, check=True)
+        subprocess.run(git + ["add", "项目"], cwd=self.root, check=True)
+        subprocess.run(git + ["commit", "-q", "-m", "init"], cwd=self.root, check=True)
+        return core
+
+    def test_shell_written_code_in_git_repo_blocks(self):
+        core = self.git_project()
+        self.prompt()
+        core.write_text("def f(): return 1\n", encoding="utf-8")
+        self.assertIn(STALE, self.stop()["reason"])
+
+    def test_shell_deleted_code_in_git_repo_blocks(self):
+        core = self.git_project()
+        self.prompt()
+        core.unlink()
+        self.assertIn(STALE, self.stop()["reason"])
+
+    def test_dirty_before_prompt_is_not_this_turn(self):
+        core = self.git_project()
+        core.write_text("def f(): return 1\n", encoding="utf-8")
+        before = time.time() - 60
+        os.utime(core, (before, before))
+        self.prompt()
+        self.assertIsNone(self.stop())
+
+    def test_git_scan_uses_prompt_cwd(self):
+        core = self.git_project()
+        self.prompt()
+        core.write_text("def f(): return 1\n", encoding="utf-8")
+        self.assertIsNotNone(self.stop(cwd=str(self.root / "elsewhere")))
+
     def captured_patch(self):
         fixture = ROOT / "tests/fixtures/codex-0.155.0-alpha.16.3-post-tool-use.json"
         raw = fixture.read_bytes()
         data = json.loads(raw)
         original = data["cwd"]
         target = self.root / "captured"
-        self.write("captured/docs/BLUEPRINT.md", "# bp")
-        self.write("captured/docs/CHANGELOG.md", "# cl")
+        self.doc("captured/docs/BLUEPRINT.md", "# bp")
+        self.doc("captured/docs/CHANGELOG.md", "# cl")
         self.write("captured/src/probe.json", '{"value": 1}\n')
         for container, key in ((data, "tool_response"), (data["tool_input"], "command")):
             container[key] = container[key].replace(original.replace("\\", "/"), target.as_posix())
@@ -257,7 +330,7 @@ class CodexDocGateTest(unittest.TestCase):
         out = self.stop(session_id=data["session_id"], turn_id=data["turn_id"])
         self.assertIsNotNone(out, "The captured successful patch must trigger the document gate")
         self.assertEqual(out["decision"], "block")
-        self.assertIn("都没动", out["reason"])
+        self.assertIn(STALE, out["reason"])
 
     def test_wrapped_nonzero_exit_does_not_count(self):
         data = self.captured_patch()
@@ -277,7 +350,7 @@ class CodexDocGateTest(unittest.TestCase):
         other = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
         self.assertEqual((manifest["name"], manifest["version"]), (other["name"], other["version"]))
         hooks = json.loads((ROOT / manifest["hooks"]).read_text(encoding="utf-8"))["hooks"]
-        self.assertEqual(set(hooks), {"PostToolUse", "Stop", "Interrupt"})
+        self.assertEqual(set(hooks), {"UserPromptSubmit", "PostToolUse", "Stop", "Interrupt"})
         self.assertEqual(hooks["PostToolUse"][0]["matcher"], "^apply_patch$")
         for groups in hooks.values():
             handler = groups[0]["hooks"][0]
@@ -294,6 +367,7 @@ class CodexDocGateTest(unittest.TestCase):
             import doc_gate_codex
             self.assertIs(doc_gate.evaluate, doc_gate_codex.evaluate)
             self.assertIs(doc_gate.render_reason, doc_gate_codex.render_reason)
+            self.assertIs(doc_gate.changed_since, doc_gate_codex.changed_since)
         finally:
             sys.path.pop(0)
 

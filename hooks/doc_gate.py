@@ -1,8 +1,12 @@
 """vibe-flow 文档闸（Claude Code Stop hook）。
 
-本轮用 Write / Edit 改了 vibe 项目的代码时，检查 BLUEPRINT.md / CHANGELOG.md：
+本轮改了 vibe 项目的代码时，检查 BLUEPRINT.md / CHANGELOG.md：
 - 缺文档 → 拦下，要求补齐；
-- 两份都没动 → 拦一次，让 AI 明确判断“要不要记”，回应后放行。
+- 两份都早于这批代码的最后一次修改 → 拦一次，让 AI 派 fork 维护文档，或说明为什么不用记。
+本轮改过的文件 = 对话记录里成功的 Write / Edit ＋ 当前 git 仓库里本轮开始后改过、暂存或删掉的文件
+（经 shell / Python 落盘的也算）。文档是否跟上只看磁盘 mtime，所以 fork 写的文档也认得出。
+还有后台子 agent 在跑时先不拦：它完成后主 agent 会被唤醒，本轮再结束时重判。常驻的 shell 后台任务
+（开发服务器、tail -f）不算，否则闸会一直不响。
 同一轮只拦一次（stop_hook_active），判断权留给 AI。非 vibe 项目（无标记）一律不管。
 
 只用 stdlib。内部出错时退出码 1（非阻断、错误可见），绝不因闸本身的 bug 卡住会话。
@@ -10,15 +14,21 @@
 import json
 import os
 import re
+import subprocess
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
 
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 DOC_SUFFIXES = {".md", ".markdown", ".txt", ".rst"}
+# git 扫描里未跟踪的新文件只认这些后缀：跑工具产生的数据、日志不算代码改动
+SCAN_SUFFIXES = {".py", ".pyw", ".js", ".mjs", ".ts", ".html", ".css", ".ps1", ".sh", ".bat", ".cmd", ".toml"}
 SCRIPT_MARK = re.compile(r"结构:\s*vibe-scripts/(standard|toolkit)\b")
 APPS_MARK = "架构约束（vibe-apps）"
 HEADER_LINES = 15
 MAX_PY_SCAN = 60
+GIT_TIMEOUT = 8
 
 
 # ---------- 对话记录 → 本轮写过的文件 ----------
@@ -59,6 +69,23 @@ def turn_written_paths(rows):
     return [p for tool_id, p in calls if tool_id in ok_ids]
 
 
+def turn_start(rows):
+    """本轮开始时刻：最后一条人类消息的 timestamp（epoch 秒），拿不到返回 None。
+
+    后台任务完成的通知 origin 是 task-notification，不算人类消息，所以 fork 回来后本轮范围不变。
+    """
+    stamp = None
+    for row in rows:
+        if _is_human_prompt(row):
+            stamp = row.get("timestamp")
+    if not isinstance(stamp, str):
+        return None
+    try:
+        return datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
 def read_rows(transcript_path):
     rows = []
     with open(transcript_path, encoding="utf-8", errors="replace") as f:
@@ -71,6 +98,56 @@ def read_rows(transcript_path):
             except ValueError:
                 continue
     return rows
+
+
+# ---------- 文件 → 最后一次变动的时刻 ----------
+
+def changed_at(path):
+    """文件最后一次变动的时刻；已删除的按最近一层还在的目录的 mtime 算。
+
+    删除条目会刷新所在目录的 mtime，所以这个值只会不早于删除那一刻：拿它判「文档是否晚于删除」
+    宁可多拦一次，不会放过「先改文档、后删代码」。什么都不在了返回 None。
+    """
+    p = Path(path)
+    for q in (p, *p.parents):
+        try:
+            return q.stat().st_mtime
+        except OSError:
+            continue
+    return None
+
+
+# ---------- git 仓库 → 本轮开始后改过的文件 ----------
+
+def _git_names(cwd, *args):
+    out = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True,
+                         timeout=GIT_TIMEOUT, check=True).stdout
+    return [n for n in out.decode("utf-8").split("\0") if n]
+
+
+def changed_since(cwd, since):
+    """cwd 所在 git 仓库里 since 之后变动的文件：未暂存和已暂存的改动（含删除），加新建的代码文件。
+
+    补上工具记录看不到的写入（shell / Python 落盘、git add 过的、rm 掉的）。变动时刻早于本轮开始的
+    旧改动不算；不是 git 仓库、git 不可用或超时就返回空，不影响工具记录那一路。
+    """
+    if not cwd or since is None:
+        return []
+    try:
+        top = Path(subprocess.run(["git", "-C", str(cwd), "rev-parse", "--show-toplevel"], capture_output=True,
+                                  timeout=GIT_TIMEOUT, check=True).stdout.decode("utf-8").strip())
+        names = _git_names(top, "ls-files", "-z", "-m")
+        names += _git_names(top, "diff", "--cached", "--name-only", "-z")
+        names += [n for n in _git_names(top, "ls-files", "-z", "-o", "--exclude-standard")
+                  if Path(n).suffix.lower() in SCAN_SUFFIXES]
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
+        return []
+    out = []
+    for name in dict.fromkeys(names):
+        at = changed_at(top / name)
+        if at is not None and at >= since:
+            out.append(str(top / name))
+    return out
 
 
 # ---------- 文件 → 所属 vibe 项目 ----------
@@ -140,10 +217,21 @@ def find_project(file_path, stop_at=None):
 
 # ---------- 判定 ----------
 
+def _mtime(p):
+    try:
+        return Path(p).stat().st_mtime
+    except OSError:
+        return None
+
+
 def evaluate(paths, stop_at=None):
-    written = {_norm(p) for p in paths}
+    """文档要晚于这批代码的最后一次变动才算跟上。
+
+    只看磁盘 mtime、不看是谁写的，所以子 agent（fork）写的文档同样算数。删掉的代码按 changed_at
+    取所在目录的 mtime；连目录都不在了就按现在，即这批改动必须重判一次。
+    """
     projects = {}
-    for raw in paths:
+    for raw in dict.fromkeys(paths):
         if Path(raw).suffix.lower() in DOC_SUFFIXES:
             continue
         found = find_project(raw, stop_at)
@@ -154,19 +242,23 @@ def evaluate(paths, stop_at=None):
         projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "layout": layout, "code": []})
         projects[key]["code"].append(raw)
 
+    now = time.time()
     issues = []
     for proj in projects.values():
         bp, cl = proj["bp"], proj["cl"]
         missing = [x.name for x in (bp, cl) if not x.exists()]
         if missing:
             issues.append(("missing", proj, missing))
-        elif _norm(bp) not in written and _norm(cl) not in written:
-            issues.append(("untouched", proj, []))
+            continue
+        code_at = max(at if (at := changed_at(c)) is not None else now for c in proj["code"])
+        docs_at = max(_mtime(bp) or 0, _mtime(cl) or 0)
+        if docs_at < code_at:
+            issues.append(("stale", proj, []))
     return issues
 
 
 def render_reason(issues):
-    lines = ["[vibe-flow 文档闸] 本轮改了下面这些 vibe 项目的代码："]
+    lines = ["[vibe-flow 文档闸] 本轮改了下面这些 vibe 项目的代码，文档还没跟上："]
     for kind, proj, missing in issues:
         where = proj["root"]
         if kind == "missing" and proj["layout"] == "unknown":
@@ -176,18 +268,26 @@ def render_reason(issues):
                          f"和别的脚本共处 → 建旁挂 {script.stem}.BLUEPRINT.md / {script.stem}.CHANGELOG.md。"
                          "出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
         elif kind == "missing":
-            lines.append(f"- {where}：缺 {' / '.join(missing)}。按 living-blueprint 补齐"
-                         f"（应在 {proj['bp'].parent}），出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
+            lines.append(f"- {where}：缺 {' / '.join(missing)}（应在 {proj['bp'].parent}）。"
+                         "出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
         else:
-            lines.append(f"- {where}：BLUEPRINT 和 CHANGELOG 都没动。判断一次：")
-    if any(k == "untouched" for k, _, _ in issues):
-        lines += [
-            "  · 功能、I/O 契约或硬约束变了 → 覆盖蓝图对应小节，并在 CHANGELOG 顶部加一条；",
-            "  · 修了用户碰到过的 bug、改了用户嫌弃的体验，蓝图本来就对 → 只在 CHANGELOG 顶部加一条；",
-            "  · 纯内部重构、用户没感知过 → 不用记，在回复里用一句话说明为什么不用记。",
-        ]
-    lines.append("本提醒每轮只出现一次；判断权在你，别为过闸写假条目。")
+            lines.append(f"- {where}：BLUEPRINT 和 CHANGELOG 都还停在这批代码改动之前。")
+    lines += [
+        "按 vibe-flow §8 收工：派一个继承本会话上下文的子 agent 维护文档（Claude Code 用 Agent 工具、"
+        "subagent_type 为 fork；Codex 用 spawn_agent 并继承全部历史），任务写：加载 living-blueprint，"
+        "按它更新本项目文档、覆盖这批改动，只改文档不碰代码，汇报不超过三行。等它完成再汇报或提交。"
+        "没有这类子 agent 可用时，自己按 living-blueprint 改。",
+        "纯内部重构、用户没感知过 → 不用派，在回复里用一句话说明为什么不用记。",
+        "本提醒每轮只出现一次；判断权在你，别为过闸写假条目。",
+    ]
     return "\n".join(lines)
+
+
+def subagent_running(tasks):
+    """后台还有子 agent 在跑（多半就是维护文档的 fork）。它总会结束、结束时主 agent 被唤醒重判，
+    所以暂缓是安全的；shell 类后台任务可能永不结束，不能让它们暂缓闸。"""
+    return any(isinstance(t, dict) and (t.get("task_type") or t.get("type")) == "subagent"
+               for t in tasks or [])
 
 
 def main():
@@ -197,12 +297,13 @@ def main():
     transcript = data.get("transcript_path")
     if not transcript or not os.path.isfile(transcript):
         return 0
-    paths = turn_written_paths(read_rows(transcript))
+    rows = read_rows(transcript)
+    paths = turn_written_paths(rows) + changed_since(data.get("cwd"), turn_start(rows))
     if not paths:
         return 0
     stop_at = os.environ.get("VIBE_FLOW_DOC_GATE_HOME")
     issues = evaluate(paths, stop_at)
-    if issues:
+    if issues and not subagent_running(data.get("background_tasks")):
         sys.stdout.write(json.dumps({"decision": "block", "reason": render_reason(issues)},
                                     ensure_ascii=False))
     return 0

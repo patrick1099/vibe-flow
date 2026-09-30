@@ -1,6 +1,18 @@
 {
-  "description": "Record successful patches and ask once per turn whether vibe documentation needs updating.",
+  "description": "Record the turn start and successful patches, then ask once per turn whether vibe documentation has caught up.",
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "^apply_patch$",
