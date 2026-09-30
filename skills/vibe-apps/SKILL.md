@@ -91,7 +91,7 @@ def summarize(data, store):       # ✅ 数据/存储显式传入
 
 ## 设计记录（意图驱动）
 
-应用独占一个目录，按 `vibe-flow` §6 带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`，有没做完的活时再加 `docs/HANDOFF.md`。这几份由收工时派出的 fork 按 `living-blueprint` 写（`vibe-flow` §8），实现者不写；唯一例外是下面脚手架里 AGENTS.md 的架构约束段。
+应用独占一个目录，按 `vibe-flow` §6 带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`，有没做完的活时再加 `docs/HANDOFF.md`。这几份由收工时派出的 fork 按 `living-blueprint` 写（`vibe-flow` §8），实现者不写；例外只有两处：下面脚手架里 AGENTS.md 的架构约束段，和讨论中谈定时往 HANDOFF「已谈定」区记的条目（`vibe-flow` §4）。
 
 ## 脚手架（建目录）
 

@@ -357,8 +357,10 @@ class CodexDocGateTest(unittest.TestCase):
             self.assertEqual(handler["commandWindows"], 'py -3 "${PLUGIN_ROOT}/hooks/doc_gate_codex.py"')
             self.assertIn('"${PLUGIN_ROOT}/hooks/doc_gate_codex.py"', handler["command"])
         claude = json.loads((ROOT / "hooks/hooks.json").read_text(encoding="utf-8"))
-        self.assertEqual(set(claude["hooks"]), {"Stop"})
+        self.assertEqual(set(claude["hooks"]), {"Stop", "SessionStart"})
         self.assertIn("/hooks/doc_gate.py", claude["hooks"]["Stop"][0]["hooks"][0]["command"])
+        self.assertEqual(claude["hooks"]["SessionStart"][0]["matcher"], "compact")
+        self.assertIn("/hooks/compact_anchor.py", claude["hooks"]["SessionStart"][0]["hooks"][0]["command"])
 
     def test_both_entries_share_the_same_evaluator(self):
         sys.path.insert(0, str(ROOT / "hooks"))
