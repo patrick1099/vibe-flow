@@ -370,6 +370,7 @@ class CodexDocGateTest(unittest.TestCase):
             self.assertIs(doc_gate.evaluate, doc_gate_codex.evaluate)
             self.assertIs(doc_gate.render_reason, doc_gate_codex.render_reason)
             self.assertIs(doc_gate.changed_since, doc_gate_codex.changed_since)
+            self.assertIs(doc_gate.changed_in_repos, doc_gate_codex.changed_in_repos)
         finally:
             sys.path.pop(0)
 

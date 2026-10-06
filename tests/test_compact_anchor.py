@@ -11,6 +11,14 @@ import unittest
 from pathlib import Path
 
 HOOK = Path(__file__).resolve().parents[1] / "hooks" / "compact_anchor.py"
+_ids = iter(range(10**6))
+
+
+def call(name, ok=True, **inp):
+    """一次工具调用 + 结果，返回两行对话记录。"""
+    tid = f"toolu_{next(_ids)}"
+    return [{"type": "assistant", "message": {"content": [{"type": "tool_use", "id": tid, "name": name, "input": inp}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": tid, "is_error": not ok}]}}]
 
 HANDOFF = """# 交接 · 2026-09-30
 
@@ -37,9 +45,14 @@ class CompactAnchorTest(unittest.TestCase):
         p.write_text(text, encoding="utf-8")
         return p
 
-    def run_hook(self, cwd, source="compact"):
+    def run_hook(self, cwd, source="compact", rows=None):
         env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))
         payload = {"hook_event_name": "SessionStart", "source": source, "cwd": str(cwd)}
+        if rows is not None:
+            tr = self.root / "transcript.jsonl"
+            flat = [r for pair in rows for r in pair]
+            tr.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in flat), encoding="utf-8")
+            payload["transcript_path"] = str(tr)
         proc = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload, ensure_ascii=False),
                               capture_output=True, text=True, encoding="utf-8", env=env)
         self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -141,6 +154,116 @@ class CompactAnchorTest(unittest.TestCase):
         self.assertIn(str(ho), ctx)
         self.assertIn("完整读完", ctx)
         self.assertNotIn("事项0", ctx)
+
+    # ---------- 按对话记录定位：会话开在别处，用绝对路径改项目 ----------
+
+    def fw(self):
+        fw = self.root / "fw"
+        (fw / ".git").mkdir(parents=True, exist_ok=True)
+        return fw
+
+    def test_written_project_injected_when_cwd_is_elsewhere(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        code = self.write("proj/src/a.py")
+        self.assertIsNone(self.run_hook(self.fw()))
+        ctx = self.run_hook(self.fw(), rows=[call("Write", file_path=str(code))])
+        self.assertIn("AI 也要能同时收发", ctx)
+
+    def test_failed_write_does_not_count(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        code = self.write("proj/src/a.py")
+        ctx = self.run_hook(self.fw(), rows=[call("Edit", ok=False, file_path=str(code))])
+        self.assertIsNone(ctx)
+
+    def test_handoff_read_directly_is_injected(self):
+        ho = self.write("proj/docs/HANDOFF.md", HANDOFF)
+        ctx = self.run_hook(self.fw(), rows=[call("Read", file_path=str(ho))])
+        self.assertIn("AI 也要能同时收发", ctx)
+
+    def test_esafe_apply_counts_as_write(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        cmd = f'py -3 esafe_code.py edit src/a.py --root "{self.root / "proj"}" --json --apply'
+        self.assertIn("AI 也要能同时收发", self.run_hook(self.fw(), rows=[call("Bash", command=cmd)]))
+
+    def test_only_read_project_listed_not_injected(self):
+        ho = self.write("other/docs/HANDOFF.md", HANDOFF)
+        code = self.write("other/src/a.py")
+        ctx = self.run_hook(self.fw(), rows=[call("Read", file_path=str(code)),
+                                            call("Bash", command=f"ls {self.root / 'other' / 'src'}")])
+        self.assertNotIn("AI 也要能同时收发", ctx)
+        self.assertIn(str(ho), ctx)
+        self.assertIn("只有当前任务属于它们时才去读", ctx)
+
+    def test_projects_ordered_by_recency_and_capped(self):
+        rows = []
+        for name in ("p1", "p2", "p3", "p4"):
+            self.write(f"{name}/docs/HANDOFF.md", f"**已谈定**：\n- {name} 的约定\n")
+            rows.append(call("Write", file_path=str(self.write(f"{name}/a.py"))))
+        ctx = self.run_hook(self.fw(), rows=rows)
+        self.assertIn("涉及几个项目", ctx)
+        self.assertLess(ctx.index("p4 的约定"), ctx.index("p3 的约定"))
+        self.assertLess(ctx.index("p3 的约定"), ctx.index("p2 的约定"))
+        self.assertNotIn("p1 的约定", ctx)
+        self.assertIn(str(self.root / "p1/docs/HANDOFF.md"), ctx)
+
+    def test_recency_counts_any_touch_after_strong_evidence(self):
+        # 写过 A，又去写 B/C/D，最后回来读 A 的代码：A 应排第一，不被挤出前 3
+        rows = []
+        for name in ("pa", "pb", "pc", "pd"):
+            self.write(f"{name}/docs/HANDOFF.md", f"**已谈定**：\n- {name} 的约定\n")
+            rows.append(call("Write", file_path=str(self.write(f"{name}/a.py"))))
+        rows.append(call("Read", file_path=str(self.root / "pa/a.py")))
+        ctx = self.run_hook(self.fw(), rows=rows)
+        self.assertIn("pa 的约定", ctx)
+        self.assertLess(ctx.index("pa 的约定"), ctx.index("pd 的约定"))
+        self.assertNotIn("pb 的约定", ctx)
+
+    def test_handoff_only_named_in_shell_is_listed(self):
+        ho = self.write("ref/docs/HANDOFF.md", HANDOFF)
+        ctx = self.run_hook(self.fw(), rows=[call("Bash", command=f"echo {ho}")])
+        self.assertNotIn("AI 也要能同时收发", ctx)
+        self.assertIn(str(ho), ctx)
+
+    def test_cwd_project_and_written_project_deduped(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        code = self.write("proj/src/a.py")
+        ctx = self.run_hook(self.root / "proj", rows=[call("Write", file_path=str(code))])
+        self.assertEqual(ctx.count("AI 也要能同时收发"), 1)
+        self.assertNotIn("涉及几个项目", ctx)
+
+    def test_deleted_outside_worktree_maps_back_to_main(self):
+        # 个人仓的规矩：worktree 放仓库外、合并后删掉；对话里的路径已不存在，要靠 git worktree add 找回主仓
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        (self.root / "proj/.git").mkdir(parents=True)
+        rows = [call("Bash", command=f"cd {self.root / 'proj'} && git worktree add -b feat/x ../proj-wt-x HEAD"),
+                call("Write", file_path=str(self.root / "proj-wt-x/src/a.py"))]
+        self.assertIn("AI 也要能同时收发", self.run_hook(self.fw(), rows=rows))
+
+    def test_python_write_in_deleted_worktree_injected_via_worktree_evidence(self):
+        # python 落盘看不出写过，但本会话为 proj 开过 worktree，足以说明在做它
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        (self.root / "proj/.git").mkdir(parents=True)
+        wt = self.root / "proj-wt-x"
+        rows = [call("Bash", command=f"cd {self.root / 'proj'} && git worktree add -b x ../proj-wt-x"),
+                call("Bash", command=f"py -3 -c \"open(r'{wt / 'a.py'}','w')\"")]
+        self.assertIn("AI 也要能同时收发", self.run_hook(self.fw(), rows=rows))
+
+    def test_failed_worktree_add_is_no_evidence(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        (self.root / "proj/.git").mkdir(parents=True)
+        rows = [call("Bash", ok=False, command=f"cd {self.root / 'proj'} && git worktree add -b x ../proj-wt-x")]
+        ctx = self.run_hook(self.fw(), rows=rows)
+        self.assertNotIn("AI 也要能同时收发", ctx)
+        self.assertIn("只有当前任务属于它们时才去读", ctx)
+
+    def test_missing_transcript_falls_back_to_cwd(self):
+        self.write("proj/docs/HANDOFF.md", HANDOFF)
+        env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root))
+        payload = {"source": "compact", "cwd": str(self.root / "proj"), "transcript_path": str(self.root / "nope.jsonl")}
+        proc = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload, ensure_ascii=False),
+                              capture_output=True, text=True, encoding="utf-8", env=env)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("AI 也要能同时收发", proc.stdout)
 
     def test_bad_input_passes_with_error(self):
         env = {k: v for k, v in os.environ.items() if k not in ("PYTHONIOENCODING", "PYTHONUTF8")}

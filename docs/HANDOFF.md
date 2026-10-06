@@ -1,4 +1,14 @@
-# 交接 · 2026-09-24
+# 交接 · 2026-10-06
+
+**已谈定**：
+- 2026-10-06 · 用户 · 宏观复查后的整改顺序：① 共享定位函数，压缩后注入和文档闸一起修；② 主 SKILL.md 瘦身；③ 记忆首次整理；④ 文档闸去重回执（联动 session-sweep）；⑤ pstate 不改代码，只写清「同一件事只在一处记进度」。接下来只合并和修复，不为新担心加新机制。
+- 2026-10-06 · 采纳 codex 建议 · 压缩后注入按可信度定位：直接读写过的 HANDOFF/NEEDS → 写过文件的项目 → cwd，这几处注入全文；只读过、只在命令里提到的项目只列路径，不把别的项目的约定套到当前任务。要认 Bash/python/esafe-code 写入，不能只认 Write/Edit。
+- 2026-10-06 · 采纳 codex 建议 · 文档闸的 git 补扫也不能只扫 cwd 所在仓库（用户的会话几乎都开在昆仑仓、用绝对路径改个人仓）。
+- 2026-10-06 · 主 agent 回放发现 · 个人仓的 worktree 放在仓库外、合并后删掉，对话里的路径全部失效；按对话里的 `git worktree add` 解析「worktree → 主仓」换回主仓路径。排除按命名猜（`-wt-x`、`~/worktrees/x`、`~/wt/x` 各种都有）。
+- 2026-10-06 · 采纳 codex 建议 · 不按修改时间推断 python 落盘（worktree 删后查不到、只读命令会被误升）；改为「本会话为它开过 worktree」的项目算强证据。剩余缺口：不开 worktree、只用 python 写的项目只列路径不注入，写进已知局限。
+
+**在做（2026-10-06）**：整改第 1 条（`hooks/locate.py` 共享定位，压缩后读回和文档闸一起改）代码已完成：worktree `C:\Users\huawei\worktrees\vibe-flow-locate`（分支 feat/locate-by-paths，版本 0.18.0），133 测试全过，codex 四轮审查最后一轮回"通过"，SKILL.md §8 与 README 沿革 0.18.0 已写。**还没提交、没合并、没装到本机**。
+**下一步**：① 在 worktree 提交（个人身份 patrick1099，无 AI 署名）→ 合并回 `C:\Users\huawei\treasury-vault\shared\plugins\vibe-flow` 的 main → 推子仓 → `hub sync --refresh`，删 worktree 和分支；② 装上后做一次真实压缩端到端：从昆仑目录开会话、用绝对路径改一个带「已谈定」的个人项目（在 worktree 里改并合并删掉）、手动 /compact、问它约定，确认注入的是该项目；③ 之后按「已谈定」第一条做整改第 2–5 条。
 
 **在做**：试行"架构层只看"。用户懂架构概念（模块、数据流、流程图），不懂具体语言和代码。0.13.2 起「我打算怎么搭」图在好档、本次动到多个模块时默认画，架构词首次带解释即可用；0.13.3 按 codex 补审收紧（一条明显路也画、图上内部疑点不问用户、clarify-needs 的旧口径收窄）。规则在 `skills/vibe-flow/SKILL.md` §4 和 `clarify-needs/references/run-model.md`。
 

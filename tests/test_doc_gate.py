@@ -49,6 +49,16 @@ def edit(path, tool="Edit", ok=True):
     return [call, result]
 
 
+def tool(name, **inp):
+    """一次非写文件的工具调用（Bash / Read 等）+ 成功结果，返回两行记录。"""
+    tid = f"toolu_{next(_ids)}"
+    call = {"type": "assistant", "message": {"role": "assistant", "content": [
+        {"type": "tool_use", "id": tid, "name": name, "input": inp}]}}
+    result = {"type": "user", "message": {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": tid, "content": "ok"}]}}
+    return [call, result]
+
+
 def set_mtime(path, t):
     os.utime(path, (t, t))
 
@@ -346,6 +356,50 @@ class DocGateTest(unittest.TestCase):
         self.assertIsNone(self.run_gate([human(at=start)], cwd=str(self.root)))
         self.write("tk/new_mod.py", "pass\n")
         self.assertIn(STALE, self.run_gate([human(at=start)], cwd=str(self.root))["reason"])
+
+    def two_repos(self):
+        """cwd 是一个非 vibe 的仓库 fw，vibe 工具包 tk 是另一个仓库：模拟在公司仓开会话、用绝对路径改个人项目。"""
+        if not shutil.which("git"):
+            self.skipTest("git 不可用")
+        core = self.toolkit(with_docs=True)
+        self.write("fw/main.c", "int main(void){return 0;}\n")
+        git = ["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid"]
+        for d in ("fw", "tk"):
+            subprocess.run(git + ["init", "-q"], cwd=self.root / d, check=True)
+            subprocess.run(git + ["add", "."], cwd=self.root / d, check=True)
+            subprocess.run(git + ["commit", "-q", "-m", "init"], cwd=self.root / d, check=True)
+        return core
+
+    def test_git_scan_follows_paths_named_in_shell_commands(self):
+        core = self.two_repos()
+        start = time.time() - 60
+        core.write_text("def f(): return 1\n", encoding="utf-8")
+        cmd = f'py -3 -c "open(r\'{core}\', \'w\')"'
+        out = self.run_gate([human(at=start), tool("Bash", command=cmd)], cwd=str(self.root / "fw"))
+        self.assertIn(STALE, out["reason"])
+        self.assertIn(str(self.root / "tk"), out["reason"])
+
+    def test_git_scan_ignores_repos_only_read_or_never_named(self):
+        core = self.two_repos()
+        start = time.time() - 60
+        core.write_text("def f(): return 1\n", encoding="utf-8")
+        self.assertIsNone(self.run_gate([human(at=start)], cwd=str(self.root / "fw")))
+        self.assertIsNone(self.run_gate([human(at=start), tool("Read", file_path=str(core))],
+                                        cwd=str(self.root / "fw")))
+
+    def test_outside_worktree_merged_and_deleted_judged_in_main(self):
+        # worktree 放在仓库外（../tk-wt-x），本轮改完、合并回 tk、删掉 worktree
+        core = self.toolkit(with_docs=True)
+        (self.root / "tk/.git").mkdir()
+        add = tool("Bash", command=f"cd {self.root / 'tk'} && git worktree add -b feat/x ../tk-wt-x HEAD")
+        gone = self.root / "tk-wt-x/core.py"
+        os.utime(core, None)
+        out = self.run_gate([add, human(), edit(gone)])
+        self.assertIn(STALE, out["reason"])
+        self.assertIn(str(self.root / "tk"), out["reason"])
+        for doc in ("tk/docs/BLUEPRINT.md", "tk/docs/CHANGELOG.md"):
+            set_mtime(self.root / doc, os.stat(core).st_mtime - 2)
+        self.assertIsNone(self.run_gate([add, human(), edit(gone)]))
 
     def test_git_scan_skipped_without_turn_start_or_repo(self):
         core = self.toolkit(with_docs=True)

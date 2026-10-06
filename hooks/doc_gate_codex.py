@@ -1,6 +1,7 @@
 """Codex 文档闸：UserPromptSubmit 记本轮开始时刻，PostToolUse 收集成功补丁，Stop 复用 doc_gate 判定。
 
-本轮改过的文件 = 成功的 apply_patch ＋ git 仓库里本轮开始后改过、暂存或删掉的文件（经 shell / Python 落盘的也算）。
+本轮改过的文件 = 成功的 apply_patch ＋ 本轮开始时的 cwd 和补丁所涉路径各自所在 git 仓库里，本轮开始后改过、暂存或
+删掉的文件（经 shell / Python 落盘的也算）。shell 命令里写出的路径这一侧还没接（PostToolUse 只挂了 apply_patch）。
 状态只存文件路径和开始时刻，按 session / turn / tool_use_id 隔离；不解析不稳定的 transcript。
 内部错误退出 1、提示后放行，与原入口一致。Windows 用 py -3 调用。
 """
@@ -13,7 +14,7 @@ import sys
 import time
 import uuid
 
-from doc_gate import changed_since, evaluate, render_reason
+from doc_gate import changed_in_repos, changed_since, evaluate, render_reason  # noqa: F401  changed_since 供测试核对共用
 
 SUCCESS = "Success. Updated the following files:"
 PATCH_HEADERS = ("*** Add File: ", "*** Update File: ", "*** Delete File: ", "*** Move to: ")
@@ -138,7 +139,7 @@ def main():
         since, cwd = take_start(data)
         paths = take_paths(data)
         if event == "Stop" and not data.get("stop_hook_active"):
-            paths += changed_since(cwd or data.get("cwd"), since)
+            paths += changed_in_repos([cwd or data.get("cwd"), *paths], since)
             issues = evaluate(paths, os.environ.get("VIBE_FLOW_DOC_GATE_HOME"))
             if issues:
                 sys.stdout.write(json.dumps({"decision": "block", "reason": render_reason(issues)},

@@ -3,8 +3,10 @@
 本轮改了 vibe 项目的代码时，检查 BLUEPRINT.md / CHANGELOG.md：
 - 缺文档 → 拦下，要求补齐；
 - 两份都早于这批代码的最后一次修改 → 拦一次，让 AI 派 fork 维护文档，或说明为什么不用记。
-本轮改过的文件 = 对话记录里成功的 Write / Edit ＋ 当前 git 仓库里本轮开始后改过、暂存或删掉的文件
-（经 shell / Python 落盘的也算）。文档是否跟上只看磁盘 mtime，所以 fork 写的文档也认得出。
+本轮改过的文件 = 对话记录里成功的 Write / Edit ＋ 本轮涉及的 git 仓库里本轮开始后改过、暂存或删掉的文件
+（经 shell / Python 落盘的也算）。涉及的仓库 = 会话 cwd 所在仓库，加本轮写过、或在 shell 命令里写出来的
+路径所在仓库（见 locate.py）：用户常在一个仓库里开会话、用绝对路径改别的仓库，只扫 cwd 会漏。
+文档是否跟上只看磁盘 mtime，所以 fork 写的文档也认得出。
 还有后台子 agent 在跑时先不拦：它完成后主 agent 会被唤醒，本轮再结束时重判。常驻的 shell 后台任务
 （开发服务器、tail -f）不算，否则闸会一直不响。
 在 worktree（`.worktrees/<名>/`、`.claude/worktrees/<名>/`）里改、本轮内合并回主仓并删掉 worktree 的，
@@ -20,9 +22,16 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
-WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+# session-sweep 等按文件路径加载本模块时，hooks 目录不在 sys.path 里
+_HERE = str(Path(__file__).resolve().parent)
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+from locate import (WRITE_TOOLS, content_items, is_human_prompt, last_prompt_index, moved,  # noqa: E402,F401
+                    read_rows, repos_of, touched, worktree_moves)
+
 DOC_SUFFIXES = {".md", ".markdown", ".txt", ".rst"}
 # git 扫描里未跟踪的新文件只认这些后缀：跑工具产生的数据、日志不算代码改动
 SCAN_SUFFIXES = {".py", ".pyw", ".js", ".mjs", ".ts", ".html", ".css", ".ps1", ".sh", ".bat", ".cmd", ".toml"}
@@ -31,37 +40,20 @@ APPS_MARK = "架构约束（vibe-apps）"
 HEADER_LINES = 15
 MAX_PY_SCAN = 60
 GIT_TIMEOUT = 8
+# 一轮里补扫的 git 仓库上限：每个仓库要跑几次 git，Stop 钩子不能拖太久
+MAX_SCAN_REPOS = 6
 # 一次合并（checkout）把代码和文档写回主仓，前后差不过几秒；文档在这个窗口内就算和代码同批
 MERGE_SLACK = 5
 
 
 # ---------- 对话记录 → 本轮写过的文件 ----------
 
-def _is_human_prompt(row):
-    if row.get("type") != "user" or row.get("isMeta"):
-        return False
-    origin = row.get("origin")
-    if isinstance(origin, dict):
-        return origin.get("kind") == "human"
-    content = (row.get("message") or {}).get("content")
-    return isinstance(content, str) and not content.lstrip().startswith("<")
-
-
-def _content_items(row):
-    content = (row.get("message") or {}).get("content")
-    return [x for x in content if isinstance(x, dict)] if isinstance(content, list) else []
-
-
 def turn_written_paths(rows):
     """本轮成功写过的文件：失败的调用（is_error）和没有结果的调用都不算。"""
-    start = 0
-    for i, row in enumerate(rows):
-        if _is_human_prompt(row):
-            start = i + 1
     calls = []
     ok_ids = set()
-    for row in rows[start:]:
-        for item in _content_items(row):
+    for row in rows[last_prompt_index(rows):]:
+        for item in content_items(row):
             kind = item.get("type")
             if row.get("type") == "assistant" and kind == "tool_use" and item.get("name") in WRITE_TOOLS:
                 inp = item.get("input") or {}
@@ -80,7 +72,7 @@ def turn_start(rows):
     """
     stamp = None
     for row in rows:
-        if _is_human_prompt(row):
+        if is_human_prompt(row):
             stamp = row.get("timestamp")
     if not isinstance(stamp, str):
         return None
@@ -88,20 +80,6 @@ def turn_start(rows):
         return datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
     except ValueError:
         return None
-
-
-def read_rows(transcript_path):
-    rows = []
-    with open(transcript_path, encoding="utf-8", errors="replace") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rows.append(json.loads(line))
-            except ValueError:
-                continue
-    return rows
 
 
 # ---------- 文件 → 最后一次变动的时刻 ----------
@@ -178,6 +156,14 @@ def changed_since(cwd, since):
     return out
 
 
+def changed_in_repos(dirs, since):
+    """dirs 所在的各 git 仓库里 since 之后变动的文件；同一仓库只扫一次，最多 MAX_SCAN_REPOS 个，按 dirs 的顺序取。"""
+    out = []
+    for root in repos_of([d for d in dirs if d], MAX_SCAN_REPOS):
+        out += changed_since(root, since)
+    return list(dict.fromkeys(out))
+
+
 # ---------- 文件 → 所属 vibe 项目 ----------
 
 def _norm(p):
@@ -185,6 +171,12 @@ def _norm(p):
 
 
 def header_marker(path):
+    return _header_marker(str(path))
+
+
+# 一次 Stop 里几十个路径常落在同几个目录：文件头和「是不是项目根」按路径缓存，避免反复 glob、读文件头
+@lru_cache(maxsize=None)
+def _header_marker(path):
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             head = "".join(f.readline() for _ in range(HEADER_LINES))
@@ -195,6 +187,12 @@ def header_marker(path):
 
 
 def _dir_is_project_root(d):
+    return _is_project_root(str(d))
+
+
+@lru_cache(maxsize=None)
+def _is_project_root(d):
+    d = Path(d)
     # 只认 BLUEPRINT.md：CHANGELOG.md 太常见，公司仓也可能有，不能当 vibe 标记
     if (d / "docs" / "BLUEPRINT.md").exists():
         return True
@@ -252,19 +250,22 @@ def _mtime(p):
         return None
 
 
-def evaluate(paths, stop_at=None):
+def evaluate(paths, stop_at=None, moves=None):
     """文档要晚于这批代码的最后一次变动才算跟上。
 
     只看磁盘 mtime、不看是谁写的，所以子 agent（fork）写的文档同样算数。删掉的代码按 changed_at
     取所在目录的 mtime；连目录都不在了就按现在，即这批改动必须重判一次。
     已删 worktree 里的代码换成主仓同一路径，按合并写回的 mtime 判，放宽 MERGE_SLACK：worktree 里改过的
-    文档随同一次合并写回，时刻与代码只差几秒；没改的文档还是旧 mtime，照样拦。
+    文档随同一次合并写回，时刻与代码只差几秒；没改的文档还是旧 mtime，照样拦。仓库里的 `.worktrees/` 按
+    路径认（merged_worktree_path），放在仓库外的按 moves（locate.worktree_moves 从对话里解析）认。
     """
     projects = {}
     for raw in dict.fromkeys(paths):
         if Path(raw).suffix.lower() in DOC_SUFFIXES:
             continue
         merged = merged_worktree_path(raw)
+        if merged is None and (m := moved(raw, moves)):
+            merged = Path(m)
         path, slack = (merged, MERGE_SLACK) if merged is not None else (raw, 0)
         found = find_project(path, stop_at)
         if not found:
@@ -330,11 +331,14 @@ def main():
     if not transcript or not os.path.isfile(transcript):
         return 0
     rows = read_rows(transcript)
-    paths = turn_written_paths(rows) + changed_since(data.get("cwd"), turn_start(rows))
+    moves = worktree_moves(rows, data.get("cwd"))
+    turn = touched(rows, last_prompt_index(rows), moves=moves, cwd=data.get("cwd"))
+    dirs = [data.get("cwd")] + [p for kind, p in turn if kind != "read"]
+    paths = turn_written_paths(rows) + changed_in_repos(dirs, turn_start(rows))
     if not paths:
         return 0
     stop_at = os.environ.get("VIBE_FLOW_DOC_GATE_HOME")
-    issues = evaluate(paths, stop_at)
+    issues = evaluate(paths, stop_at, moves)
     if issues and not subagent_running(data.get("background_tasks")):
         sys.stdout.write(json.dumps({"decision": "block", "reason": render_reason(issues)},
                                     ensure_ascii=False))
