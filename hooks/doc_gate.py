@@ -11,7 +11,9 @@
 （开发服务器、tail -f）不算，否则闸会一直不响。
 在 worktree（`.worktrees/<名>/`、`.claude/worktrees/<名>/`）里改、本轮内合并回主仓并删掉 worktree 的，
 按主仓里同一相对路径判，见 merged_worktree_path。
-同一轮只拦一次（stop_hook_active），判断权留给 AI。非 vibe 项目（无标记）一律不管。
+同一轮只拦一次（stop_hook_active，只防循环）。AI 判断这批不用记时跑提示里的回执命令（receipt.py），
+之后同一份代码快照不再提醒——后台任务完成把 AI 唤醒、本轮再结束时也不会重复拦。判断权留给 AI。
+非 vibe 项目（无标记）一律不管。
 
 只用 stdlib。内部出错时退出码 1（非阻断、错误可见），绝不因闸本身的 bug 卡住会话。
 """
@@ -29,6 +31,7 @@ from pathlib import Path
 _HERE = str(Path(__file__).resolve().parent)
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
+import receipt  # noqa: E402
 from locate import (WRITE_TOOLS, content_items, is_human_prompt, last_prompt_index, moved,  # noqa: E402,F401
                     read_rows, repos_of, touched, worktree_moves)
 
@@ -258,6 +261,7 @@ def evaluate(paths, stop_at=None, moves=None):
     已删 worktree 里的代码换成主仓同一路径，按合并写回的 mtime 判，放宽 MERGE_SLACK：worktree 里改过的
     文档随同一次合并写回，时刻与代码只差几秒；没改的文档还是旧 mtime，照样拦。仓库里的 `.worktrees/` 按
     路径认（merged_worktree_path），放在仓库外的按 moves（locate.worktree_moves 从对话里解析）认。
+    stale 的项目若有与当前代码快照一致的回执（receipt.covers）就不报；缺文档一律照报。
     """
     projects = {}
     for raw in dict.fromkeys(paths):
@@ -285,9 +289,15 @@ def evaluate(paths, stop_at=None, moves=None):
             continue
         code_at = max((at if (at := changed_at(c)) is not None else now) - slack for c, slack in proj["code"])
         docs_at = max(_mtime(bp) or 0, _mtime(cl) or 0)
-        if docs_at < code_at:
+        if docs_at < code_at and not receipt.covers(bp, cl, [c for c, _ in proj["code"]],
+                                                    DOC_SUFFIXES, SCAN_SUFFIXES):
             issues.append(("stale", proj, []))
     return issues
+
+
+def receipt_command(bp):
+    return (f'"{sys.executable}" "{Path(__file__).resolve()}" receipt --blueprint "{bp}" '
+            '--reason "<一句话：为什么这批不用记>"')
 
 
 def render_reason(issues):
@@ -304,14 +314,17 @@ def render_reason(issues):
             lines.append(f"- {where}：缺 {' / '.join(missing)}（应在 {proj['bp'].parent}）。"
                          "出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
         else:
-            lines.append(f"- {where}：BLUEPRINT 和 CHANGELOG 都还停在这批代码改动之前。")
+            lines.append(f"- {where}：BLUEPRINT 和 CHANGELOG 都还停在这批代码改动之前。"
+                         f"判断不用记时跑：{receipt_command(proj['bp'])}")
     lines += [
         "按 vibe-flow §8 收工：派一个继承本会话上下文的子 agent 维护文档（Claude Code 用 Agent 工具、"
         "subagent_type 为 fork；Codex 用 spawn_agent 并继承全部历史），任务写：加载 living-blueprint，"
         "按它更新本项目文档、覆盖这批改动，只改文档不碰代码，汇报不超过三行。等它完成再汇报或提交。"
         "没有这类子 agent 可用时，自己按 living-blueprint 改。",
-        "纯内部重构、用户没感知过 → 不用派，在回复里用一句话说明为什么不用记。",
-        "本提醒每轮只出现一次；判断权在你，别为过闸写假条目。",
+        "纯内部重构、用户没感知过 → 不用派，跑上面那条回执命令写明理由，并在回复里说一句。回执确认的是"
+        "「这对文档管的全部代码在当前状态下都不用更新文档」，不只是本轮那几个文件；之后代码或这两份文档"
+        "再变，回执自动失效。文档还没建的不能用回执，要先建。",
+        "本提醒每轮只出现一次；判断权在你，别为过闸写假条目，也别为过闸写假回执。",
     ]
     return "\n".join(lines)
 
@@ -321,6 +334,22 @@ def subagent_running(tasks):
     所以暂缓是安全的；shell 类后台任务可能永不结束，不能让它们暂缓闸。"""
     return any(isinstance(t, dict) and (t.get("task_type") or t.get("type")) == "subagent"
                for t in tasks or [])
+
+
+def receipt_main(argv):
+    import argparse
+    ap = argparse.ArgumentParser(prog="doc_gate.py receipt",
+                                 description="写一条「这批不用记」回执（见 receipt.py）")
+    ap.add_argument("--blueprint", required=True, help="闸提示里给出的 BLUEPRINT 路径")
+    ap.add_argument("--reason", required=True, help="一句话：为什么这批不用记")
+    args = ap.parse_args(argv)
+    try:
+        record = receipt.write(args.blueprint, args.reason, DOC_SUFFIXES, SCAN_SUFFIXES)
+    except (ValueError, receipt.Unverifiable) as e:
+        sys.stderr.write(f"回执没写：{e}\n")
+        return 2
+    sys.stdout.write(f"回执已写：{record['root']}（{record['layout']}，快照 {record['files']} 个文件）\n")
+    return 0
 
 
 def main():
@@ -350,6 +379,8 @@ if __name__ == "__main__":
         sys.stdin.reconfigure(encoding="utf-8")
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+        if sys.argv[1:2] == ["receipt"]:
+            sys.exit(receipt_main(sys.argv[2:]))
         sys.exit(main())
     except Exception as e:
         sys.stderr.write(f"vibe-flow doc_gate 内部错误（已放行）：{e!r}\n")

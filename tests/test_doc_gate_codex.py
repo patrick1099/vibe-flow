@@ -22,6 +22,7 @@ class CodexDocGateTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.state = self.root / "plugin-data"
         self.env = dict(os.environ, PLUGIN_DATA=str(self.state), VIBE_FLOW_DOC_GATE_HOME=str(self.root),
+                        VIBE_FLOW_RECEIPTS=str(self.root / "receipts"),
                         GIT_CEILING_DIRECTORIES=str(self.root.parent))
         self.env.pop("CLAUDE_PLUGIN_DATA", None)
         self.seq = 0

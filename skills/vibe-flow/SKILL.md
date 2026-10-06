@@ -201,7 +201,7 @@ AI 决定并说明：库、模块划分、文件名、内部 API（模块和数�
 **文档跟着改才算完成，但不由干活的主 agent 来整理**——全压在主 agent 上下文里会拖累正事。干活期间不加载 `living-blueprint`、不整理 `BLUEPRINT` / `CHANGELOG` / `AGENTS.md` / `HANDOFF`，只做 §4 的即时记录；例外是 vibe-apps 脚手架里 `AGENTS.md` 的架构约束段，由实现者随目录创建。`DESIGN.md` 归 vibe-apps；`NEEDS.md` 的需求梳理归 `clarify-needs`。一批改动做完、验证过、交付汇报之前（微脚本只改头部契约行，免），**派一个继承本会话上下文的 fork 维护文档，等它完成、核对它没碰代码再汇报**——四步照 `references/doc-fork.md` 做。活没做完要结束会话时，同样派 fork 写 `HANDOFF.md`。没有这类子 agent 可用时，主 agent 自己按 `living-blueprint` 改。
 
 **两个兜底钩子**（细则同在 `doc-fork.md`）：
-- **文档闸**（Stop 时，Claude Code 和 Codex 都有；Codex 上首次使用或钩子定义变更后，须先在 Codex 中审阅并信任钩子，CLI 用 `/hooks`，否则它不执行）：被拦就派 fork；纯内部改动就在回复里一句话说明为什么不用记，别为过闸写假条目。没有触发闸不代表文档已经合格。
+- **文档闸**（Stop 时，Claude Code 和 Codex 都有；Codex 上首次使用或钩子定义变更后，须先在 Codex 中审阅并信任钩子，CLI 用 `/hooks`，否则它不执行）：被拦就派 fork；纯内部改动就跑提示里那条回执命令写明理由（fork 判断不用记、文档没动时也写），别为过闸写假条目或假回执。没有触发闸不代表文档已经合格。
 - **压缩后读回**（只在 Claude Code）：收到注入的「已谈定」原文或待读路径，就按 §4「读回」对照后再继续；只列了路径的项目，当前任务属于它才去读。
 
 完成时简洁报告：

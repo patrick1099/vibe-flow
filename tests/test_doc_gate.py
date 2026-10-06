@@ -95,7 +95,8 @@ class DocGateTest(unittest.TestCase):
         tr = self.root / "transcript.jsonl"
         tr.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in flatten(rows)), encoding="utf-8")
         # 临时目录外层若恰好是 git 仓库，别让 git 扫描摸上去
-        env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root), GIT_CEILING_DIRECTORIES=str(self.root.parent))
+        env = dict(os.environ, VIBE_FLOW_DOC_GATE_HOME=str(self.root), GIT_CEILING_DIRECTORIES=str(self.root.parent),
+                   VIBE_FLOW_RECEIPTS=str(self.root / "receipts"))
         payload = {"transcript_path": str(tr), "stop_hook_active": active, **extra}
         proc = subprocess.run(
             [sys.executable, str(GATE)],
