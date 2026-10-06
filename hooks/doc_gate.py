@@ -7,6 +7,8 @@
 （经 shell / Python 落盘的也算）。文档是否跟上只看磁盘 mtime，所以 fork 写的文档也认得出。
 还有后台子 agent 在跑时先不拦：它完成后主 agent 会被唤醒，本轮再结束时重判。常驻的 shell 后台任务
 （开发服务器、tail -f）不算，否则闸会一直不响。
+在 worktree（`.worktrees/<名>/`、`.claude/worktrees/<名>/`）里改、本轮内合并回主仓并删掉 worktree 的，
+按主仓里同一相对路径判，见 merged_worktree_path。
 同一轮只拦一次（stop_hook_active），判断权留给 AI。非 vibe 项目（无标记）一律不管。
 
 只用 stdlib。内部出错时退出码 1（非阻断、错误可见），绝不因闸本身的 bug 卡住会话。
@@ -29,6 +31,8 @@ APPS_MARK = "架构约束（vibe-apps）"
 HEADER_LINES = 15
 MAX_PY_SCAN = 60
 GIT_TIMEOUT = 8
+# 一次合并（checkout）把代码和文档写回主仓，前后差不过几秒；文档在这个窗口内就算和代码同批
+MERGE_SLACK = 5
 
 
 # ---------- 对话记录 → 本轮写过的文件 ----------
@@ -114,6 +118,30 @@ def changed_at(path):
             return q.stat().st_mtime
         except OSError:
             continue
+    return None
+
+
+# ---------- worktree → 主仓 ----------
+
+def merged_worktree_path(path):
+    """worktree 里的路径在 worktree 已删时，换成主仓里的同一相对路径；否则返回 None。
+
+    worktree 还在时它自己就是完整的项目副本（带 docs/），照常按它判。删掉了说明已合并回主仓
+    （或放弃了），这时对话记录里的路径全都不存在：往上找项目会落到主仓，却拿主仓文档去比
+    worktree 里写过的文档，必然误报。认 `.worktrees/<名>/` 和 Claude Code 的 `.claude/worktrees/<名>/`。
+    """
+    parts = Path(path).parts
+    for i, part in enumerate(parts[:-2]):
+        low = part.lower()
+        if low == ".worktrees":
+            main = parts[:i]
+        elif low == "worktrees" and i and parts[i - 1].lower() == ".claude":
+            main = parts[:i - 1]
+        else:
+            continue
+        if not main or Path(*parts[:i + 2]).exists():
+            return None
+        return Path(*main, *parts[i + 2:])
     return None
 
 
@@ -229,18 +257,22 @@ def evaluate(paths, stop_at=None):
 
     只看磁盘 mtime、不看是谁写的，所以子 agent（fork）写的文档同样算数。删掉的代码按 changed_at
     取所在目录的 mtime；连目录都不在了就按现在，即这批改动必须重判一次。
+    已删 worktree 里的代码换成主仓同一路径，按合并写回的 mtime 判，放宽 MERGE_SLACK：worktree 里改过的
+    文档随同一次合并写回，时刻与代码只差几秒；没改的文档还是旧 mtime，照样拦。
     """
     projects = {}
     for raw in dict.fromkeys(paths):
         if Path(raw).suffix.lower() in DOC_SUFFIXES:
             continue
-        found = find_project(raw, stop_at)
+        merged = merged_worktree_path(raw)
+        path, slack = (merged, MERGE_SLACK) if merged is not None else (raw, 0)
+        found = find_project(path, stop_at)
         if not found:
             continue
         root, bp, cl, layout = found
         key = (_norm(bp), _norm(cl))
         projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "layout": layout, "code": []})
-        projects[key]["code"].append(raw)
+        projects[key]["code"].append((path, slack))
 
     now = time.time()
     issues = []
@@ -250,7 +282,7 @@ def evaluate(paths, stop_at=None):
         if missing:
             issues.append(("missing", proj, missing))
             continue
-        code_at = max(at if (at := changed_at(c)) is not None else now for c in proj["code"])
+        code_at = max((at if (at := changed_at(c)) is not None else now) - slack for c, slack in proj["code"])
         docs_at = max(_mtime(bp) or 0, _mtime(cl) or 0)
         if docs_at < code_at:
             issues.append(("stale", proj, []))
@@ -262,7 +294,7 @@ def render_reason(issues):
     for kind, proj, missing in issues:
         where = proj["root"]
         if kind == "missing" and proj["layout"] == "unknown":
-            script = Path(proj["code"][0])
+            script = Path(proj["code"][0][0])
             lines.append(f"- {script}：还没有 BLUEPRINT / CHANGELOG，位置看不出来，按这个脚本的实际归属选（vibe-flow §6）："
                          f"独占这个目录 → 建 {where / 'AGENTS.md'} 和 {where / 'docs'} 下的两份；"
                          f"和别的脚本共处 → 建旁挂 {script.stem}.BLUEPRINT.md / {script.stem}.CHANGELOG.md。"

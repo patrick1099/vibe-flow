@@ -243,6 +243,56 @@ class DocGateTest(unittest.TestCase):
         set_mtime(cl, deleted_at + 5)
         self.assertIsNone(self.run_gate(rows))
 
+    # ---------- worktree：在 worktree 里改，本轮内合并回主仓并删掉 worktree ----------
+
+    def worktree_turn(self, base="tk/.worktrees/wt", touch_doc=True):
+        """主仓 tk 项目的文档是旧的；本轮在 tk 下开的 worktree 里改代码（和文档），然后合并、删掉 worktree。
+        worktree 开在项目根下面，删掉后往上找会落到主仓项目——真实误报就是这么来的。"""
+        self.toolkit(with_docs=True)
+        wt = self.root / base
+        self.write(f"{base}/cli.py", "# 结构: vibe-scripts/toolkit\n")
+        core = self.write(f"{base}/core.py", "def f(): return 1\n")
+        bp = self.doc(f"{base}/docs/BLUEPRINT.md")
+        cl = self.doc(f"{base}/docs/CHANGELOG.md")
+        rows = [human(), edit(core)] + ([edit(bp), edit(cl)] if touch_doc else [])
+        # 真实顺序：先合并（主仓文件被写回，文档先于代码一点），过一会儿再删 worktree
+        merged_at = time.time() - 3
+        if touch_doc:
+            set_mtime(self.root / "tk/docs/BLUEPRINT.md", merged_at - 1)
+            set_mtime(self.root / "tk/docs/CHANGELOG.md", merged_at - 1)
+        set_mtime(self.root / "tk/core.py", merged_at)
+        shutil.rmtree(wt)
+        return rows
+
+    def test_removed_worktree_with_docs_merged_passes(self):
+        self.assertIsNone(self.run_gate(self.worktree_turn()))
+
+    def test_removed_worktree_without_docs_blocks_on_main_repo(self):
+        out = self.run_gate(self.worktree_turn(touch_doc=False))
+        self.assertIn(STALE, out["reason"])
+        self.assertIn(str(self.root / "tk"), out["reason"])
+        self.assertNotIn(".worktrees", out["reason"])
+
+    def test_claude_code_worktree_layout_is_mapped_too(self):
+        self.assertIsNone(self.run_gate(self.worktree_turn(base="tk/.claude/worktrees/wt")))
+
+    def test_worktree_docs_older_than_merge_window_still_block(self):
+        rows = self.worktree_turn()
+        merged_at = (self.root / "tk/core.py").stat().st_mtime
+        set_mtime(self.root / "tk/docs/BLUEPRINT.md", merged_at - 60)
+        set_mtime(self.root / "tk/docs/CHANGELOG.md", merged_at - 60)
+        self.assertIn(STALE, self.run_gate(rows)["reason"])
+
+    def test_live_worktree_is_judged_by_its_own_docs(self):
+        self.toolkit(with_docs=True)
+        self.write("tk/.worktrees/wt/cli.py", "# 结构: vibe-scripts/toolkit\n")
+        core = self.write("tk/.worktrees/wt/core.py", "def f(): return 1\n")
+        self.doc("tk/.worktrees/wt/docs/BLUEPRINT.md")
+        cl = self.doc("tk/.worktrees/wt/docs/CHANGELOG.md")
+        out = self.run_gate([human(), edit(core)])
+        self.assertIn(str(self.root / "tk/.worktrees/wt"), out["reason"])
+        self.assertIsNone(self.run_gate([human(), edit(core), edit(cl)]))
+
     # ---------- git 扫描：经 shell / Python 落盘、对话记录里没有的改动 ----------
 
     def git_repo(self):

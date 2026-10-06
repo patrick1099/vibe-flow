@@ -258,5 +258,16 @@ codex 审方案时改了五处：最初打算用 PreCompact 拦手动压缩（�
 不只进 CHANGELOG。没选的路：新建 DECISIONS.md（用户已嫌文档多；HANDOFF 本来就管"做到一半"这段）；并进 NEEDS.md
 （它只在好档有，也不管做法）；改 ai-room 让台账记结论（那是另一个工具的事，由这里的"审完记一条"覆盖）。
 
+0.17.1（2026-10-06）文档闸认 worktree。起因是用户看到一次误报问"为什么报错"：protocol-simulator 的代码和
+BLUEPRINT/CHANGELOG 都在 `.worktrees/rederive/` 里改了，同一轮合并回主仓、删掉 worktree，闸却报文档没动。根因：
+worktree 删掉后，对话记录里的路径全都不存在，往上找项目落到了主仓，却拿主仓文档去比 worktree 里写过的文档；
+0.15.0 起改看修改时间也躲不过，删掉的代码按最近一层还在的目录（`.worktrees`）算时刻，那正是删 worktree 的时刻，
+晚于合并写回的文档。用户的个人仓规矩是"一律先开 worktree 再改"，所以每次都会撞上。改成：已删 worktree
+（`.worktrees/<名>/`、`.claude/worktrees/<名>/`）里的代码换成主仓同一相对路径，按合并写回的修改时间判，放宽 5 秒；
+worktree 里改过的文档随同一次合并写回，落在窗口内；没改的文档还是旧时刻，照样拦。worktree 还在时它本身就是带
+docs/ 的完整副本，照旧按它判。没选的路：查 git 看分支是否已合并（要找出是哪个分支、合并到哪，绕得远，修改时间已经够）；
+worktree 的路径一律换成主仓（worktree 还没合并时，主仓文档确实没变，会误拦）。已知盲区：worktree 没合并就删掉
+（放弃了）时，按主仓旧文件判，结果不可靠，但这时本来也没有要记的改动。
+
 合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`，更早的设计记录见
 `docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。
