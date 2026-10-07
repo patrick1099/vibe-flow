@@ -161,6 +161,10 @@ fork 回来后怎么确认它没碰代码：`skills/vibe-flow/scripts/code_state
 
 四份各管一件：AGENTS 管怎么干活，HANDOFF 管做到哪，BLUEPRINT 管是什么，CHANGELOG 管为什么。
 
+**同一件事的进度只记一处。** 有 HANDOFF 的项目，进度和交接只写 HANDOFF，不在 pstate（project-state 插件的任务板）
+另建任务，也不写进平台原生记忆或 hub 金库——记忆只存长期结论和教训。pstate 管没有 HANDOFF 的仓库（公司仓等）。
+session-sweep 只是发现入口：从它那里捡起一件事，进度落回 HANDOFF 或 pstate，不在它那里维护。
+
 Claude Code 默认只读 CLAUDE.md。想让它读项目的 AGENTS.md，要么启用内置的 agents-md 并把
 `instructionFiles` 设成 `claude-md-and-agents-md`，要么在项目里放一个只有一行 `@AGENTS.md` 的
 CLAUDE.md。Codex 原生读 AGENTS.md。
@@ -320,6 +324,17 @@ session-sweep 的文档探测也要认；键用那对 BLUEPRINT/CHANGELOG 而不
 （同目录几个旁挂脚本会互相豁免）；回执放进项目仓库或 `.git` 目录（前者污染仓库，非 git 项目没有后者）；解析 AI 回复里
 "不用记"之类的措辞。已知局限：被 gitignore 的代码、超过 3000 个文件的项目，回执验证不了，照常提醒；session-sweep
 先按目录只留最新一个文件，可能留下的是 AGENTS.md 而把同目录代码丢掉，这是它原有的漏报，不在本次范围。
+
+0.20.1（2026-10-07）§6 写清「同一件事的进度只记一处」，只改规矩不改代码；同日 project-state 0.1.1 跟着改。起因是
+宏观复查用户的担心之一："缺项目待办，和 handoff 冲突"——HANDOFF、pstate、原生记忆、session-sweep 都能记"做到哪"，
+却没有一处说清谁管什么，真实记录里进度类条目散在原生记忆里、过期了还被拿出来问用户。改成：有 HANDOFF 的项目只写
+HANDOFF；pstate 管没有 HANDOFF 的仓库（公司仓等），并由 AI 判断一件事一个会话做不完时主动建任务，不等用户说"记个
+任务"；原生记忆和金库只存长期结论，不记进度；session-sweep 只做发现入口。至此宏观复查的五条整改做完（压缩后读回和
+文档闸按实际碰过的路径定位、主 skill 瘦身、原生记忆首次整理、文档闸回执、本条）。复查的结论也留作以后加机制的门槛：
+自动跑的（闸、fork、注入）用起来了，要用户记着做的（"记个任务"、每月整理记忆）没用起来，而且每个担心都新加一套机制、
+从没合并过——**新机制先问：加了它以后，用户要记着做的事有没有变少；能合并、修复已有的就不加新的。** 没选的路：停用 pstate
+（codex 否决：公司仓没有 HANDOFF，跨 worktree 交接仍要它；它零使用的真正原因是"AI 主动记录"这条触发没落实，加上没有
+任务时完全静默，不是没用）；把进度统一并进 HANDOFF（公司仓不建 vibe 文档）。
 
 合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`，更早的设计记录见
 `docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。
