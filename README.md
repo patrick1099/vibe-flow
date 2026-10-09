@@ -161,9 +161,10 @@ fork 回来后怎么确认它没碰代码：`skills/vibe-flow/scripts/code_state
 
 四份各管一件：AGENTS 管怎么干活，HANDOFF 管做到哪，BLUEPRINT 管是什么，CHANGELOG 管为什么。
 
-**同一件事的进度只记一处。** 有 HANDOFF 的项目，进度和交接只写 HANDOFF，不在 pstate（project-state 插件的任务板）
-另建任务，也不写进平台原生记忆或 hub 金库——记忆只存长期结论和教训。pstate 管没有 HANDOFF 的仓库（公司仓等）。
-session-sweep 只是发现入口：从它那里捡起一件事，进度落回 HANDOFF 或 pstate，不在它那里维护。
+**同一件事的进度只记一处。** 进度和交接只写 HANDOFF，不写进 pstate 条目，也不写进平台原生记忆或 hub 金库——记忆只存
+长期结论和教训。pstate（project-state 插件）管另外两件：会话互斥（几个会话同时干同一个个人项目时，撞上同一个文件由钩子
+拦下、问你等还是接手）和待办条目（还没开始的事，一行一条，指向 HANDOFF）。公司仓不建 vibe 文档，也不加锁、不新建条目。
+session-sweep 只是发现入口：从它那里捡起一件事，进度落回 HANDOFF，不在它那里维护。
 
 Claude Code 默认只读 CLAUDE.md。想让它读项目的 AGENTS.md，要么启用内置的 agents-md 并把
 `instructionFiles` 设成 `claude-md-and-agents-md`，要么在项目里放一个只有一行 `@AGENTS.md` 的
@@ -335,6 +336,14 @@ HANDOFF；pstate 管没有 HANDOFF 的仓库（公司仓等），并由 AI 判�
 从没合并过——**新机制先问：加了它以后，用户要记着做的事有没有变少；能合并、修复已有的就不加新的。** 没选的路：停用 pstate
 （codex 否决：公司仓没有 HANDOFF，跨 worktree 交接仍要它；它零使用的真正原因是"AI 主动记录"这条触发没落实，加上没有
 任务时完全静默，不是没用）；把进度统一并进 HANDOFF（公司仓不建 vibe 文档）。
+
+0.20.2（2026-10-09）推翻 0.20.1 里"pstate 管没有 HANDOFF 的仓库（公司仓等）"那半句，只改规矩不改代码；同日 project-state
+0.2.0 跟着改。起因是用户整理文件职能时指出："HANDOFF是要接受正在干但没干完。PSTATE是干我同时要做的几件事"，"我当初涉及
+pstate就不是为了公司项目吧，我当时说过，公司东西我记得住，不需要。 pstate是为了达到一个类似互斥锁的功能吧"。0.20.1 是按
+仓库类型分工（个人仓写 HANDOFF、公司仓写 pstate），两处记的其实是同一种东西；而"公司的我记得住"是用户前一天在 session-sweep
+里说的，没被连起来。改成按概念分：进度和交接只写 HANDOFF；pstate 只管会话互斥（撞上同一个文件由钩子拦下、问用户等还是接手）
+和待办条目，只用于个人项目，公司仓不加锁、不新建条目。没选的路：保留 0.20.1 的按仓库分工（同一件事两种记法，用户分不清职能）；
+把待办也并进 HANDOFF（HANDOFF 做完就删，装不下"还没开始的事"，也表达不了几个会话谁在干什么）。
 
 合并理由与档位设计见 `docs/history/2026-07-30-vibe-flow-plugin-merge.md`，更早的设计记录见
 `docs/history/` 其余文件，`clarify-needs` 的 RED 基线与夹具见 `docs/evals/`。
