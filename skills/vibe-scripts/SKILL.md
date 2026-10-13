@@ -11,7 +11,7 @@ description: Use when writing or modifying any standalone Python script or small
 
 省 token 原理：AI 改代码的成本 ∝ 它必须读的代码量。本模板让任何一类改动只需读/改一个固定小区域。
 
-**适用判定**：这段代码坏了产品会坏吗？会 → 不适用（走项目编码规范 + 人审）；不会（独立脚本/工具）→ 适用。有界面 / 要发给别人(exe) / 可能变网站 → 改用 **vibe-apps**。
+**适用判定**：这段代码坏了产品会坏吗？会 → 不适用（走项目编码规范 + 人审）；不会（独立脚本/工具）→ 适用。有界面 → 改用 **vibe-apps**；没界面的命令行工具即使要打包发给别人，或以后可能变网站，仍用本 skill。
 
 **分工**：判档、低耦合规矩、文档要求、谁拍板，都以 `vibe-flow` 为准（§2、§4–§6），本 skill 只给 Python 脚本的落法。**新写脚本或调整结构时，读 `references/templates.md` 拿模板代码。**
 

@@ -37,7 +37,7 @@ from locate import (WRITE_TOOLS, content_items, is_human_prompt, last_prompt_ind
 
 DOC_SUFFIXES = {".md", ".markdown", ".txt", ".rst"}
 # git 扫描里未跟踪的新文件只认这些后缀：跑工具产生的数据、日志不算代码改动
-SCAN_SUFFIXES = {".py", ".pyw", ".js", ".mjs", ".ts", ".html", ".css", ".ps1", ".sh", ".bat", ".cmd", ".toml"}
+SCAN_SUFFIXES = {".py", ".pyw", ".rs", ".js", ".mjs", ".ts", ".html", ".css", ".ps1", ".sh", ".bat", ".cmd", ".toml"}
 SCRIPT_MARK = re.compile(r"结构:\s*vibe-scripts/(standard|toolkit)\b")
 APPS_MARK = "架构约束（vibe-apps）"
 HEADER_LINES = 15

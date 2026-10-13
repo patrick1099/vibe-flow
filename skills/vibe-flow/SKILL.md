@@ -1,6 +1,6 @@
 ---
 name: vibe-flow
-description: "Load FIRST — before vibe-scripts, vibe-apps or clarify-needs, and before writing any code — whenever the user asks to build, write, change, fix, or extend a personal script, tool, app, plugin, or automation (not company firmware / product code). Sizes this one change (small and clear → act directly; wide-impact, costly-if-wrong, or genuinely unclear → thorough), then routes to the right skill. 中文触发：帮我写/做/改/修一个脚本、小工具、应用、插件、自动化；给这个工具加个功能；这个脚本有 bug；动手写代码之前先加载本 skill。"
+description: "Load FIRST — before vibe-scripts, vibe-apps (and its vibe-apps-native / vibe-apps-web branches) or clarify-needs, and before writing any code — whenever the user asks to build, write, change, fix, or extend a personal script, tool, app, plugin, or automation (not company firmware / product code). Sizes this one change (small and clear → act directly; wide-impact, costly-if-wrong, or genuinely unclear → thorough), then routes to the right skill. 中文触发：帮我写/做/改/修一个脚本、小工具、应用、插件、自动化；给这个工具加个功能；这个脚本有 bug；动手写代码之前先加载本 skill。"
 ---
 
 # Vibe Flow：轻量 vibe-coding 主流程
@@ -9,7 +9,7 @@ description: "Load FIRST — before vibe-scripts, vibe-apps or clarify-needs, an
 
 > 先明确需求，再判这是小事还是大事：**小事要省，大事要好。**
 
-省的是流程，不是质量；好的是该厚的地方厚，不是每次走满。本 skill 是这套工作流的**总入口与档位闸门**：`vibe-scripts` / `vibe-apps` / `clarify-needs` 都先经过这里判档再进。跨分支的规矩（低耦合 §5、文档 §6、谁拍板 §4）以本 skill 及其 `references/` 为唯一权威出处，分支 skill 只给代码例子；不把各 skill 串成必经关卡。
+省的是流程，不是质量；好的是该厚的地方厚，不是每次走满。本 skill 是这套工作流的**总入口与档位闸门**：`vibe-scripts` / `vibe-apps` / `clarify-needs` 都先经过这里判档再进。跨分支的规矩（低耦合 §5、文档 §6、谁拍板 §4）以本 skill 及其 `references/` 为唯一权威出处，分支 skill 只给代码例子；不把各 skill 串成必经关卡。唯一的固定顺序在应用内部：`vibe-apps` 先选原生 / Web 路线，再只加载 `vibe-apps-native` 或 `vibe-apps-web` 其中一个。
 
 **细则按时机读，不预读**（路径相对本 skill 目录）：
 
@@ -116,6 +116,8 @@ AI 决定并说明：库、模块划分、文件名、内部 API（模块和数�
 
 纯技术内部选择不许反问用户；拿不准就交给决策者（§7），不是交给用户。要用户拍板的点，一律先翻译成后果再问——用户决定“要什么”，不是“怎么做”。
 
+**用户主动指定或讨论语言、框架时，直接回应并遵守已明确的选择。** 上面的默认决策边界与“不讲语言、库、框架”只约束 AI 不主动把内部选型抛给用户，不能覆盖用户已确认的技术约束。普通修改沿用已有项目的路线、语言和框架，不因分支默认而自动迁移。
+
 ### 谈定就记下来，动手前读回（不分档）
 
 讨论里定下的东西从谈定到收工只活在对话里：一压缩就丢细节，丢的常是最早、最根本的那句；来回纠正时又容易只盯最新一句。所以谈定当场记，动手前读回。**只记不读等于没记。**
@@ -132,7 +134,7 @@ AI 决定并说明：库、模块划分、文件名、内部 API（模块和数�
 | 场景 | 路由 |
 |---|---|
 | 独立 Python 命令行脚本、小工具、自动化 | 加载 `vibe-scripts` |
-| 有界面、要打包分发、可能成长为网站的个人 Python 应用 | 加载 `vibe-apps` |
+| 有界面的个人应用（Python、明确选择的 Rust 或其他已有实现） | 加载 `vibe-apps`，按实际需求选原生/Web 分支 |
 | 公司固件、产品代码、构建系统或已有正式仓库 | 遵守该仓库规范；不要套个人工具技术栈 |
 | 不属于以上类型 | 沿用项目现有结构，以最小改动完成 |
 
@@ -199,7 +201,7 @@ AI 决定并说明：库、模块划分、文件名、内部 API（模块和数�
 
 **结构也要验**（个人脚本和应用）：所有档交付前做**拔插自查**——本次动到的变化轴，调用方里有没有另写的成员名单或按成员名特判；动到外部数据 / 默认运行策略的再做**配置取值自查**；好档新建或收口了变化轴的补**结构测试**。后两项的做法见 `low-coupling.md` 第 3 节。
 
-**文档跟着改才算完成，但不由干活的主 agent 来整理**——全压在主 agent 上下文里会拖累正事。干活期间不加载 `living-blueprint`、不整理 `BLUEPRINT` / `CHANGELOG` / `AGENTS.md` / `HANDOFF`，只做 §4 的即时记录；例外是 vibe-apps 脚手架里 `AGENTS.md` 的架构约束段，由实现者随目录创建。`DESIGN.md` 归 vibe-apps；`NEEDS.md` 的需求梳理归 `clarify-needs`。一批改动做完、验证过、交付汇报之前（微脚本只改头部契约行，免），**派一个继承本会话上下文的 fork 维护文档，等它完成、核对它没碰代码再汇报**——四步照 `references/doc-fork.md` 做。活没做完要结束会话时，同样派 fork 写 `HANDOFF.md`。没有这类子 agent 可用时，主 agent 自己按 `living-blueprint` 改。
+**文档跟着改才算完成，但不由干活的主 agent 来整理**——全压在主 agent 上下文里会拖累正事。干活期间不加载 `living-blueprint`、不整理 `BLUEPRINT` / `CHANGELOG` / `AGENTS.md` / `HANDOFF`，只做 §4 的即时记录；例外是 vibe-apps 脚手架里 `AGENTS.md` 的架构约束段，由实现者随目录创建。`DESIGN.md` 归 vibe-apps-web；`NEEDS.md` 的需求梳理归 `clarify-needs`。一批改动做完、验证过、交付汇报之前（微脚本只改头部契约行，免），**派一个继承本会话上下文的 fork 维护文档，等它完成、核对它没碰代码再汇报**——四步照 `references/doc-fork.md` 做。活没做完要结束会话时，同样派 fork 写 `HANDOFF.md`。没有这类子 agent 可用时，主 agent 自己按 `living-blueprint` 改。
 
 **两个兜底钩子**（细则同在 `doc-fork.md`）：
 - **文档闸**（Stop 时，Claude Code 和 Codex 都有；Codex 上首次使用或钩子定义变更后，须先在 Codex 中审阅并信任钩子，CLI 用 `/hooks`，否则它不执行）：被拦就派 fork；纯内部改动就跑提示里那条回执命令写明理由（fork 判断不用记、文档没动时也写），别为过闸写假条目或假回执。没有触发闸不代表文档已经合格。

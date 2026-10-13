@@ -376,5 +376,47 @@ class CodexDocGateTest(unittest.TestCase):
             sys.path.pop(0)
 
 
+    def test_native_app_marker_without_blueprint_blocks(self):
+        for guide in ("AGENTS.md", "CLAUDE.md"):
+            for filename in ("ui.py", "main.rs"):
+                with self.subTest(guide=guide, filename=filename):
+                    name = guide.replace(".", "-") + "-" + filename.replace(".", "-")
+                    self.write(f"{name}/{guide}", "## 架构约束（vibe-apps）\n")
+                    code = self.write(f"{name}/src/{filename}", "example\n")
+                    self.patch(code)
+                    out = self.stop()
+                    self.assertEqual(out["decision"], "block")
+                    self.assertIn(str(self.root / name / "docs"), out["reason"])
+                    self.assertIn("缺 BLUEPRINT.md", out["reason"])
+
+    def test_untracked_rust_with_marker_without_blueprint_blocks(self):
+        self.git_project()
+        self.write("AGENTS.md", "## 架构约束（vibe-apps）\n实现选择：原生 Rust。\n")
+        self.prompt()
+        self.write("src/main.rs", "fn main() {}\n")
+        out = self.stop()
+        self.assertEqual(out["decision"], "block")
+        self.assertIn(str(self.root / "docs"), out["reason"])
+        self.assertIn("缺 BLUEPRINT.md", out["reason"])
+
+    def test_untracked_rust_in_unmarked_repo_is_ignored(self):
+        self.git_project()
+        self.prompt()
+        self.write("src/main.rs", "fn main() {}\n")
+        self.assertIsNone(self.stop())
+
+    def test_rust_document_update_passes(self):
+        self.write("native/AGENTS.md", "## 架构约束（vibe-apps）\n")
+        code = self.write("native/src/main.rs", "fn main() {}\n")
+        self.doc("native/docs/BLUEPRINT.md")
+        changelog = self.doc("native/docs/CHANGELOG.md")
+        self.patch(code)
+        self.assertIn(STALE, self.stop()["reason"])
+        self.patch(code)
+        later = code.stat().st_mtime + 5
+        os.utime(changelog, (later, later))
+        self.assertIsNone(self.stop())
+
+
 if __name__ == "__main__":
     unittest.main()
