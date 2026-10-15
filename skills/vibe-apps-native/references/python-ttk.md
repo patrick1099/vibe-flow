@@ -54,7 +54,7 @@ mytool/
 - **字号单位**：Tk 正数字号按点、负数按像素。DESIGN.md 的 `16px` 写成 `-16`，写成 `16` 会按点算、明显偏大。字体族取目标机器上真实存在的那个（Windows 中文默认 `Microsoft YaHei UI`）。
 - 间距、内边距按像素填；ttk 没有通用圆角，DESIGN.md 的 `rounded` 只作用于需要额外绘制的部分，整体直角就在正文写明。
 
-**截图**：`root.update()` 等布局稳定后，`PIL.ImageGrab.grab(window=root.winfo_id())` 截客户区，不用按屏幕坐标裁剪（需要 Pillow ≥ 11.2.1）。窗口尺寸用 `geometry()` 固定，样例数据写死在一个开发入口里。Pillow 只作开发验证依赖，不进交付依赖。
+**截图**：`root.update()` 等布局稳定后，`PIL.ImageGrab.grab(window=root.winfo_id())` 截客户区，不用按屏幕坐标裁剪（需要 Pillow ≥ 11.2.1）。窗口尺寸用 `geometry()` 固定成效果图的尺寸，样例数据与效果图相同、写死在一个开发入口里。Pillow 只作开发验证依赖，不进交付依赖。
 
 ## 开发与交付
 
