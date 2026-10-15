@@ -8,8 +8,8 @@
 
 纯 Rust 原生 GUI 一律用 Slint（用户 2026-10-15 定），不再比较 egui、iced 等其他 Rust GUI，也不为单个项目重新选框架。不因采用 Rust 就宣布更省内存；资源要求仍由 release 产物实测。
 
-- 界面写在 `.slint` 文件里，由 `build.rs` 用 `slint-build` 编译，Rust 侧 `slint::include_modules!()` 引入；不把大段界面塞进 `slint!` 宏，独立的 `.slint` 文件才能用实时预览。
-- 改界面时用 `slint-viewer --auto-reload ui/app.slint` 或编辑器的 Slint 扩展实时预览，不必每次编译整个应用。
+- **本机实例**：`my-repos/serial-split`（Slint 1.18，winit + software 渲染，2026-10-14 按确认的样稿做完 v2 界面）。新项目照它的写法起步：界面、组件和 `global Theme` 都写在 `ui.rs` 的 `slint::slint!` 宏里，不用 `build.rs` 编译单独的 `.slint` 文件；界面大到宏里难维护，或要用 `slint-viewer --auto-reload` 实时预览时，再拆成 `.slint` 文件，由 `slint-build` 编译。
+- **本机工具链**：`stable-x86_64-pc-windows-gnullvm`，链接器和 C 编译器用 llvm-mingw；每条 cargo 命令前先把 llvm-mingw 的 `bin` 放到 PATH 最前面，机器内存紧时加 `-j 2`。具体写法见 serial-split 的 README 与 `build.rs`。
 - 许可：只自用不分发时不用处理；要分发给别人时，按当时的 Slint 许可条款（GPLv3、免版税许可或商业许可）满足要求，免版税许可有致谢展示的要求，发布前查一次原文。
 
 ## 最小适用结构
@@ -22,15 +22,12 @@ mytool/
 ├── docs/mockup/        定稿的 HTML 效果图
 ├── Cargo.toml
 ├── Cargo.lock
-├── build.rs            slint-build 编译 ui/
-├── ui/
-│   ├── app.slint       窗口与界面结构
-│   └── theme.slint     按 DESIGN.md 写的 global Theme，色值只在这里
 ├── src/
 │   ├── main.rs         入口、配置与资源组装
 │   ├── core.rs         纯业务规则与数据类型
-│   ├── ui.rs           把应用状态接到 Slint 属性与回调
+│   ├── ui.rs           slint! 宏里的界面、自写小组件与 global Theme（色值只在这里），外加状态与回调
 │   └── adapters.rs     按需：设备、文件、存储等 IO
+├── examples/ui_smoke.rs  界面截图夹具：假数据驱动各状态，出快照与效果图对照
 └── tests/              按需：行为契约与集成路径
 ```
 
@@ -40,13 +37,13 @@ mytool/
 
 流程按共用入口「界面：效果图先行」。Slint 的表现力接近 CSS，效果图可以放开画，但下面第三列仍不画。具体属性名以当时版本的 Slint 文档为准。
 
-| 现成支持 | 需要额外处理 | 本流程不采用 |
+| 现成支持（用 `Rectangle` / `Text` / `TextInput` / `PopupWindow` 等基础元素自己拼） | 需要额外处理 | 本流程不采用 |
 |---|---|---|
-| 圆角、边框、阴影（`drop-shadow-*`）、线性 / 径向渐变、透明度、属性动画（`animate`）、内嵌字体；布局（横 / 竖 / 网格，带间距与内边距）；std-widgets 的按钮、输入框、下拉、开关、滑块、进度、标签页、列表、表格、滚动区 | std-widgets 自带样式不读你的 Theme：要么用它的调色板全局量调整，要么自绘控件消费 Theme；图表和任意形状用 `Path` 画 | 背景模糊 / 毛玻璃、CSS filter 一类滤镜（画之前先查当时版本，支持了再放开） |
+| 圆角、边框、阴影（`drop-shadow-*`）、线性 / 径向渐变、透明度、属性动画（`animate`）、内嵌字体；布局（横 / 竖 / 网格，带间距与内边距）；分组框、方角按钮、下拉、复选、指示灯、标签页、状态栏这类小组件 | 图表和任意形状用 `Path` 画；std-widgets 的 `ScrollView` / `ListView` 可直接当滚动容器，但外观要调成和整体一致 | std-widgets 的 Fluent 默认控件（太高太圆，serial-split v1 “太丑”正是它造成的，v2 改成自写小组件）；背景模糊 / 毛玻璃、CSS filter 一类滤镜（画之前先查当时版本，支持了再放开） |
 
-**DESIGN.md → `ui/theme.slint`**：写成 `export global Theme { out property <color> primary: #2563eb; out property <length> space-2: 8px; … }`，token 名照抄 DESIGN.md（Slint 标识符允许连字符）。Slint 的 `px` 是逻辑像素，和 CSS `px` 一一对应，数值直接搬；颜色之外的字体、字号、圆角、间距也都放这里。控件只引用 `Theme.xxx`，不散写色值。生成器还没做，目前由 AI 按 DESIGN.md 手工维护这一份。
+**DESIGN.md → `global Theme`**：写成 `export global Theme { out property <color> primary: #2563eb; out property <length> space-2: 8px; … }`，token 名照抄 DESIGN.md（Slint 标识符允许连字符）。Slint 的 `px` 是逻辑像素，和 CSS `px` 一一对应，效果图按目标窗口逻辑像素 1:1 画，数值就能直接搬；颜色之外的字体、字号、圆角、间距也都放这里。要浅色 / 深色时在 Theme 里加一个 `dark: bool`，各色按它取值。组件只引用 `Theme.xxx`，不散写色值。生成器还没做，目前由 AI 按 DESIGN.md 手工维护这一份。
 
-**截图**：优先用 `Window::take_snapshot()` 拿窗口内容，渲染后端不支持时退回截系统窗口；固定窗口尺寸和样例数据，注意缩放比与效果图截图一致。
+**截图**：照 serial-split 的 `examples/ui_smoke.rs`——只用假数据驱动界面，不打开真实串口、不调外部程序；每个要对照的状态用 `Window::take_snapshot()` 出一张图（software 渲染下可用），断言 `scale_factor() == 1.0` 和预期尺寸，写到 `target/ui-smoke/`（BMP 手写文件头即可，不必为此加图像库依赖）。再和效果图同一状态并排看。
 
 ## 后台与构建
 

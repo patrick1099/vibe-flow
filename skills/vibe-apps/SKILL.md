@@ -55,7 +55,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 1. **最小 DESIGN.md**：项目根放 `DESIGN.md`（沿用上游约定，别的 agent 能自己找到），只写本次用到的 token（颜色、字体、字号、间距、圆角）和一段说明层次与风格的正文；已有就复用、按需补。**格式以 `vendor/design-md/spec.md` 为准**（上游原文，这里不复述）。风格起点可从 [awesome-design-md](https://github.com/voltagent/awesome-design-md) 挑一份改。
    - **颜色名用 DaisyUI 的语义名**：`primary` `secondary` `accent` `neutral` `base-100` `base-200` `base-300` `base-content` `info` `success` `warning` `error`，以及各自的 `*-content`（放在该色上的文字色）。原生框架要的而这套没有的角色（输入框、选中行、边框、禁用等）按需补具名 token；怎么对到框架的槽位写在语言参考里，不一对一硬套。
    - `omitted` 只表示这套设计有意不定义某一整节，**不用来声明框架做不到什么**；框架能力看语言参考的能力清单。
-2. **一个可切换状态的 HTML 效果图**：原生路线放 `docs/mockup/`（`index.html` 及其资源），Web 路线直接写在 `web/`。
+2. **一个可切换状态的 HTML 效果图**：原生路线放 `docs/mockup/`（`index.html` 及其资源），Web 路线直接写在 `web/`。按目标窗口的逻辑像素 1:1 画（窗口多大、控件多高都按实际尺寸），实现时数值才能直接搬。
    - **按所选框架的能力清单画**（见语言参考），不画框架做不出的效果。原生路线用纯 HTML/CSS 把控件画成目标框架的样子，不用 Web 组件库——画成 Web 组件，原生就还原不了。
    - **状态按实际功能选**：正常状态，加上会改变布局的边界情况（空数据、报错、长内容；有连接功能才画断连）。同一页面里用切换按钮，不各出一份。
    - 颜色、字体、间距只引用 DESIGN.md 的值；布局结构和伸缩规则写在 HTML 里。

@@ -10,16 +10,16 @@
 
 ## 待做：DESIGN.md → 原生主题生成器（效果图先行的第二批）
 
-**状态**：第一批（0.22.0，skill 文本）已在分支 `feat/mockup-first-design-md` 完成，150 项回归通过。第二批没开工，**等用户下一个真实的 ttk 或 Slint 应用时再做**，不要凭空先写。
+**状态**：第一批（0.22.0 skill 文本，0.22.1 按 `my-repos/serial-split` 修正 Slint 参考）已合进 main 并发布。第二批没开工，**等用户下一个真实的 ttk 或 Slint 应用时再做**，不要凭空先写。
 
-**现在怎么办**：原生主题由 AI 按项目根 `DESIGN.md` 手工搬进主题文件一处（ttk 的 `theme.py`、Slint 的 `ui/theme.slint`），规则在 `skills/vibe-apps/SKILL.md`「界面：效果图先行」与 `skills/vibe-apps-native/references/{python-ttk.md,rust.md}`「效果图与主题」。
+**现在怎么办**：原生主题由 AI 按项目根 `DESIGN.md` 手工搬进主题一处（ttk 的 `theme.py`；Slint 是 `ui.rs` 里 `slint!` 宏中的 `global Theme`，写法照 serial-split），规则在 `skills/vibe-apps/SKILL.md`「界面：效果图先行」与 `skills/vibe-apps-native/references/{python-ttk.md,rust.md}`「效果图与主题」。
 
 **要做的**：
 - 生成器放插件（建议 `skills/vibe-apps/scripts/`），生成结果放应用项目；应用运行、打包不依赖插件路径或 Node，只在改设计时跑。
 - 流程：读 DESIGN.md 源数据先校验支持范围（v1 只认不透明 HEX 色、带单位的尺寸、字体族与支持的字重），不支持的字段**报错**，不静默丢——这一步必须看源数据，丢进导出后的 JSON 里已经发现不了。再用 `designmd export --format dtcg`（版本取 `skills/vibe-apps/vendor/design-md/cli-package.json`）拿 JSON，stdlib 读，不手写 YAML 解析器。
 - 已知导出缺口（0.4.0，codex 实测）：css-vars 无字体；css-vars 与 dtcg 都不导 `components`；dtcg 丢无单位 `lineHeight`。
 - 输出：效果图用的预览 CSS；ttk 项目主题（`ThemeDefinition` + `register_theme`，颜色槽位映射照 `python-ttk.md` 那张表，字号 px 写成负数）；Slint `export global Theme`（px 直接搬）。
-- 验收：在真实 tk / Slint 窗口里实测字号单位和颜色映射，截图与效果图对照。主题生成后控件仍要自己消费这些值，hover / focus / disabled / selection 状态要单独核。
+- 验收：在真实 tk / Slint 窗口里实测字号单位和颜色映射，截图与效果图对照（Slint 截图照 serial-split 的 `examples/ui_smoke.rs`）。主题生成后控件仍要自己消费这些值，hover / focus / disabled / selection 状态要单独核。
 
 ## 仍在试行的架构沟通
 

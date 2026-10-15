@@ -234,6 +234,12 @@ v0.4.0 之前 `clarify-needs` 标着 `disable-model-invocation: true`，是硬�
 没选的路：把 designmd 导出当无损转换器；用 `omitted` 声明框架做不到什么；所有工具固定画五种状态；这一批就写
 DESIGN.md → ttk / Slint 主题生成器（等真实项目再做，见 HANDOFF）。
 
+0.22.1（2026-10-15）Slint 参考按本机实例改写。用户指出“slint我们不是有了吗。昨天你还做了一个串口分路工具”——
+0.22.0 的 Slint 部分是照资料写的，没对照已按样稿做完 v2 的 `my-repos/serial-split`。改成照它的做法：界面写在
+`slint!` 宏里（宏太大或要实时预览再拆 `.slint`）；std-widgets 的 Fluent 默认控件列为不采用（它 v1“太丑”的根源），
+小组件自己拼；截图照它的 `examples/ui_smoke.rs` 用假数据夹具 + `take_snapshot`；补本机 gnullvm + llvm-mingw 工具链
+指针与 Theme 浅深色切换；共用入口加“效果图按目标窗口逻辑像素 1:1 画”。没选的路：保留 `build.rs` + 独立 `.slint` 为默认。
+
 0.21.0（2026-10-12）应用路线拆成原生桌面与 Web 界面。起因是用户要求运行内存小，在看过两款原生样窗后说
 “那我就选择ttk”，并指出“vibe-flow对于gui选择上。可以拆分成两个”；随后补充“未来更进一步，我可能会选择纯rust”。
 旧规则把所有 GUI 都锁在 Python 五层 Web 栈，未来换语言也受 0.14.0 的历史决定约束。改成保留薄 `vibe-apps` 入口：
