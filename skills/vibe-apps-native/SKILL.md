@@ -1,6 +1,6 @@
 ---
 name: vibe-apps-native
-description: Build or modify native desktop personal apps and hardware control tools after the native route is selected; default Python with ttkbootstrap, or an explicitly selected pure Rust implementation. 原生 GUI、上位机、低内存桌面工具、ttkbootstrap、纯 Rust 桌面。Load vibe-flow and vibe-apps before scaffolding; Web UI uses vibe-apps-web.
+description: Build or modify native desktop personal apps and hardware control tools after the native route is selected; default Python with ttkbootstrap, or an explicitly selected pure Rust implementation with Slint. 原生 GUI、上位机、低内存桌面工具、ttkbootstrap、纯 Rust 桌面、Slint、照效果图实现原生界面。Load vibe-flow and vibe-apps before scaffolding; Web UI uses vibe-apps-web.
 ---
 
 # vibe-apps-native：原生桌面实现
@@ -10,9 +10,11 @@ description: Build or modify native desktop personal apps and hardware control t
 | 当前实现 | 动手前读 |
 |---|---|
 | Python，未指定 GUI 时用 ttkbootstrap | [references/python-ttk.md](references/python-ttk.md) |
-| 用户已明确选择纯 Rust | [references/rust.md](references/rust.md) |
+| 用户已明确选择纯 Rust（固定 Slint） | [references/rust.md](references/rust.md) |
 
 其他已确认的语言或 GUI 框架沿用项目规范和共用边界，不自动换成默认方案。Python 与 Rust 是实现方案，不要求一个应用同时提供两种语言版本。
+
+界面观感按共用入口「界面：效果图先行」走；所选框架的能力清单、DESIGN.md 颜色怎么对到框架、应用窗口怎么截图，都在语言参考的「效果图与主题」节。
 
 ## 原生应用的数据流
 
@@ -28,4 +30,4 @@ description: Build or modify native desktop personal apps and hardware control t
 
 先建立共用入口要求的 `## 架构约束（vibe-apps）` 段，写明实际原生路线、语言、框架及以上适用的任务/数据约束；按语言参考选最小结构，不要求 `api/`、`web/` 或本地 HTTP 服务。
 
-中文输入、字体与 DPI、键盘/复制、长日志、暂停/恢复、错误提示、断连及退出，用实际窗口走通。硬件类操作没有设备时区分模拟验证与真机结果；验收条件由项目需求决定。打包与性能采样按共用入口及所选语言参考执行。
+第一版主要布局出来就按共用入口截图对照效果图，修完差异再接剩下的业务。中文输入、字体与 DPI、键盘/复制、长日志、暂停/恢复、错误提示、断连及退出，用实际窗口走通。硬件类操作没有设备时区分模拟验证与真机结果；验收条件由项目需求决定。打包与性能采样按共用入口及所选语言参考执行。

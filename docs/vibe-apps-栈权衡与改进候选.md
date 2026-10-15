@@ -1,16 +1,16 @@
 # vibe-apps 栈权衡 & 改进候选（决策笔记）
 
-> **当前决定（2026-10-12，vibe-flow 0.21.0）**：
+> **当前决定（2026-10-15，vibe-flow 0.22.0）**：
 > - `vibe-apps` 为薄路由与共用边界；原生桌面走 `vibe-apps-native`，Web 界面走 `vibe-apps-web`。用户明确选择与已有项目实现优先，普通修改不自动迁移。
-> - 新建本地工具、上位机与优先低内存的 GUI 默认 Python + ttkbootstrap；明确选择纯 Rust 时按需加载原生 Rust 参考。不要求同时维护两套语言，也不预建 PyO3 桥。
-> - Web 默认 Python + FastAPI；桌面 Web 壳加 pywebview，浏览器/网站交付不要求桌面壳。Web 保留五层适用职责、离线前端与上游同步；业务规则不调用 IO 适配器。
-> - `DESIGN.md` 上游同步脚本已迁到 `skills/vibe-apps-web/scripts/sync_upstream.py`，vendor 规范也归 Web 分支；当前规则以三个应用 skill 及其按需参考为准。
+> - 新建本地工具、上位机与优先低内存的 GUI 默认 Python + ttkbootstrap；明确选择纯 Rust 时固定用 Slint，不再比较其他 Rust GUI。不要求同时维护两套语言，也不预建 PyO3 桥。
+> - Web 默认 Python + FastAPI；桌面 Web 壳加 pywebview，浏览器/网站交付不要求桌面壳。Web 保留五层适用职责与离线前端；业务规则不调用 IO 适配器。
+> - 界面效果图先行（新应用 / 新页面 / 布局大改）与 `DESIGN.md` 归共用入口 `vibe-apps`，原生与 Web 共用；上游同步脚本在 `skills/vibe-apps/scripts/sync_upstream.py`，vendor 规范在 `skills/vibe-apps/vendor/`。当前规则以三个应用 skill 及其按需参考为准。
 > - 以下历史数据保留原采样条件与估计标签；应用资源目标要用代表性负载实测，不能从包体积、实现语言或一次原生样窗短测推断通用内存排名。
 >
 > **历史决定（2026-09-29，vibe-flow 0.14.0，已由上述路由决定更新）**：
 > - 当时放弃 Rust/Tauri 路线，自用为主，不为远期迁移牺牲当前体验；下文 §5 结论句、§6#1/#6、§7 首条、§8 的 Tauri/PyO3 设计属于当时历史，不作为当前默认架构。
 > - 当时前端默认改为 Tailwind 浏览器版 + DaisyUI（取代 Pico.css），库文件本地化，零构建无 npm；§6#5 据此不留 React 档。此默认现仅用于 Web 分支，用户明确选择优先。
-> - 当时 `DESIGN.md` 上游同步脚本在 `skills/vibe-apps/scripts/sync_upstream.py`；该旧路径已迁移，勿再按它执行。
+> - 当时 `DESIGN.md` 上游同步脚本在 `skills/vibe-apps/scripts/sync_upstream.py`；0.21.0 曾迁到 `vibe-apps-web`，0.22.0 又随 DESIGN.md 共用迁回 `vibe-apps`。
 >
 > 原状态（2026-07-07）：决策输入，未定案。记录一场从
 > "vibe-scripts 和 vibe-apps 是否功能重合" 展开的讨论 + 实测数据。

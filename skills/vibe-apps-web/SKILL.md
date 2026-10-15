@@ -40,7 +40,7 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 
 **前端库本地化**：两份库文件下载到 `web/vendor/`（`tailwindcss-browser.js`、`daisyui.css`，需要多主题时加 `daisyui-themes.css`），页面只引本地路径、不引 CDN——自用工具常离线跑，走 CDN 断网就没样式。版本号钉死在上表，升级时改表、重新下载。Tailwind 官方把浏览器版定位为开发用途（页面加载时现编译样式）；自用工具接受这点换零构建，页面多到加载明显变慢再议。
 
-**默认零构建**：应用的运行和打包都不用 npm，不上 React/Vue/npm 构建——打包简单，AI 改前端不用跑构建。（唯一用到 node 的是可选的 DESIGN.md 导出，见下文，只在改配色时跑一次。）用户明确选择的既有前端栈优先；包体积与运行内存是不同指标，有资源要求时按共用入口实测，不预先放弃资源目标。
+**默认零构建**：应用的运行和打包都不用 npm，不上 React/Vue/npm 构建——打包简单，AI 改前端不用跑构建。（唯一用到 node 的是 DESIGN.md 导出，见「界面规范与效果图」，只在改设计时跑一次。）用户明确选择的既有前端栈优先；包体积与运行内存是不同指标，有资源要求时按共用入口实测，不预先放弃资源目标。
 
 ## 桌面 Web 壳的默认五层（规则不知 UI 存在）
 
@@ -83,20 +83,13 @@ def summarize(data):              # ✅ 规则接收显式数据，不在规则�
 
 要换路线、框架、语言，或把应用变成多人网站时，读 [共用 evolution.md](../vibe-apps/references/evolution.md)。平时不用读；迁移前确认实际复用范围。
 
-## 界面规范（DESIGN.md，可选）
+## 界面规范与效果图
 
-**何时建**：界面超过一个页面，或要交给别的 AI 改界面时；单页小工具不建，DaisyUI 默认主题就够。
+DESIGN.md、效果图先行与截图对照按 [vibe-apps「界面：效果图先行」](../vibe-apps/SKILL.md#界面效果图先行) 走。Web 路线的效果图直接写在 `web/`，可以用 DaisyUI 组件，定稿后就是前端起点，不另画一份；接入真实数据、放进 pywebview 后仍按该节对照一次。本栈落法：
 
-- 放项目根 `DESIGN.md`（沿用上游约定，别的 agent 能自己找到）。**格式以本 skill 的 `vendor/design-md/spec.md` 为准**——那是上游原文，这里不复述。上游更新时跑 `py -3 <本 skill 目录>/scripts/sync_upstream.py`（在哪个目录跑都行；`--check` 只看有没有更新、不写文件），规范和 CLI 版本一起刷新，本文不用改。
-- **颜色 token 用 DaisyUI 的变量名**：`primary` `secondary` `accent` `neutral` `base-100` `base-200` `base-300` `base-content` `info` `success` `warning` `error`，以及各自的 `*-content`（放在该色上的文字色）。
-- **颜色只写在 DESIGN.md 一处**，`web/theme.css` 由它生成，不手写第二份色值。`<ver>` 取 `vendor/design-md/cli-package.json` 里的 `version`，让 CLI 和存着的规范是同一版：
-  ```
-  npx -y -p @google/design.md@<ver> designmd lint DESIGN.md && npx -y -p @google/design.md@<ver> designmd export DESIGN.md --format css-vars > web/theme.css.tmp
-  ```
-  **必须用 `&&` 串成一条**：DESIGN.md 有错时 lint 退出非零，而 export 照样退出 0、会导出坏结果。整条成功后再把 `theme.css.tmp` 改名覆盖 `theme.css`；失败就修 DESIGN.md，旧 theme.css 不动。Windows 上命令名必须用 `designmd`。
+- 用共用入口的导出命令把 DESIGN.md 导成 `web/theme.css`（目标路径换成 `web/theme.css.tmp`），不手写第二份色值。
 - 页面在 `daisyui.css` **之后** `<link>` 引 `theme.css`，默认主题下按钮、`bg-primary` 这类工具类就都跟着变。用 `data-theme` 切到别的 DaisyUI 主题时，theme.css 管不到那些主题。
-- **只有颜色会自动生效**。圆角、间距导出后变量名和 DaisyUI 对不上，靠 DESIGN.md 正文描述 + DaisyUI 默认值。
-- 风格起点可以从 [awesome-design-md](https://github.com/voltagent/awesome-design-md) 挑一份拷过来改，颜色名改成上面那套。
+- **只有颜色会自动生效**。圆角、间距导出后变量名和 DaisyUI 对不上，靠 DESIGN.md 正文描述 + DaisyUI 默认值；css-vars 不导出字体，字体在 `web/` 的样式里按 DESIGN.md 写一处。
 
 ## 设计记录（意图驱动）
 
@@ -115,8 +108,8 @@ mytool/
 ├── api/server.py          # FastAPI 薄适配
 ├── web/{index.html,app.js}   # fetch 调 api; Tailwind 工具类 + DaisyUI 组件
 ├── web/vendor/            # tailwindcss-browser.js、daisyui.css（本地副本，版本见技术栈表）
-├── web/theme.css          # 可选：由 DESIGN.md 导出，不手改
-├── DESIGN.md              # 可选：界面规范（见「界面规范」节）
+├── web/theme.css          # 由 DESIGN.md 导出，不手改
+├── DESIGN.md              # 界面规范（见 vibe-apps「界面：效果图先行」）
 ├── tests/test_*.py        # pytest 测 core
 ├── app.py                 # 桌面壳：起 uvicorn + 开 pywebview；网站：服务组装入口
 ├── requirements.txt       # 按交付方式固定依赖；网站不用 pywebview/PyInstaller
