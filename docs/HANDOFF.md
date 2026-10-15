@@ -10,38 +10,9 @@
 - 2026-10-15 · 用户 · 第二批现在就开始做，不再等真实项目（推翻上一条里的“等真实项目时再做”）。
 - 2026-10-15 · 用户 · serial-split 保持现状：运行中参数照旧置灰，不加 HEX 行的 ASCII 列。
 
-## 在做：DESIGN.md → 原生主题生成器（效果图先行的第二批）
+## 留给下次（不是本次任务）
 
-**状态**：第一批（0.22.0 skill 文本，0.22.1 按 `my-repos/serial-split` 修正 Slint 参考，0.22.2 截图对照改查“像不像”）已合进 main 并发布。第二批**用户已叫开工**（2026-10-15），目前只做了事实摸底，**还没出方案、没写代码**。判档：好档·轻（新工具、三种输出）——方案要先过 codex 一次再动手。
-
-**下一步（按顺序）**：
-1. 验证 Slint 的 `slint!` 宏能不能 `import` 外部 `.slint` 文件。这决定 Slint 输出是“生成一个 `theme.slint` 文件”还是“生成一段要贴进宏里的文本”。用一个最小测试 crate 试，工具链照 `my-repos/serial-split` 的 README（`stable-x86_64-pc-windows-gnullvm` + llvm-mingw 的 `bin` 放 PATH 最前，`-j 2`），Slint 版本对齐 serial-split 的 1.18.1。
-2. 写三点短设计 + 变化轴（输出目标 css / ttk / slint 已是 3 个实际成员 → 一份注册表 + 每目标一个适配器，按 `vibe-flow` 的 `references/low-coupling.md`），连同下面“待定”交 codex 审（`ai-room ask --to codex`，cwd 用本插件仓）。
-3. 实现前加载 `vibe-scripts` 和 `xu-skills:cli-ai-spec`（脚本给 AI 调：一行 JSON 信封、退出码 0/1/2，参照同目录 `sync_upstream.py` 的写法）；在 worktree 里写、写测试。
-4. 真窗口验收：ttk 窗口（ttkbootstrap 2.2.3 + Pillow 12.3）与 Slint 测试窗口，按 `skills/vibe-apps/SKILL.md` 第 5 步截图对照。
-5. 收工：派 fork 更新 README 沿革 / 本文件，bump 0.23.0，合并、推子仓、`hub sync --refresh`（调法见共享记忆 `reference_hub_cli_invocation`）。注意：本次 HANDOFF 更新只提交在本地 main，没 bump、没推；在 bump 之前跑 `hub refresh` 会被 `PluginBumpNeeded` 拦，属正常，随 0.23.0 一起推。
-
-**已摸清的事实（2026-10-15 用 designmd 0.4.0 实测，样例 DESIGN.md 含 rgba 色、无单位 spacing、无单位 lineHeight、components）**：
-- CLI 只有 `lint | diff | export | spec`；export 格式：`css-tailwind`、`json-tailwind`（= `tailwind`）、`dtcg`、`css-vars`。
-- `lint --format json` 只给 findings（警告 / 错误 / 计数），**不给解析后的 token**；有警告时退出码仍是 0。把颜色定义了却没被 component 引用会报 `orphaned-tokens` 警告——原生项目 DESIGN.md 多半不写 components，这类警告要容忍。
-- **无单位的 spacing（`md: 8`）被静默丢弃**：lint 的计数和所有导出都没有它，可规范写的是 `Dimension | number`。这正是“只看导出发现不了”的例子。
-- `rgba(...)` 色被接受，导出成 8 位 hex（`#2563eb4d`）；dtcg 的 `components` 数组丢了 alpha，只有 `hex` 字段带着。
-- dtcg：颜色 / spacing / rounded / typography（fontFamily、fontSize、fontWeight）都有，丢无单位 lineHeight，无 components。json-tailwind：颜色、fontFamily、fontSize（带 fontWeight）、borderRadius、spacing，无 lineHeight。css-vars：只有颜色、spacing、rounded。
-
-**待定（交 codex 审时一起问）**：
-- 校验要看源数据，但 stdlib 解析不了 YAML。三条路：① 只认一个窄子集（两层映射 + 标量）的手写 front matter 读取器，子集外一律报错；② PyYAML 放 venv；③ 写个 node 小脚本直接用 `@google/design.md` 包里的解析器。之前写的“不手写 YAML 解析器”是在不知道导出会静默丢字段时定的，要重新权衡。
-- ttk 输出的形式：生成一个 `design_tokens.py`（常量 + 颜色槽位字典，项目的 `theme.py` 导入后 `register_theme`），还是 JSON（运行时读、打包要带上）。倾向前者（PyInstaller 不用额外收文件）。
-- 深色主题：DESIGN.md 规范只有一套颜色；serial-split 用 Theme 里的 `dark: bool` 切换。v1 是否只做单套。
-- 8 位 hex（带透明度）在 ttk 里不支持，按“不支持就报错”处理。
-
-**现在怎么办**：原生主题由 AI 按项目根 `DESIGN.md` 手工搬进主题一处（ttk 的 `theme.py`；Slint 是 `global Theme`，写在 `slint!` 宏里或 `ui/*.slint` 里都行，serial-split 是前者），规则在 `skills/vibe-apps/SKILL.md`「界面：效果图先行」与 `skills/vibe-apps-native/references/{python-ttk.md,rust.md}`「效果图与主题」。
-
-**要做的**：
-- 生成器放插件（建议 `skills/vibe-apps/scripts/`），生成结果放应用项目；应用运行、打包不依赖插件路径或 Node，只在改设计时跑。
-- 流程：读 DESIGN.md 源数据先校验支持范围（v1 只认不透明 HEX 色、带单位的尺寸、字体族与支持的字重），不支持的字段**报错**，不静默丢——这一步必须看源数据，丢进导出后的 JSON 里已经发现不了。再用 `designmd export --format dtcg`（版本取 `skills/vibe-apps/vendor/design-md/cli-package.json`）拿 JSON，stdlib 读，不手写 YAML 解析器。
-- 已知导出缺口（0.4.0，codex 实测）：css-vars 无字体；css-vars 与 dtcg 都不导 `components`；dtcg 丢无单位 `lineHeight`。
-- 输出：效果图用的预览 CSS；ttk 项目主题（`ThemeDefinition` + `register_theme`，颜色槽位映射照 `python-ttk.md` 那张表，字号 px 写成负数）；Slint `export global Theme`（px 直接搬）。
-- 验收：在真实 tk / Slint 窗口里实测字号单位和颜色映射，按 `skills/vibe-apps/SKILL.md` 第 5 步做截图对照（同尺寸、同状态、同数据，差异清单覆盖布局、控件状态、显示内容；Slint 截图写法参考 serial-split 的 `examples/ui_smoke.rs`）。主题生成后控件仍要自己消费这些值，hover / focus / disabled / selection 状态要单独核。
+效果图先行两批都已完成（0.22.0–0.23.0，见 README「沿革」）。只剩一条待核实：Web 路线的 `web/theme.css` 若由 python 进程写出，本机 Esafenet 也会把它加密——浏览器经 FastAPI 取到的是明文、不受影响，但用 file:// 直接打开页面会丢样式。下次真做 Web 项目时实测一次，再决定要不要像原生效果图那样把 token 写进 HTML。
 
 ## 仍在试行的架构沟通
 

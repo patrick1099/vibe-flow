@@ -13,7 +13,8 @@ mytool/
 ├── app.py              入口、配置与资源组装
 ├── core.py             纯业务规则
 ├── ui.py               ttkbootstrap 控件、UI 状态与事件分发
-├── theme.py            按 DESIGN.md 建的项目主题，色值与字体只在这里
+├── design_tokens.py    由 DESIGN.md 生成（design_theme.py），不手改
+├── theme.py            用 design_tokens 建项目主题、配命名字体与控件 Style
 ├── adapters.py         按需：串口、文件、存储等 IO
 ├── tests/              针对性业务与错误路径测试
 └── requirements.txt    固定实际依赖
@@ -39,7 +40,7 @@ mytool/
 |---|---|---|
 | 主题色板（下表 16 个槽位）、bootstyle 变体（实心 / 描边 / 链接、切换开关、条纹进度条）；标准 ttk 控件：按钮、输入框、下拉、复选 / 单选、Notebook、Treeview、Labelframe、Progressbar、Scale、滚动条；grid / pack 布局与内边距；字体族、字号、粗细 | 圆角卡片或面板、渐变、图标（PNG 或图标字体）、自定义形状控件、图表 | 阴影、半透明叠层 / 毛玻璃、过渡动画、逐控件任意圆角半径 |
 
-**DESIGN.md → 主题**：用 `ThemeDefinition(name, colors, mode)` 建项目主题，`style.register_theme()` 后 `theme_use()`；色值、字体只在这一处出现。
+**DESIGN.md → 主题**：`design_theme.py ttk`（见 vibe-apps「导出」）生成项目根的 `design_tokens.py`，纯数据：`TTK_COLORS`（16 个槽位）、`COLORS`（全部颜色，按 token 名）、`FONTS`（Tk 字体元组，字号已是负数）、`SPACING`、`ROUNDED`。`theme.py` 导入它，用 `ThemeDefinition(name, TTK_COLORS, mode)` 建项目主题，`style.register_theme()` 后 `theme_use()`，再把 `TkDefaultFont` / `TkTextFont` 等命名字体配成 `FONTS` 里的正文字体；色值、字体只从这里来，不手抄。生成器按下表映射槽位，表里要的颜色缺一个就报错。
 
 | DESIGN.md token | ttkbootstrap 槽位 |
 |---|---|
@@ -51,8 +52,9 @@ mytool/
 | 补的 `border`、`input` / `input-content`、`active`（悬停 / 按下） | `border`、`inputbg` / `inputfg`、`active` |
 
 - `accent`、`base-300` 没有槽位，要用就在 Style 里配给具体控件。`*-content` 也没有逐色的槽位：彩色控件上的文字色以框架实际渲染为准，截图对照时核对，不一致就接受框架的颜色或单独配 Style。
-- **字号单位**：Tk 正数字号按点、负数按像素。DESIGN.md 的 `16px` 写成 `-16`，写成 `16` 会按点算、明显偏大。字体族取目标机器上真实存在的那个（Windows 中文默认 `Microsoft YaHei UI`）。
+- **字号单位**：Tk 正数字号按点、负数按像素。DESIGN.md 的 `16px` 写成 `-16`（生成器已经这样写），写成 `16` 会按点算、明显偏大；2026-10 在 125% 缩放的机器上实测，负数字号仍和效果图同为 12px。Tk 只有常规和粗体，`fontWeight` 只能是 400 / 700。字体族取目标机器上真实存在的那个（Windows 中文默认 `Microsoft YaHei UI`）。
 - 间距、内边距按像素填；ttk 没有通用圆角，DESIGN.md 的 `rounded` 只作用于需要额外绘制的部分，整体直角就在正文写明。
+- 主题只管颜色和字体，控件自身的尺寸要在 Style 里调：比如 ttkbootstrap 按钮默认的上下内边距在 26px 高度里会切掉文字，要 `style.configure("primary.TButton", padding=(8, 0))` 一类收紧。截图对照时留意这类差异。
 
 **截图**：`root.update()` 等布局稳定后，`PIL.ImageGrab.grab(window=root.winfo_id())` 截客户区，不用按屏幕坐标裁剪（需要 Pillow ≥ 11.2.1）。窗口尺寸用 `geometry()` 固定成效果图的尺寸，样例数据与效果图相同、写死在一个开发入口里。Pillow 只作开发验证依赖，不进交付依赖。
 

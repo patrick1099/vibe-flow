@@ -26,8 +26,9 @@ mytool/
 ├── src/
 │   ├── main.rs         入口、配置与资源组装
 │   ├── core.rs         纯业务规则与数据类型
-│   ├── ui.rs           把应用状态接到 Slint 属性与回调；界面、自写小组件与 global Theme（色值只在这里）写在这里的 slint! 宏里，或拆到 ui/*.slint
+│   ├── ui.rs           把应用状态接到 Slint 属性与回调；界面和自写小组件写在这里的 slint! 宏里，或拆到 ui/*.slint
 │   └── adapters.rs     按需：设备、文件、存储等 IO
+├── ui/theme.slint      global Theme，由 DESIGN.md 生成（design_theme.py），不手改
 ├── examples/ui_smoke.rs  界面截图夹具：假数据驱动各状态，出快照与效果图对照
 └── tests/              按需：行为契约与集成路径
 ```
@@ -42,9 +43,10 @@ mytool/
 |---|---|---|
 | 圆角、边框、阴影（`drop-shadow-*`）、线性 / 径向渐变、透明度、属性动画（`animate`）、内嵌字体；布局（横 / 竖 / 网格，带间距与内边距）；分组框、方角按钮、下拉、复选、指示灯、标签页、状态栏这类小组件 | 图表和任意形状用 `Path` 画；std-widgets 的 `ScrollView` / `ListView` 可直接当滚动容器，但外观要调成和整体一致 | std-widgets 的 Fluent 默认控件（太高太圆，serial-split v1 “太丑”正是它造成的，v2 改成自写小组件）；背景模糊 / 毛玻璃、CSS filter 一类滤镜（画之前先查当时版本，支持了再放开） |
 
-**DESIGN.md → `global Theme`**：写成 `export global Theme { out property <color> primary: #2563eb; out property <length> space-2: 8px; … }`，token 名照抄 DESIGN.md（Slint 标识符允许连字符）。Slint 的 `px` 是逻辑像素，和 CSS `px` 一一对应，效果图按目标窗口逻辑像素 1:1 画，数值就能直接搬；颜色之外的字体、字号、圆角、间距也都放这里。要浅色 / 深色时在 Theme 里加一个 `dark: bool`，各色按它取值。组件只引用 `Theme.xxx`，不散写色值。生成器还没做，目前由 AI 按 DESIGN.md 手工维护这一份。
+**DESIGN.md → `global Theme`**：`design_theme.py slint`（见 vibe-apps「导出」）生成 `ui/theme.slint`，内容是 `export global Theme { … }`：颜色照抄 token 名（`Theme.primary`、`Theme.base-100`），其余加前缀（`Theme.spacing-md`、`Theme.rounded-sm`、`Theme.<字体名>-family|size|weight`）。界面写在 `slint!` 宏里也能用它：宏内 `import { Theme } from "ui/theme.slint";`，路径相对 crate 根，改了这个文件 cargo 会自动重编（Slint 1.18.1 实测）；拆成 `.slint` 文件的项目照常 import。Slint 的 `px` 是逻辑像素，和 CSS `px` 一一对应，效果图按目标窗口逻辑像素 1:1 画，数值就能直接搬。组件只引用 `Theme.xxx`，不散写色值。生成器只出一套颜色；要浅色 / 深色切换的项目（如 serial-split 的 `dark: bool`）照旧手写 Theme，不接生成器。
+- **字体文件要注册全**：software 渲染器不会合成粗体。用到 `fontWeight: 700` 就得把粗体文件也注册上（微软雅黑是 `msyhbd.ttc`，常规体是 `msyh.ttc`），否则粗体静默按常规体画，截图对照时才看得出来（2026-10 实测）。
 
-**截图**：照 serial-split 的 `examples/ui_smoke.rs`——只用假数据驱动界面，不打开真实串口、不调外部程序；每个要对照的状态用 `Window::take_snapshot()` 出一张图（software 渲染下可用），窗口设成效果图的尺寸、样例数据与效果图相同，断言 `scale_factor() == 1.0` 和预期尺寸，写到 `target/ui-smoke/`（BMP 手写文件头即可，不必为此加图像库依赖）。再和效果图同一状态并排看。
+**截图**：照 serial-split 的 `examples/ui_smoke.rs`——只用假数据驱动界面，不打开真实串口、不调外部程序；每个要对照的状态用 `Window::take_snapshot()` 出一张图（software 渲染下可用），窗口设成效果图的尺寸、样例数据与效果图相同，写到 `target/ui-smoke/`（BMP 手写文件头即可，不必为此加图像库依赖）。系统缩放不是 100% 时，先设环境变量 `SLINT_SCALE_FACTOR=1`（serial-split 在夹具入口里设），再断言 `scale_factor() == 1.0` 和预期尺寸。再和效果图同一状态并排看。
 
 ## 后台与构建
 

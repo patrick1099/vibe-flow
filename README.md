@@ -63,7 +63,9 @@
 
 新应用、新页面、布局大改，写界面前先出效果图：项目根 `DESIGN.md` 定颜色、字体、间距，AI 按所选框架的能力
 画一个可切换状态的 HTML 效果图，你在浏览器里改到满意；再照图实现，第一版布局出来 AI 就截应用窗口和效果图
-并排对照、修完差异再给你看。小改沿用已有设计，不重画。
+并排对照、修完差异再给你看。小改沿用已有设计，不重画。原生应用（ttk / Slint）的主题不手抄：
+`vibe-apps/scripts/design_theme.py` 从 DESIGN.md 生成主题文件，同时把同一批值写进效果图，两边出自一处；
+DESIGN.md 里有框架还原不了的写法，它直接报错指出哪一行，不悄悄丢掉。
 
 `clarify-needs` 会自触发但带闸，只在这次要做的事够大、需求本身又不清时起（开新项目 / 新工具、
 新加一整块功能、多目标纠缠、需求越聊越多），明确的小改 / 改 bug / 纯问答不起。闸写在 description 里，是软约束；
@@ -248,6 +250,29 @@ serial-split 保持现状。根因有三：样稿和需求说法不一致，没�
 状态、样例数据截图，差异清单覆盖布局、控件状态、显示内容三类，每条要么修到一致、要么写明原因交用户定；交付给并排对照图加差异清单。
 0.22.1 里“界面先写在 `slint!` 宏里”只因 serial-split 那么写、没有效果依据，回调为宏或 `.slint` + `slint-build` 两种都行。
 没选的路：拿单个项目的写法当标准；只查缺陷的对照；把程序直接交用户自己看。
+
+0.23.0（2026-10-15）效果图先行第二批：DESIGN.md → 原生主题生成器。0.22.0 定了"等真实项目再做"，用户随后说
+第二批现在就开始。新增 `skills/vibe-apps/scripts/design_theme.py`（只用 stdlib，JSON 信封、退出码 0/1/2、`--ai-help`、
+`--check` 查产物落后、`--dry-run`）：`ttk` 生成纯数据的 `design_tokens.py`（16 个颜色槽位、全部颜色、字号已写成负数的
+字体元组、间距、圆角），`slint` 生成 `ui/theme.slint` 的 `export global Theme`；同时刷新效果图 `index.html` 里
+`<style id="design-tokens">` 块的 CSS 变量，块外不动。它直接读 DESIGN.md 源数据——designmd 0.4.0 的导出会静默丢
+无单位 spacing，看导出结果查不出来——用一个只认块状写法的窄子集读取器，子集外写法和 v1 范围外的值（rgba、em/rem、
+无单位尺寸、lineHeight、letterSpacing、components 等；ttk 另限不透明色、400/700 字重、整数像素、16 个槽位要的颜色
+缺一不可）全部带行号一次列出。输出目标是一条变化轴，两个成员 ttk / slint 收进一张 `TARGETS` 注册表，各自声明校验与渲染。
+方案经 codex 审，采纳：lineHeight 对原生目标报错（Slint 的 line-height-factor 乘字体自然行高，DESIGN.md 乘字号，
+含义对不上）；效果图 CSS 不单列成目标，绑在原生目标上、出自同一次校验；未知字段报错；Slint 查重名时 `_` 与 `-` 等价；
+摘要只取 front matter 且换行归一，改正文不算设计变了。实测后改了两处设计：本机 Esafenet 会加密 python 写出的 `.css`，
+浏览器读到密文、效果图丢光样式，而 `.html` 不受影响，所以 token 写进效果图 HTML，不另建 theme.css；Esafenet 不让把
+别的扩展名改名成受加密的扩展名（`os.replace` 报 WinError 17），临时文件改为保留目标扩展名。Slint 1.18.1 的 `slint!`
+宏能 `import` 外部 `ui/theme.slint`（路径相对 crate 根，改了自动重编），所以写在宏里的项目也能用。验收用同一份
+DESIGN.md、同尺寸同数据，HTML 效果图、ttk、Slint 三方截图并排：五处取色三方全等，字号一致（125% 缩放机器上 Tk
+负数字号仍是 12px）。验收中查出并写进语言参考：Slint software 渲染器不合成粗体，700 字重要注册 `msyhbd.ttc`；
+系统缩放不是 100% 时 Slint 截图先设 `SLINT_SCALE_FACTOR=1`；ttkbootstrap 按钮默认内边距在 26px 高里切字，要在
+Style 里收紧。剩下的差异在控件层（ttk Treeview 边框色、选中行内缩），与生成器无关。生成器只出一套颜色，要深浅色
+切换的项目（如 serial-split 的 `dark: bool`）照旧手写 Theme。新增 35 项测试，全量 185 项通过。没选的路：无单位
+spacing 当像素（codex 建议；规范把无单位数定义为列数或比例，v1 直接报错）；PyYAML 放 venv（codex 建议；插件脚本
+约定只用 stdlib，分发出去的插件里 venv 也无处安置）；node 脚本调 designmd 的解析器；ttk 产物用 JSON（打包要多收一个文件）；
+单独的 theme.css（本机浏览器读不了）。
 
 0.21.0（2026-10-12）应用路线拆成原生桌面与 Web 界面。起因是用户要求运行内存小，在看过两款原生样窗后说
 “那我就选择ttk”，并指出“vibe-flow对于gui选择上。可以拆分成两个”；随后补充“未来更进一步，我可能会选择纯rust”。

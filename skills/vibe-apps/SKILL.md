@@ -59,7 +59,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
    - **按所选框架的能力清单画**（见语言参考），不画框架做不出的效果。原生路线用纯 HTML/CSS 把控件画成目标框架的样子，不用 Web 组件库——画成 Web 组件，原生就还原不了。
    - **状态按实际功能选**：正常状态，加上会改变布局或控件状态的情况（空数据、报错、长内容、运行中锁定参数；有连接功能才画断连）。同一页面里用切换按钮，不各出一份。
    - **按真实规则画**：每个状态照需求里这个状态下的规则画——需求写了“运行中参数置灰”，“运行中”那一帧就画成置灰。效果图里不出现需求没有的内容（多出一列、一种显示格式），要加就先当新需求记下来再画。用户点头的是这张图，图和需求说法不一，做出来的程序必然和他认可的样子对不上。
-   - 颜色、字体、间距只引用 DESIGN.md 的值；布局结构和伸缩规则写在 HTML 里。
+   - 颜色、字体、间距只引用 DESIGN.md 的值；布局结构和伸缩规则写在 HTML 里。原生路线的效果图在 `<head>` 里留一个 `<style id="design-tokens"></style>`，token 由生成器写进去（见下面「导出」），不另建 CSS 文件。
 3. **用户在浏览器里改到满意**：调颜色、字体、间距体系 → 改 DESIGN.md 再重新导出；调布局、伸缩 → 改 HTML。定稿那版留在项目里，作为实现和对照的依据；改图时新增或去掉的内容同步改进需求记录。
 4. **照图实现**：同时读效果图 HTML 源码（精确数值）和效果图截图（整体观感）。DESIGN.md 的值集中放进主题 / 样式一处，不在控件代码里散写色值。**第一版主要布局出来就做一次截图对照**，不等业务全部接好才发现还原不了。
 5. **截图对照（AI 自己做，再交用户）**：查的是**像不像效果图**，不是“有没有重叠、截断”这类缺陷——没有缺陷的程序照样可以和效果图对不上。
@@ -69,15 +69,22 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
    - **交给用户的是并排对照图加差异清单**（把两边截图拼成一张图），不是只给程序让他自己看——单看程序，用户看不出它和认可的效果图哪里不同。
    - 截图只管观感；键盘、中文输入、断连恢复、长日志性能仍按下面的交付验证在真实窗口里走。
 
-**导出**：`<ver>` 取 `vendor/design-md/cli-package.json` 里的 `version`，让 CLI 和存着的规范是同一版：
+**导出**：两条路线都先用 designmd 查规范，`<ver>` 取 `vendor/design-md/cli-package.json` 里的 `version`，让 CLI 和存着的规范是同一版。Windows 上命令名必须用 `designmd`。**必须用 `&&` 串成一条**：DESIGN.md 有错时 lint 退出非零，后一步照样会跑出坏结果。
 
-```
-npx -y -p @google/design.md@<ver> designmd lint DESIGN.md && npx -y -p @google/design.md@<ver> designmd export DESIGN.md --format css-vars > <目标>.tmp
-```
+- **原生路线（ttk / Slint）**：用本 skill 的 `scripts/design_theme.py`，一次产出目标框架的主题文件（ttk 的 `design_tokens.py`、Slint 的 `ui/theme.slint`），并刷新效果图 `docs/mockup/index.html` 里的 `design-tokens` 块：
 
-**必须用 `&&` 串成一条**：DESIGN.md 有错时 lint 退出非零，而 export 照样退出 0、会导出坏结果。整条成功后再把 `.tmp` 改名覆盖目标；失败就修 DESIGN.md，旧文件不动。Windows 上命令名必须用 `designmd`。效果图引导出的 `theme.css`，不手写第二份色值。
+  ```
+  npx -y -p @google/design.md@<ver> designmd lint DESIGN.md && py -3 <本 skill 目录>/scripts/design_theme.py <ttk|slint> --design DESIGN.md
+  ```
 
-**导出不是无损转换**（0.4.0 实测）：css-vars 只有颜色、间距、圆角，没有字体；`--format dtcg` 带字体但丢无单位的 `lineHeight`；两种都不导 `components`。导不出的值在用到的地方按 DESIGN.md 写一处，不许悄悄丢掉。原生主题目前由 AI 按 DESIGN.md 手工搬进主题文件一处，不经 node。
+  它直接读 DESIGN.md 源数据，超出支持范围的写法（ttk 用透明色、无单位尺寸、`lineHeight`、`components` 等）逐条报错、带行号，不静默丢；支持范围和参数看 `--ai-help`。产物提交进项目，主题和控件代码只引用产物里的值；`--check` 核对产物有没有落后于 DESIGN.md。token 写进 HTML 而不另建 `.css`：本机 Esafenet 会加密 python 写出的 `.css`，浏览器读到密文，效果图就丢了全部样式（2026-10-15 实测）。
+- **Web 路线**：用 designmd 导出，整条成功后再把 `.tmp` 改名覆盖目标；失败就修 DESIGN.md，旧文件不动：
+
+  ```
+  npx -y -p @google/design.md@<ver> designmd lint DESIGN.md && npx -y -p @google/design.md@<ver> designmd export DESIGN.md --format css-vars > <目标>.tmp
+  ```
+
+  页面引导出的 `theme.css`，不手写第二份色值。**导出不是无损转换**（0.4.0 实测）：css-vars 只有颜色、间距、圆角，没有字体，无单位的 spacing 会被静默丢掉；`--format dtcg` 带字体但丢无单位的 `lineHeight`；两种都不导 `components`。导不出的值在用到的地方按 DESIGN.md 写一处，不许悄悄丢掉。
 
 上游规范更新时跑 `py -3 <本 skill 目录>/scripts/sync_upstream.py`（在哪个目录跑都行；`--check` 只看有没有更新、不写文件），规范和 CLI 版本一起刷新，本文不用改。
 
