@@ -8,12 +8,14 @@
 
 纯 Rust 原生 GUI 一律用 Slint（用户 2026-10-15 定），不再比较 egui、iced 等其他 Rust GUI，也不为单个项目重新选框架。不因采用 Rust 就宣布更省内存；资源要求仍由 release 产物实测。
 
-- **本机实例**：`my-repos/serial-split`（Slint 1.18，winit + software 渲染，2026-10-14 按确认的样稿做完 v2 界面；2026-10-15 并排对照，布局、控件、颜色、字体还原度高）。可以照它的组件和 Theme 写法起步。
+- **本机实例**：`my-repos/serial-split`（Slint 1.18，winit + software 渲染，2026-10-14 按确认的样稿做完 v2 界面；2026-10-15 并排对照，布局、控件、颜色、字体还原度高）。只参考它的组件和 Theme 写法，不把其 ui.rs 的应用编排方式当成 Clean MVVM 架构样板。
 - **界面放哪两种都行**：写在 Rust 文件的 `slint::slint!` 宏里（serial-split 的做法，不用额外构建步骤），或拆成 `.slint` 文件由 `build.rs` 用 `slint-build` 编译（能用 `slint-viewer --auto-reload` 实时预览）。按项目体量和要不要实时预览选，已有项目沿用。
 - **本机工具链**：`stable-x86_64-pc-windows-gnullvm`，链接器和 C 编译器用 llvm-mingw；每条 cargo 命令前先把 llvm-mingw 的 `bin` 放到 PATH 最前面，机器内存紧时加 `-j 2`。具体写法见 serial-split 的 README 与 `build.rs`。
 - 许可：只自用不分发时不用处理；要分发给别人时，按当时的 Slint 许可条款（GPLv3、免版税许可或商业许可）满足要求，免版税许可有致谢展示的要求，发布前查一次原文。
 
-## 最小适用结构
+## 选定 Clean MVVM 时的结构示例
+
+新项目先完成架构讨论。以下骨架仅供选定 Clean MVVM 时使用；简单项目按已定结构裁剪，不为套模板创建空模块。
 
 ```text
 mytool/
@@ -24,16 +26,21 @@ mytool/
 ├── Cargo.toml
 ├── Cargo.lock
 ├── src/
-│   ├── main.rs         入口、配置与资源组装
-│   ├── core.rs         纯业务规则与数据类型
-│   ├── ui.rs           把应用状态接到 Slint 属性与回调；界面和自写小组件写在这里的 slint! 宏里，或拆到 ui/*.slint
-│   └── adapters.rs     按需：设备、文件、存储等 IO
+│   ├── main.rs         入口、配置与资源组装；调用 library 模块
+│   ├── lib.rs          导出 core/application/viewmodel；按需导出 ui 供截图夹具调用
+│   ├── core.rs         domain：纯业务规则与领域数据
+│   ├── application.rs  用例、任务生命周期与外部依赖 ports
+│   ├── viewmodel.rs    展示状态、命令；不依赖 Slint/驱动/数据库
+│   ├── ui.rs           View：Slint 属性、控件、事件桥与 ViewModel 绑定
+│   └── adapters.rs     按需：实现 ports 的设备、文件、存储 IO
 ├── ui/theme.slint      global Theme，由 DESIGN.md 生成（design_theme.py），不手改
 ├── examples/ui_smoke.rs  界面截图夹具：假数据驱动各状态，出快照与效果图对照
 └── tests/              按需：行为契约与集成路径
 ```
 
-按实际体量拆模块；只做一个应用时不用 workspace 或通用 trait 体系。状态与消息用具体类型表达，应用状态可以可变，业务规则不依赖 GUI。多个实际适配成员出现时才按变化轴收口。
+按实际体量拆模块，遵守 [Clean MVVM](../../vibe-apps/references/clean-mvvm.md)；不为分层强制 Cargo workspace。application 定义实际 IO 所需的窄 trait/函数边界并接受注入，选择泛型或 trait object 按实际用途，不造通用仓储基类。Slint 的 Weak、ModelRc、SharedString 和回调绑定只在 View/界面适配处；ViewModel 用普通 Rust 状态与消息，可不启动 Slint 测试。串口线程生命周期和退出清理由 application 协调，不因独立成一个 App struct 就仍放在 ui.rs。
+
+单个 crate 的模块划分并不能在编译期禁止所有反向依赖。集成测试与 examples 从 `lib.rs` 导出的公共接口调用，避免在二进制和夹具重复声明同一套模块；公开的内层接口不泄漏 Slint 类型。需要强编译隔离时再讨论拆 crate，否则使用约定的静态依赖检查。ViewModel 测试可使用真实用例加假 port，或注入普通结果事件，不要求每个用例都有一份 trait。
 
 ## 效果图与主题
 
@@ -50,7 +57,7 @@ mytool/
 
 ## 后台与构建
 
-- 短小纯计算可直接调用；阻塞 IO 使用后台工作线程或框架支持的任务机制，结果通过事件/消息回到 UI。已有异步需求才选择运行时，不默认引入 Tokio、线程池或每操作一个线程。
+- 短小纯计算可直接调用；阻塞 IO 使用后台工作线程或框架支持的任务机制，结果通过普通事件/消息回到 UI。View 用 UI 线程的 Timer 消费，或安全唤醒后消费队列，先更新同线程拥有的 ViewModel 再绑定；后台不持有可变 ViewModel，不默认用 Arc<Mutex<ViewModel>>。已有异步需求才选择运行时，不默认引入 Tokio、线程池或每操作一个线程。
 - 事件通道与显示历史有界，满时处理、命令/结果/错误不丢弃、关闭取消与释放资源，遵守原生分支的契约；不要在 UI 线程阻塞等待线程退出或通道可写。
 - 应用提交 `Cargo.lock`，依赖版本与实际渲染后端可复现；外部 DLL、字体、图标、驱动要求记录并随交付验证。平台特定调用集中在适配处，不放进纯规则。
 - 运行 `cargo check`、针对性 `cargo test`，完成项目要求的格式/静态检查，再 `cargo build --release --locked`；从目标机器的交付入口实用验证。资源比较使用 release 构建，不拿 debug 与 Python 打包产物混比。

@@ -2,7 +2,9 @@
 
 只在原生分支实际采用 Python 时读。ttkbootstrap 是新建、未指定 GUI 的本地工具默认；已有 Qt、Dear PyGui、Tk 或其他框架不因这份参考自动迁移。
 
-## 最小适用结构
+## 选定 Clean MVVM 时的结构示例
+
+新项目先完成架构讨论。以下骨架仅供选定 Clean MVVM 时使用；简单项目按已定结构裁剪，不为套模板创建空模块。
 
 ```text
 mytool/
@@ -11,8 +13,10 @@ mytool/
 ├── docs/{BLUEPRINT.md,CHANGELOG.md}
 ├── docs/mockup/        定稿的 HTML 效果图
 ├── app.py              入口、配置与资源组装
-├── core.py             纯业务规则
-├── ui.py               ttkbootstrap 控件、UI 状态与事件分发
+├── core.py             domain：纯业务规则与领域数据
+├── application.py      用例、任务生命周期与外部依赖 ports
+├── viewmodel.py        展示状态、命令；不导入 Tk 或具体 IO
+├── ui.py               View：ttkbootstrap 控件与绑定
 ├── design_tokens.py    由 DESIGN.md 生成（design_theme.py），不手改
 ├── theme.py            用 design_tokens 建项目主题、配命名字体与控件 Style
 ├── adapters.py         按需：串口、文件、存储等 IO
@@ -20,12 +24,12 @@ mytool/
 └── requirements.txt    固定实际依赖
 ```
 
-目录与模块按实际体量调整；多个 IO 成员出现时按 `vibe-flow` 的变化轴规则收口。会话/任务编排复杂到需要拆出时才加应用层模块，不预建空 `services/`、`ports/` 或接口。
+目录与模块按实际体量调整，职责遵守 [Clean MVVM](../../vibe-apps/references/clean-mvvm.md)。有会话/任务编排就放 application，不留在 ui.py 等复杂了再拆。实际 IO 的窄 port 可用 Protocol 或注入 callable，定义在使用方内层，即使只有一个实现也隔离；没有业务规则时不造空 domain，没有 IO 时不造空 port。
 
 ## 实现要点
 
-- 有效果图时照图搭布局（见下节）；业务校验留在 core，不写进按钮回调。主题与字体由 UI 组装处统一设置，不把样式散进业务逻辑。
-- Tk 控件只在主线程操作。需要后台 IO 时，线程将结果放入事件通道，主线程用有节制的 `after()` 消费并更新；回调应短且每批有界，不在 UI 中阻塞 `join()` 或等满队列腾位置。
+- 有效果图时照图搭布局（见下节）；业务校验留在 core，按钮回调只向 ViewModel 发命令。Tk Variable、控件与 after 绑定留在 View；ViewModel 使用普通 Python 数据，通过注入的用例边界接收结果，不导入 Tk。主题与字体由 UI 组装处统一设置，不把样式散进业务逻辑。
+- Tk 控件只在主线程操作。需要后台 IO 时，线程将结果放入事件通道，主线程用有节制的 `after()` 消费事件、更新主线程持有的 ViewModel，再同步控件；后台不得直接调用 ViewModel 的可变方法或展示订阅者；回调应短且每批有界，不在 UI 中阻塞 `join()` 或等满队列腾位置。
 - 保存定时回调标识，关闭时撤销；任务超时、取消、断连及晚到消息遵守原生分支的数据和生命周期契约。无需后台工作的小工具不创建线程或队列。
 - 长日志将历史保存与展示条数分开，批量插入/删除可见记录；若达到性能目标需要分页或虚拟化，按真实负载实现，不能靠少显示而改掉导出/持久化的数据契约。
 - 指定主题、默认配置与实际依赖集中管理；依赖和资源用项目路径定位，不依赖当前工作目录。字体、DPI 与中文输入在目标 Windows/Linux/macOS 环境核验，不把某台机器的 Tcl 或字体修复写成所有项目的启动要求。
