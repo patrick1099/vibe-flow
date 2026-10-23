@@ -36,29 +36,35 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 | 前端 | 原生 HTML/JS + Tailwind 浏览器版（`@tailwindcss/browser@4.3.3`）+ DaisyUI（`daisyui@5.7.46`），**零构建、无 npm** |
 | 窗口/入口 | 桌面壳用 pywebview（只当壳，通信走本地 HTTP，不用专有 JS 业务桥）；网站用浏览器入口 |
 | 交付 | 桌面壳默认 PyInstaller；网站部署后端与静态资源 |
-| 测试 | pytest |
+| 测试 | 后端 pytest；需要前端无 DOM 行为测试时用 Node 内置 `node --test`（仅开发依赖） |
 
 **前端库本地化**：两份库文件下载到 `web/vendor/`（`tailwindcss-browser.js`、`daisyui.css`，需要多主题时加 `daisyui-themes.css`），页面只引本地路径、不引 CDN——自用工具常离线跑，走 CDN 断网就没样式。版本号钉死在上表，升级时改表、重新下载。Tailwind 官方把浏览器版定位为开发用途（页面加载时现编译样式）；自用工具接受这点换零构建，页面多到加载明显变慢再议。
 
-**默认零构建**：应用的运行和打包都不用 npm，不上 React/Vue/npm 构建——打包简单，AI 改前端不用跑构建。（唯一用到 node 的是 DESIGN.md 导出，见「界面规范与效果图」，只在改设计时跑一次。）用户明确选择的既有前端栈优先；包体积与运行内存是不同指标，有资源要求时按共用入口实测，不预先放弃资源目标。
+**默认零构建**：应用的运行和打包都不用 npm，不上 React/Vue/npm 构建——打包简单，AI 改前端不用跑构建。DESIGN.md 导出和前端测试可以使用 Node 开发工具；开发检查依赖与应用运行/打包依赖分开，按项目实际记录。用户明确选择的既有前端栈优先；包体积与运行内存是不同指标，有资源要求时按共用入口实测，不预先放弃资源目标。
 
-## 桌面 Web 壳的默认五层（规则不知 UI 存在）
+## 选定 Clean Architecture + MVVM 时的 Web 映射
+
+先完成共用入口的架构讨论。以下层次、脚手架和模板是选定 Clean MVVM 后的实现示例；采用其他已定结构时按职责裁剪，不能把模板当成选型结论。
 
 | 层 | 职责 | 性质 |
 |---|---|---|
-| `core/` | 全部业务逻辑 | 纯 Python，可 pytest，工具"真身" |
-| `api/` | 把 core 暴露成 `/api/...` HTTP/JSON | 薄，只做 HTTP↔core 翻译 |
-| `web/` | HTML/CSS/JS，`fetch('/api/..')` 调后端 | 只管展示，不含业务逻辑 |
+| `core/` | domain：业务规则与领域数据 | 纯 Python |
+| `application/` | 用例、会话/任务、ports | 依赖 domain，不导入 FastAPI/具体 IO |
+| `adapters/` | 实现 ports：设备、存储等 | 依赖内层契约 |
+| `api/` | HTTP 请求/响应与用例转换 | 入站适配器，不是 ViewModel |
+| `web/view.js` | DOM 展示与事件绑定 | View，只调用 ViewModel |
+| `web/viewmodel.mjs` | 展示状态、命令、错误映射 | 不依赖 DOM/fetch，注入请求接口 |
+| `web/client.js` | 实现前端请求接口，fetch/JSON | HTTP 适配器，不决定业务规则 |
 | `app.py` | 后台起 uvicorn + 开 pywebview 窗口 | 只管拼装 |
 | pywebview | 把 localhost 页面套成原生窗口 | 纯壳 |
 
-桌面壳数据流：双击 exe → app.py 后台起 uvicorn(127.0.0.1:随机端口) → pywebview 加载该地址 → 前端 fetch → FastAPI 调应用操作 → JSON → 渲染。
+桌面壳数据流：app.py 起本地服务与窗口 → View 命令 → ViewModel → 注入的 HTTP client → FastAPI → application 用例 → domain / 注入的 IO port → 响应更新 ViewModel → View 渲染。浏览器与服务器是两个运行边界，不共用可变 ViewModel，也不让后端依赖前端模块。
 
-网站保留 `core/`、`api/`、`web/` 的适用职责，入口改为服务部署，不创建 pywebview 窗口。应用操作先调用适配器取得数据，再将数据交纯规则；需要 IO 编排时由应用/组装层拥有，API 只翻译请求与结果，不把 IO 调用塞进 core。体量需要时才将编排拆成独立模块。
+网站沿用相同职责，入口改为服务部署，不创建 pywebview 窗口。application 用例通过自身定义的 ports 编排 IO，把数据交 domain；入口注入实现，API 不承担工作流。纯静态展示不造空 ViewModel；已有前端框架用它自己的绑定机制实现这些边界，不强制新增运行框架。
 
 ## 业务规则不依赖当前用户或窗口
 
-数据显式传入，设备/存储 IO 由适配层处理；UI、连接、会话与任务状态由应用层拥有。逻辑分离降低换框架或交付方式的影响范围，实际可复用部分仍要核对依赖和行为契约。
+数据显式传入，设备/存储 IO 由适配层处理；连接、会话与任务状态由 application 拥有，前端展示状态归 ViewModel，DOM 状态归 View。服务端业务校验是权威，前端可做输入格式与交互校验，不复制业务决策。逻辑分离降低换框架或交付方式的影响范围，实际可复用部分仍要核对依赖和行为契约。
 
 ```python
 def summarize():                  # ❌ 读全局 DATA_FILE、焊死单用户
@@ -67,17 +73,17 @@ def summarize(data):              # ✅ 规则接收显式数据，不在规则�
     ...
 ```
 
-**判据**：业务规则能直接构造输入调用，不依赖 GUI、全局当前用户或外部 IO；存储适配器由应用/组装层调用，取得的数据显式传给规则。保留这种边界即可，不提前建多用户/登录。
+**判据**：业务规则能直接构造输入调用，不依赖 GUI、全局当前用户或外部 IO；application 只通过内层 port 使用存储，入口注入具体适配器，取得的数据显式传给规则。保留这种边界即可，不提前建多用户/登录。
 
 ## core 里的变化轴（可插拔）
 
-五层管的是上下分层；横向还有一类耦合五层管不到：**同一类会增删的成员**（数据源、导出格式、设备型号、第三方平台）。什么时候收口、什么时候要故障隔离，规矩在 `vibe-flow` §5「低耦合底线」及其 `references/low-coupling.md`，落到本栈：
+选定 Clean MVVM 时，它管依赖方向与展示职责；横向还有一类成员选择：**同一类会增删的成员**（数据源、导出格式、设备型号、第三方平台）。什么时候收口、什么时候要故障隔离，规矩在 `vibe-flow` §5「低耦合底线」及其 `references/low-coupling.md`，落到本栈：
 
-- **放哪按成员碰不碰 IO 分**：纯规则类成员（格式转换、设备型号规则）放 `core/<轴>/`；碰网络、文件、设备、第三方平台的成员放 `adapters/<轴>/`，由应用/组装层调用，将取得的数据显式传给 core；core 不调用 IO 适配器。
+- **放哪按成员碰不碰 IO 分**：纯规则类成员（格式转换、设备型号规则）放 `core/<轴>/`；碰网络、文件、设备、第三方平台的成员放 `adapters/<轴>/`，由入口注入 application 定义的 port，将取得的数据显式传给 core；core 不调用 IO 适配器。
 - `<轴>/__init__.py` 放唯一的注册表；成员用属性自己声明能力。成员只是纯规则函数时一张 dict 就够。
-- `api/` 和 `web/` 需要成员列表时，走一个 `/api/<轴>` 端点从注册表取，前端不写死名单。
+- `api/` 和 `web/` 需要成员列表时，走 `/api/<轴>` → application 的成员查询用例。纯规则名单可来自 core 注册表；IO 名单经入口注入的 catalog port 读取外层注册表，API/用例不直接导入 adapters，前端不写死名单。
 - **成员各有外部依赖时**（第三方库、设备、网络），注册表只登记名字、惰性加载（写法见 `vibe-scripts` 的 `references/templates.md`）；列表类接口遇到单个成员加载或运行出错，只标它不可用，照常返回其余成员。用户点名操作这个成员，或操作要求全部成功时，明确报错，不假装成功。
-- 只有一个成员时不建 `<轴>/` 目录，代码留在普通业务模块里聚成一处；第二个出现时再收成注册表。
+- 只有一个成员时不建 `<轴>/` 目录：纯规则聚在 core 普通模块，IO 聚在 adapters 普通模块；第二个出现时再收成注册表。
 
 ## 远期：换零件、变网站
 
@@ -95,7 +101,7 @@ DESIGN.md、效果图先行与截图对照按 [vibe-apps「界面：效果图先
 
 应用独占一个目录，按 `vibe-flow` §6 带 `AGENTS.md` ＋ `docs/BLUEPRINT.md` ＋ `docs/CHANGELOG.md`，有没做完的活时再加 `docs/HANDOFF.md`。这几份由收工时派出的 fork 按 `living-blueprint` 写（`vibe-flow` §8），实现者不写；例外只有两处：下面脚手架里 AGENTS.md 的架构约束段，和讨论中谈定时往 HANDOFF「已谈定」区记的条目（`vibe-flow` §4）。
 
-## 脚手架（建目录）
+## 脚手架（选定 Clean MVVM 后按需建目录）
 
 ```
 mytool/
@@ -103,29 +109,36 @@ mytool/
 ├── docs/BLUEPRINT.md      # 当前功能全貌（living-blueprint）
 ├── docs/CHANGELOG.md      # 为什么变更，只追加（living-blueprint）
 ├── docs/HANDOFF.md        # 可选：只在有没做完的活时存在，做完删掉（living-blueprint）
-├── core/*.py              # 纯逻辑, 可 pytest, 对"谁"无状态
+├── core/*.py              # domain：纯业务规则
+├── application/           # 用例、会话/任务及 ports
+├── adapters/              # 实际 IO 的 port 实现
 ├── core/<轴>/ 或 adapters/<轴>/   # 可选：某条轴出现第二个成员时才建（纯规则进 core，碰 IO 进 adapters）
 ├── api/server.py          # FastAPI 薄适配
-├── web/{index.html,app.js}   # fetch 调 api; Tailwind 工具类 + DaisyUI 组件
+├── web/index.html         # View 的页面布局
+├── web/view.js            # DOM 绑定 ViewModel
+├── web/viewmodel.mjs       # 普通 JS 展示状态和命令；可无 DOM 测试
+├── web/client.js          # 注入的 HTTP client 实现
+├── web/app.js             # 前端组装入口
 ├── web/vendor/            # tailwindcss-browser.js、daisyui.css（本地副本，版本见技术栈表）
 ├── web/theme.css          # 由 DESIGN.md 导出，不手改
 ├── DESIGN.md              # 界面规范（见 vibe-apps「界面：效果图先行」）
-├── tests/test_*.py        # pytest 测 core
+├── tests/                # domain/usecase/VM 行为与实际依赖边界检查
 ├── app.py                 # 桌面壳：起 uvicorn + 开 pywebview；网站：服务组装入口
 ├── requirements.txt       # 按交付方式固定依赖；网站不用 pywebview/PyInstaller
 └── build.spec             # 仅桌面壳：PyInstaller
 ```
 
-**搭脚手架时，实现者把项目实际的架构约束写进 AGENTS.md，下面是桌面 Web 壳示例**：网站应删除壳与桌面打包约束，写实际服务入口、部署与文件传输契约；不能只改“实现选择”一行而保留 pywebview 五层。它是固定模板，也是文档闸认出 vibe-apps 项目的标记，所以随目录一起建，不等收工。AGENTS.md 其余几段和 BLUEPRINT、CHANGELOG 由收工时的 fork 补（骨架见 `living-blueprint` 的 `references/templates.md`）：
+**搭脚手架时，实现者把项目实际的架构约束写进 AGENTS.md，下面是桌面 Web 壳示例**：网站应删除壳与桌面打包约束，写实际服务入口、部署与文件传输契约；不能只改“实现选择”一行而保留桌面壳职责。固定的是下方标题，它是文档闸认出 vibe-apps 项目的标记；正文须按架构讨论的实际选择填写，所以随目录一起建，不等收工。AGENTS.md 其余几段和 BLUEPRINT、CHANGELOG 由收工时的 fork 补（骨架见 `living-blueprint` 的 `references/templates.md`）：
 ```markdown
 ## 架构约束（vibe-apps）
 实现选择：Web 界面，Python + FastAPI + pywebview；交付 PyInstaller 桌面应用。
-五层：core(纯逻辑可 pytest, 对"谁"无状态) / api(FastAPI 薄适配) / web(HTML+fetch) / app.py(拼装) / pywebview(壳)。
-逻辑只放 core；api 只做 HTTP↔core 翻译；web 不含业务逻辑。
+架构：Clean Architecture + MVVM；core 为 domain，application 定义用例/ports，adapters 实现 IO，api 只做 HTTP↔用例转换。
+前端 View 绑定 ViewModel，ViewModel 通过注入的 client 请求后端；不持有 DOM、不直接 fetch。内层不导入外层实现，入口负责组装。
+在此写明已选架构的验证方式；有自动检查时列实际命令及覆盖范围，越界非零退出，未自动覆盖的边界如实记录。
 前端默认原生 HTML/JS + Tailwind 浏览器版 + DaisyUI，库文件放 web/vendor/ 本地引用，零构建无 npm；通信走 HTTP，不用 pywebview 专有桥。
 有 DESIGN.md 时，颜色只改 DESIGN.md 再导出 web/theme.css，不手改 theme.css。
 ```
-（这五层是 **默认 Python Web 实现结构**，属本 AGENTS.md。共用入口规定的可移植边界由 fork 写进蓝图；实际外部接口才记录协议契约，不把本分支的 HTTP、具名五层或专有桥限制强加给原生应用。网站交付时按实际职责重写模板正文，删除 pywebview/本地窗口及桌面打包约束。）
+（这些模块名是 **默认 Python Web 实现结构**，属本 AGENTS.md。共用入口规定的可移植边界由 fork 写进蓝图；实际外部接口才记录协议契约，不把本分支的 HTTP 或专有桥限制强加给原生应用。网站交付时按实际职责重写模板正文，删除 pywebview/本地窗口及桌面打包约束。）
 
 ## 文件选择：按交付边界处理
 
@@ -133,7 +146,13 @@ mytool/
 
 **桌面 Web 壳**（下述本机绝对路径方案仅适用于此方式）：
 
-浏览器沙箱拿不到本地绝对路径，但业务又常需要。**统一做法**：在 `api/` 加一个 HTTP 端点（如 `/api/pick-path`），服务端调 pywebview 的 `create_file_dialog(FOLDER_DIALOG/...)` 弹原生框返回路径；开发态没有 webview 窗口时回退 `tkinter.filedialog`。前端仍只 `fetch` 这个端点。**不要**为此改用 pywebview 的 js_api 业务桥——那会让前端耦合壳、且没法用浏览器调。这是"通信一律走 HTTP"的唯一需要特殊处理点。
+浏览器沙箱拿不到本地绝对路径，但业务又常需要。**统一做法**：在 `api/` 加一个 HTTP 端点（如 `/api/pick-path`），端点调用 application 的路径选择用例，用例通过自身定义的 picker port 请求文件选择能力，由桌面适配器在 GUI 允许的线程调 `create_file_dialog(FOLDER_DIALOG/...)`，开发态使用显式选择的 Tk 适配器。前端由 client 请求该端点，ViewModel 接收结果；窗口句柄和框架调用不进入 ViewModel/用例层。**不要**为此改用 pywebview 的 js_api 业务桥——那会让前端耦合壳、且没法用浏览器调。这是"通信一律走 HTTP"的唯一需要特殊处理点。
+
+## 前端边界怎么验证
+
+按共用 Clean MVVM 验证要求和本次规模选择检查，不把“零构建”解释成不能有开发测试。无构建的新前端可将实际 ViewModel 写成 ES module（例如 `viewmodel.mjs`，并同步入口引用）；测试通过 `node --test tests/frontend/*.test.mjs` 导入生产模块，以假 client 驱动命令、失败与晚到响应。已有模块方案沿用，不为测试重写一份 ViewModel。
+
+测试夹具可把 `fetch`、`XMLHttpRequest`、`document`、`window`、`localStorage` 替换为一经访问即报错的对象，运行后恢复；测试的是本次执行到的路径，不能据此宣称完整源码没有越界。需要静态依赖检查时选择支持实际 JS 模块语法的工具，开发依赖单独记录；用正反夹具验证 alias/re-export 等覆盖范围。不能用后端 pytest 通过或几个关键词搜索代替前端验证。
 
 ## 开发 / 交付两态
 
