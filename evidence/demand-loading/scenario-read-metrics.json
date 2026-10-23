@@ -1,0 +1,128 @@
+{
+  "definition": "Actual returned command output text normalized CRLF/CR to LF, once per command; includes headings/inventory/fixture text where returned. Not tokens/billing/long-term context. Underlying Get-Content can read whole file into process memory while only selected lines are returned to model.",
+  "scenarios": [
+    {
+      "scenario": "small",
+      "source_session": "rollout-2026-10-23T10-07-37-01a16683-8216-7861-b261-68970a2217b6.jsonl",
+      "actual_custom_tool_calls": 4,
+      "actual_command_outputs": [
+        {
+          "source_line": 18,
+          "exit_code": 0,
+          "output_chars_lf": 9768,
+          "output_sha256": "55c56c9017c6fe17e4b97f54efc3093c1ebb2eaa3e6c945c873a4a0bba3b1e4b"
+        },
+        {
+          "source_line": 25,
+          "exit_code": 0,
+          "output_chars_lf": 6845,
+          "output_sha256": "85a8817079e0b42191231ea7eb61441daa5646f956f66c88428a9800a55ddba1"
+        },
+        {
+          "source_line": 30,
+          "exit_code": 0,
+          "output_chars_lf": 2543,
+          "output_sha256": "2aab4dc42a7bbd210459204a87c67323e0c7f96dc34b2498be927f052ac60f52"
+        },
+        {
+          "source_line": 37,
+          "exit_code": 0,
+          "output_chars_lf": 3814,
+          "output_sha256": "8e600678c38d7b634cddb364bb1291cee70037658963ce9623271d6941acf5b1"
+        }
+      ],
+      "returned_text_chars_lf": 22970,
+      "returned_text_chars_lf_body_excluding_frontmatter": 21513
+    },
+    {
+      "scenario": "new",
+      "source_session": "rollout-2026-10-23T10-09-18-01a16685-0dee-7703-b5a1-2e5f7fe11cce.jsonl",
+      "actual_custom_tool_calls": 3,
+      "actual_command_outputs": [
+        {
+          "source_line": 18,
+          "exit_code": 0,
+          "output_chars_lf": 9768,
+          "output_sha256": "55c56c9017c6fe17e4b97f54efc3093c1ebb2eaa3e6c945c873a4a0bba3b1e4b"
+        },
+        {
+          "source_line": 26,
+          "exit_code": 0,
+          "output_chars_lf": 358,
+          "output_sha256": "ce09cde4f8f738056840a1e544837952539d0bc474ce1b28b6cf3ca150eb3ace"
+        },
+        {
+          "source_line": 26,
+          "exit_code": 0,
+          "output_chars_lf": 6845,
+          "output_sha256": "85a8817079e0b42191231ea7eb61441daa5646f956f66c88428a9800a55ddba1"
+        },
+        {
+          "source_line": 34,
+          "exit_code": 0,
+          "output_chars_lf": 965,
+          "output_sha256": "f74d77092e9859351979293b000373bb411cc884743406f05fec99372a2fe7de"
+        },
+        {
+          "source_line": 34,
+          "exit_code": 0,
+          "output_chars_lf": 2543,
+          "output_sha256": "2aab4dc42a7bbd210459204a87c67323e0c7f96dc34b2498be927f052ac60f52"
+        }
+      ],
+      "returned_text_chars_lf": 20479,
+      "returned_text_chars_lf_body_excluding_frontmatter": 19022
+    },
+    {
+      "scenario": "resume",
+      "source_session": "rollout-2026-10-23T10-11-27-01a16687-077b-76e0-969a-61ad518c5c0b.jsonl",
+      "actual_custom_tool_calls": 3,
+      "actual_command_outputs": [
+        {
+          "source_line": 18,
+          "exit_code": null,
+          "output_chars_lf": 1632,
+          "output_sha256": "e3662927f3da8340ad3eb50ffb3d07f6baeba7a87206c6b2cd2f5bbe9dfa9528"
+        },
+        {
+          "source_line": 25,
+          "exit_code": 0,
+          "output_chars_lf": 4520,
+          "output_sha256": "c7ab078f78aabcf77407df077c6c8994ffec975a5826488e493243152049a7d1"
+        },
+        {
+          "source_line": 25,
+          "exit_code": 0,
+          "output_chars_lf": 1092,
+          "output_sha256": "8d77bff3025a9e24a1f0a68e6da1560fce8263ed02f85b1848a915166d97371b"
+        },
+        {
+          "source_line": 25,
+          "exit_code": 0,
+          "output_chars_lf": 383,
+          "output_sha256": "2a96df1c4a24927b952955da1f43efb59faab9bb162c23ca9230709c3ea10900"
+        },
+        {
+          "source_line": 34,
+          "exit_code": 0,
+          "output_chars_lf": 3634,
+          "output_sha256": "7da4d31b9cee9d7eaa3e3fa53d247c76494baef1834ecfb4d11a8fb47bf1ed77"
+        },
+        {
+          "source_line": 34,
+          "exit_code": 0,
+          "output_chars_lf": 55,
+          "output_sha256": "42f682960edf9a0e8e6f12f0d54064f54c985d5a645cc1b93fa0a0f7e07b4351"
+        },
+        {
+          "source_line": 34,
+          "exit_code": 0,
+          "output_chars_lf": 1089,
+          "output_sha256": "9a3c8c34a93baaabb6f06d11ca54d20db20d03d6e58cf5c676b929216cc81cef"
+        }
+      ],
+      "returned_text_chars_lf": 12405,
+      "returned_text_chars_lf_body_excluding_frontmatter": 12405
+    }
+  ]
+}

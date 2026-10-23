@@ -13,7 +13,7 @@ description: Use when writing or modifying any standalone Python script or small
 
 **适用判定**：这段代码坏了产品会坏吗？会 → 不适用（走项目编码规范 + 人审）；不会（独立脚本/工具）→ 适用。有界面 → 改用 **vibe-apps**；没界面的命令行工具即使要打包发给别人，或以后可能变网站，仍用本 skill。
 
-**分工**：判档、低耦合规矩、文档要求、谁拍板，都以 `vibe-flow` 为准（§2、§4–§6），本 skill 只给 Python 脚本的落法。**新写脚本或调整结构时，读 `references/templates.md` 拿模板代码。**
+**分工**：直接服务用户先读 [vibe-flow](../vibe-flow/SKILL.md) 判档；已分派角色按 [role-reading.md](../vibe-flow/references/role-reading.md) 读取指定公共节，不通读父入口或重判档。公共规则仍以该入口为准，本 skill 只给 Python 脚本的落法。**新写脚本或调整结构时，读 `references/templates.md` 拿模板代码。**
 
 ## 第一步：定级（先定级，再写代码）
 

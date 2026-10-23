@@ -1,0 +1,324 @@
+{
+  "definition": "Unicode codepoints after UTF-8-sig decode and CRLF/CR to LF; frontmatter includes opening delimiter through closing delimiter plus exactly its final LF; subsequent blank line belongs to body. File totals exclude vendor snapshots. No tokens, fees or persistent-context estimate.",
+  "baseline": "5ef3632",
+  "snapshot": "after result-review two targeted corrections; original three forward scenarios predate this snapshot and were not rerun; final staging removed one redundant EOF LF from planning and collaboration, no semantic changes",
+  "totals": {
+    "root": {
+      "files": 1,
+      "chars_lf_including_frontmatter": 9828,
+      "chars_lf_body": 9281
+    },
+    "nine_entries": {
+      "files": 9,
+      "chars_lf_including_frontmatter": 46928,
+      "chars_lf_body": 42524
+    },
+    "root_plus_six_touched_or_new_references": {
+      "files": 7,
+      "chars_lf_including_frontmatter": 26181,
+      "chars_lf_body": 25634
+    },
+    "maintained_skill_markdown": {
+      "files": 27,
+      "chars_lf_including_frontmatter": 97100,
+      "chars_lf_body": 92696
+    }
+  },
+  "four_related_files": {
+    "skills/vibe-flow/SKILL.md": {
+      "chars_lf_including_frontmatter": 9828,
+      "chars_lf_body": 9281,
+      "frontmatter_chars_lf": 547,
+      "lines": 184,
+      "sha256": "f38a5063fc240583eda86d0f1dca5b79dc13cbc264fa0827bea8522a1df1e73e"
+    },
+    "skills/vibe-flow/references/doc-fork.md": {
+      "chars_lf_including_frontmatter": 3514,
+      "chars_lf_body": 3514,
+      "frontmatter_chars_lf": 0,
+      "lines": 45,
+      "sha256": "07c6a97379a2ba4ce5c612dc1d27fe1e989bc448811f70ae261fdff94b9878f9"
+    },
+    "skills/vibe-flow/references/role-reading.md": {
+      "chars_lf_including_frontmatter": 1670,
+      "chars_lf_body": 1670,
+      "frontmatter_chars_lf": 0,
+      "lines": 21,
+      "sha256": "4a3d50002ef5f2723ad443f64ba3a34b3f3e4c8a263050c32e48a015c5c49727"
+    },
+    "skills/vibe-flow/references/batch-supervisor.md": {
+      "chars_lf_including_frontmatter": 4548,
+      "chars_lf_body": 4548,
+      "frontmatter_chars_lf": 0,
+      "lines": 69,
+      "sha256": "4471dff185223f0fb6265e86e07404c5fe540eed72e3044689c360a99df7f2e9"
+    }
+  },
+  "baseline_totals_reference": "character-counts.json",
+  "checks": {
+    "quick_validate": {
+      "skill": "vibe-flow",
+      "exit_code": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    "four_file_diff_check": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of 'skills/vibe-flow/SKILL.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'skills/vibe-flow/references/batch-supervisor.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'skills/vibe-flow/references/doc-fork.md', LF will be replaced by CRLF the next time Git touches it"
+    },
+    "local_links": [
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 12,
+        "target": "references/role-reading.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 18,
+        "target": "references/planning.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 19,
+        "target": "references/low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 20,
+        "target": "references/batch-supervisor.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 21,
+        "target": "references/collaboration.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 22,
+        "target": "references/doc-fork.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 23,
+        "target": "references/platform-porting.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 24,
+        "target": "../clarify-needs/references/run-model.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 87,
+        "target": "references/planning.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 95,
+        "target": "references/collaboration.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 127,
+        "target": "references/low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 128,
+        "target": "references/low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 129,
+        "target": "references/platform-porting.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 154,
+        "target": "references/batch-supervisor.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 154,
+        "target": "references/role-reading.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 156,
+        "target": "references/collaboration.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 168,
+        "target": "references/low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 170,
+        "target": "references/doc-fork.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/SKILL.md",
+        "line": 172,
+        "target": "references/doc-fork.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/doc-fork.md",
+        "line": 9,
+        "target": "../SKILL.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 3,
+        "target": "../SKILL.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 16,
+        "target": "batch-supervisor.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 16,
+        "target": "collaboration.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 16,
+        "target": "doc-fork.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 16,
+        "target": "planning.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 17,
+        "target": "low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 18,
+        "target": "low-coupling.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 19,
+        "target": "doc-fork.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 19,
+        "target": "../../living-blueprint/SKILL.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 21,
+        "target": "../../vibe-apps/SKILL.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/role-reading.md",
+        "line": 21,
+        "target": "../../vibe-apps/references/clean-mvvm.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 5,
+        "target": "../SKILL.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 9,
+        "target": "role-reading.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 22,
+        "target": "role-reading.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 67,
+        "target": "../vendor/gsd/manager.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 67,
+        "target": "../vendor/gsd/context-budget.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 68,
+        "target": "../vendor/gastown/witness.md",
+        "exists": true
+      },
+      {
+        "source": "skills/vibe-flow/references/batch-supervisor.md",
+        "line": 68,
+        "target": "../vendor/gastown/handoff.go",
+        "exists": true
+      }
+    ],
+    "collaboration_target_exists": true,
+    "collaboration_unchanged_from_initial_review": false,
+    "collaboration_sha256": "fc223b27a6bfd6f67fe6761bc1f5bce6ecd4091a80b17ee29e699f0506b999d0"
+  },
+  "review_receipt": {
+    "path": "t3-result-review-receipt.json",
+    "sha256": "afd57fc671bd0c6ee33c967193056558f3602672b6b309401333ecccb54287af"
+  },
+  "final_whitespace_cleanup": {
+    "character_delta": -2,
+    "files": [
+      {
+        "file": "skills/vibe-flow/references/planning.md",
+        "character_delta": -1,
+        "only_trailing_lf_removed": true
+      },
+      {
+        "file": "skills/vibe-flow/references/collaboration.md",
+        "character_delta": -1,
+        "only_trailing_lf_removed": true
+      }
+    ],
+    "semantics": "unchanged; only trailing LF count reduced"
+  }
+}

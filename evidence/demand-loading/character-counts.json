@@ -1,0 +1,284 @@
+{
+  "definition": "Unicode codepoints after UTF-8-sig decode and CRLF/CR to LF; frontmatter includes opening delimiter through closing delimiter plus exactly its final LF; subsequent blank line belongs to body. File totals exclude vendor snapshots. No tokens, fees or persistent-context estimate.",
+  "baseline": "5ef3632",
+  "maintained_skill_markdown": {
+    "baseline": {
+      "files": 24,
+      "chars_lf_including_frontmatter": 94123,
+      "chars_lf_body": 89833
+    },
+    "current": {
+      "files": 27,
+      "chars_lf_including_frontmatter": 96976,
+      "chars_lf_body": 92572
+    }
+  },
+  "file_measurements": [
+    {
+      "path": "skills/clarify-needs/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 5200,
+        "chars_lf_including_frontmatter": 5200,
+        "chars_lf_body": 4211,
+        "frontmatter_chars_lf": 989,
+        "lines": 128
+      },
+      "current": {
+        "decoded_chars_raw": 5328,
+        "chars_lf_including_frontmatter": 5200,
+        "chars_lf_body": 4211,
+        "frontmatter_chars_lf": 989,
+        "lines": 128
+      }
+    },
+    {
+      "path": "skills/cut-scope/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 2016,
+        "chars_lf_including_frontmatter": 2016,
+        "chars_lf_body": 1649,
+        "frontmatter_chars_lf": 367,
+        "lines": 64
+      },
+      "current": {
+        "decoded_chars_raw": 2080,
+        "chars_lf_including_frontmatter": 2016,
+        "chars_lf_body": 1649,
+        "frontmatter_chars_lf": 367,
+        "lines": 64
+      }
+    },
+    {
+      "path": "skills/living-blueprint/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 5437,
+        "chars_lf_including_frontmatter": 5437,
+        "chars_lf_body": 4981,
+        "frontmatter_chars_lf": 456,
+        "lines": 96
+      },
+      "current": {
+        "decoded_chars_raw": 5598,
+        "chars_lf_including_frontmatter": 5598,
+        "chars_lf_body": 5142,
+        "frontmatter_chars_lf": 456,
+        "lines": 98
+      }
+    },
+    {
+      "path": "skills/scan-field/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 3106,
+        "chars_lf_including_frontmatter": 3106,
+        "chars_lf_body": 2651,
+        "frontmatter_chars_lf": 455,
+        "lines": 104
+      },
+      "current": {
+        "decoded_chars_raw": 3210,
+        "chars_lf_including_frontmatter": 3106,
+        "chars_lf_body": 2651,
+        "frontmatter_chars_lf": 455,
+        "lines": 104
+      }
+    },
+    {
+      "path": "skills/vibe-apps-native/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 2364,
+        "chars_lf_including_frontmatter": 2364,
+        "chars_lf_body": 1980,
+        "frontmatter_chars_lf": 384,
+        "lines": 37
+      },
+      "current": {
+        "decoded_chars_raw": 2543,
+        "chars_lf_including_frontmatter": 2543,
+        "chars_lf_body": 2077,
+        "frontmatter_chars_lf": 466,
+        "lines": 37
+      }
+    },
+    {
+      "path": "skills/vibe-apps-web/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 8442,
+        "chars_lf_including_frontmatter": 8442,
+        "chars_lf_body": 8141,
+        "frontmatter_chars_lf": 301,
+        "lines": 161
+      },
+      "current": {
+        "decoded_chars_raw": 8603,
+        "chars_lf_including_frontmatter": 8603,
+        "chars_lf_body": 8257,
+        "frontmatter_chars_lf": 346,
+        "lines": 161
+      }
+    },
+    {
+      "path": "skills/vibe-apps/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 6687,
+        "chars_lf_including_frontmatter": 6687,
+        "chars_lf_body": 6243,
+        "frontmatter_chars_lf": 444,
+        "lines": 102
+      },
+      "current": {
+        "decoded_chars_raw": 6845,
+        "chars_lf_including_frontmatter": 6845,
+        "chars_lf_body": 6401,
+        "frontmatter_chars_lf": 444,
+        "lines": 102
+      }
+    },
+    {
+      "path": "skills/vibe-flow/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 13650,
+        "chars_lf_including_frontmatter": 13650,
+        "chars_lf_body": 13090,
+        "frontmatter_chars_lf": 560,
+        "lines": 247
+      },
+      "current": {
+        "decoded_chars_raw": 9768,
+        "chars_lf_including_frontmatter": 9768,
+        "chars_lf_body": 9221,
+        "frontmatter_chars_lf": 547,
+        "lines": 182
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/batch-supervisor.md",
+      "baseline": {
+        "decoded_chars_raw": 4220,
+        "chars_lf_including_frontmatter": 4220,
+        "chars_lf_body": 4220,
+        "frontmatter_chars_lf": 0,
+        "lines": 69
+      },
+      "current": {
+        "decoded_chars_raw": 4520,
+        "chars_lf_including_frontmatter": 4520,
+        "chars_lf_body": 4520,
+        "frontmatter_chars_lf": 0,
+        "lines": 69
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/collaboration.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 1080,
+        "chars_lf_including_frontmatter": 1080,
+        "chars_lf_body": 1080,
+        "frontmatter_chars_lf": 0,
+        "lines": 24
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/doc-fork.md",
+      "baseline": {
+        "decoded_chars_raw": 3103,
+        "chars_lf_including_frontmatter": 3103,
+        "chars_lf_body": 3103,
+        "frontmatter_chars_lf": 0,
+        "lines": 39
+      },
+      "current": {
+        "decoded_chars_raw": 3514,
+        "chars_lf_including_frontmatter": 3514,
+        "chars_lf_body": 3514,
+        "frontmatter_chars_lf": 0,
+        "lines": 45
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/planning.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 2492,
+        "chars_lf_including_frontmatter": 2492,
+        "chars_lf_body": 2492,
+        "frontmatter_chars_lf": 0,
+        "lines": 30
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/platform-porting.md",
+      "baseline": {
+        "decoded_chars_raw": 2988,
+        "chars_lf_including_frontmatter": 2988,
+        "chars_lf_body": 2988,
+        "frontmatter_chars_lf": 0,
+        "lines": 52
+      },
+      "current": {
+        "decoded_chars_raw": 3051,
+        "chars_lf_including_frontmatter": 3051,
+        "chars_lf_body": 3051,
+        "frontmatter_chars_lf": 0,
+        "lines": 52
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/role-reading.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 1632,
+        "chars_lf_including_frontmatter": 1632,
+        "chars_lf_body": 1632,
+        "frontmatter_chars_lf": 0,
+        "lines": 21
+      }
+    },
+    {
+      "path": "skills/vibe-scripts/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 3091,
+        "chars_lf_including_frontmatter": 3091,
+        "chars_lf_body": 2757,
+        "frontmatter_chars_lf": 334,
+        "lines": 68
+      },
+      "current": {
+        "decoded_chars_raw": 3189,
+        "chars_lf_including_frontmatter": 3189,
+        "chars_lf_body": 2855,
+        "frontmatter_chars_lf": 334,
+        "lines": 68
+      }
+    }
+  ],
+  "current_sha256": {
+    "skills/clarify-needs/SKILL.md": "71672eed8dd4a869f413f0862558fcfda1143c9ce54095d2ba969d848f16025a",
+    "skills/cut-scope/SKILL.md": "e563a87a47c6da1eac11592469d0f704ab2f58230368fb11b56a849446a626c1",
+    "skills/living-blueprint/SKILL.md": "e2e481e0bd49b81ebecef6fa60042db1d779719e74c9111a6b5de33b9bcabc94",
+    "skills/scan-field/SKILL.md": "0d3d8409062d946f334093d93fe2c3cc7523d5a4ddd298cb77d8c7b8208c621a",
+    "skills/vibe-apps/SKILL.md": "0f9fcc0134074043c004f9c011fc4590d3a2920552f16119f33803fb4b10d3cd",
+    "skills/vibe-apps-native/SKILL.md": "a6636d3b4111956495a0601b88358d13019833d6ea0eac4a58ba3940f78ae708",
+    "skills/vibe-apps-web/SKILL.md": "c0ac7cff944ba9fe46ad03d8fd028785d8399df28d6d5dc979dda998811862be",
+    "skills/vibe-flow/SKILL.md": "1cc9d1da929eb62d4fb00e19ce44accfcdc38565a22a4e0876580f121d1c5783",
+    "skills/vibe-scripts/SKILL.md": "46e77569bf7c106165aa0bd4e771d9fb59a25bdadc03321ba919b5efc7d40056",
+    "skills/vibe-scripts/references/templates.md": "cbbdd7b116684f60ab36817418fe04387d35b4ebcd0f0a82a538506dfb35f19e",
+    "skills/vibe-flow/references/batch-supervisor.md": "2ef26653c3c99369c0db12c623e501082c025164fac2139db8b2ebcceefea9d7",
+    "skills/vibe-flow/references/collaboration.md": "a73f0400a5b04c7442b63613317d759e0b9710ab1d1c75725b5362d285b5e152",
+    "skills/vibe-flow/references/doc-fork.md": "3454d2cc0bac0b8b08a870c9a5e7c416db5b66befb9e0d77ed644f6cc9a91a61",
+    "skills/vibe-flow/references/low-coupling.md": "fadffe591c96b92aed523fd00e50b6ee54490d604d30ab5dd27a601c8566f18c",
+    "skills/vibe-flow/references/planning.md": "f08db8da944e7802c8c0619aa8e6bbde35623d234769fd728784a62ad56cfe6c",
+    "skills/vibe-flow/references/platform-porting.md": "1196c33cbd39fb06edbc586a9a6b48c3aeb207fde9f2895827c6fd69beb6b484",
+    "skills/vibe-flow/references/role-reading.md": "3beb6c8549c1130fbdc79695d5c168e85baa9eaf02fffc51be3dc4a410525699",
+    "skills/vibe-apps-native/references/python-ttk.md": "8e600678c38d7b634cddb364bb1291cee70037658963ce9623271d6941acf5b1",
+    "skills/vibe-apps-native/references/rust.md": "58ec02a73c4c604eb3591f7190613525b5a5e362152041d99a3af977078dcec1",
+    "skills/vibe-apps/references/clean-mvvm.md": "74fbec9fedc5acb8bf91374736812310e37c47e976f0e049828fed1f21f3ab85",
+    "skills/vibe-apps/references/evolution.md": "455ba744fbac0af442c8d335cd2b1117ed21a660f553cd6fb8124564765f5988",
+    "skills/vibe-apps/references/resource-check.md": "5bf07cc7011ff050de6cf15ebe12d48985b15e89471fc73805a034d72f30e33a",
+    "skills/vibe-apps/scripts/design_theme.BLUEPRINT.md": "677ea7bb83327ecd27ebde8cd3823030a63152344e16444e292c84bc6cd29c95",
+    "skills/vibe-apps/scripts/design_theme.CHANGELOG.md": "60de747fb6d8b47eb0b9e6324a5d797d04f79845e64f9283c085ac4e477a8f24",
+    "skills/living-blueprint/references/templates.md": "571810afc5372851b481ef6281378e478641b09e797c100e96a7aaea2d6a99af",
+    "skills/clarify-needs/references/deep-needs-analysis.md": "db59863d2b9f719c70341d2a285de82f00bca9e2c3b2438ec5112cc3912e1c0a",
+    "skills/clarify-needs/references/run-model.md": "5bb7a334046cbf21baea3d81ccf9a1d85c75229438ea5c705e69b8020157c86a"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: vibe-apps-web
-description: Build or modify personal apps with a Web UI using Python, FastAPI and pywebview, or a browser/site delivery target. Load after vibe-flow and vibe-apps have selected the Web route, before scaffolding. Web 界面、浏览器访问、网站交付、FastAPI、pywebview；原生桌面走 vibe-apps-native。
+description: Build or modify personal apps with a Web UI using Python, FastAPI and pywebview, or a browser/site delivery target. For direct user work, load after vibe-flow and vibe-apps select Web; assigned roles follow vibe-flow/references/role-reading.md. Web 界面、浏览器访问、网站交付、FastAPI、pywebview；原生桌面走 vibe-apps-native。
 ---
 
 # vibe-apps-web：Web 界面的默认 Python 实现
@@ -9,7 +9,7 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 
 > 本页给 Web 路线的默认 Python 落法，业务规则与界面分离，通信走标准 HTTP。
 
-先读 [vibe-apps](../vibe-apps/SKILL.md) 的路线优先级、共用边界和资源验证。已有项目或用户明确的语言/框架选择优先，本默认不触发自动迁移。用户已指定其他 Web 实现时沿用其项目规范，不把原生 Rust 参考套到 Web 上。
+直接服务用户先读 [vibe-apps](../vibe-apps/SKILL.md) 的路线优先级、共用边界和资源验证；已分派角色按 [role-reading.md](../vibe-flow/references/role-reading.md) 只读适用公共部分，沿用已定路线/架构，不通读父入口。已有项目或用户明确的语言/框架选择优先，本默认不触发自动迁移。用户已指定其他 Web 实现时沿用其项目规范，不把原生 Rust 参考套到 Web 上。
 
 ## 适用判定
 
@@ -19,7 +19,7 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 | 已选择 Web 界面 / 浏览器访问 / 网站交付 | **本 skill** |
 | 原生桌面 / 上位机 / 低内存本地 GUI | **vibe-apps-native** |
 
-**流程前置**：先由 `vibe-flow` 判档，再决定是否需要澄清或探方案。新建一个多模块的应用通常是好档（范围大），但好档不等于走满——目标清楚的小应用仍可直接落地；已有应用上的明确小改按省档走。判档、低耦合、文档、谁拍板都以 `vibe-flow`（§2、§4–§6）为准，本 skill 只给本栈的落法。
+**流程前置**：直接服务用户先由 `vibe-flow` 判档，已分派角色沿用派工档位；再决定是否需要澄清或探方案。新建一个多模块的应用通常是好档（范围大），但好档不等于走满——目标清楚的小应用仍可直接落地；已有应用上的明确小改按省档走。判档、低耦合、文档、谁拍板都以 `vibe-flow`（§2、§4–§6）为准，本 skill 只给本栈的落法。
 
 ## 先确定 Web 交付方式
 

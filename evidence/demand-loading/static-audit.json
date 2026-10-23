@@ -1,0 +1,1370 @@
+{
+  "baseline": "5ef3632",
+  "skill_count": 9,
+  "quick_validate": [
+    {
+      "path": "skills/clarify-needs/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/cut-scope/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/living-blueprint/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/scan-field/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/vibe-apps/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/vibe-apps-native/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/vibe-apps-web/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/vibe-flow/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    },
+    {
+      "path": "skills/vibe-scripts/SKILL.md",
+      "exit": 0,
+      "stdout": "Skill is valid!",
+      "stderr": ""
+    }
+  ],
+  "measurements": [
+    {
+      "path": "skills/clarify-needs/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 5200,
+        "chars_lf_including_frontmatter": 5200,
+        "chars_lf_body": 4211,
+        "frontmatter_chars_lf": 989,
+        "lines": 128
+      },
+      "current": {
+        "decoded_chars_raw": 5328,
+        "chars_lf_including_frontmatter": 5200,
+        "chars_lf_body": 4211,
+        "frontmatter_chars_lf": 989,
+        "lines": 128
+      }
+    },
+    {
+      "path": "skills/cut-scope/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 2016,
+        "chars_lf_including_frontmatter": 2016,
+        "chars_lf_body": 1649,
+        "frontmatter_chars_lf": 367,
+        "lines": 64
+      },
+      "current": {
+        "decoded_chars_raw": 2080,
+        "chars_lf_including_frontmatter": 2016,
+        "chars_lf_body": 1649,
+        "frontmatter_chars_lf": 367,
+        "lines": 64
+      }
+    },
+    {
+      "path": "skills/living-blueprint/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 5437,
+        "chars_lf_including_frontmatter": 5437,
+        "chars_lf_body": 4981,
+        "frontmatter_chars_lf": 456,
+        "lines": 96
+      },
+      "current": {
+        "decoded_chars_raw": 5598,
+        "chars_lf_including_frontmatter": 5598,
+        "chars_lf_body": 5142,
+        "frontmatter_chars_lf": 456,
+        "lines": 98
+      }
+    },
+    {
+      "path": "skills/scan-field/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 3106,
+        "chars_lf_including_frontmatter": 3106,
+        "chars_lf_body": 2651,
+        "frontmatter_chars_lf": 455,
+        "lines": 104
+      },
+      "current": {
+        "decoded_chars_raw": 3210,
+        "chars_lf_including_frontmatter": 3106,
+        "chars_lf_body": 2651,
+        "frontmatter_chars_lf": 455,
+        "lines": 104
+      }
+    },
+    {
+      "path": "skills/vibe-apps-native/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 2364,
+        "chars_lf_including_frontmatter": 2364,
+        "chars_lf_body": 1980,
+        "frontmatter_chars_lf": 384,
+        "lines": 37
+      },
+      "current": {
+        "decoded_chars_raw": 2543,
+        "chars_lf_including_frontmatter": 2543,
+        "chars_lf_body": 2077,
+        "frontmatter_chars_lf": 466,
+        "lines": 37
+      }
+    },
+    {
+      "path": "skills/vibe-apps-web/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 8442,
+        "chars_lf_including_frontmatter": 8442,
+        "chars_lf_body": 8141,
+        "frontmatter_chars_lf": 301,
+        "lines": 161
+      },
+      "current": {
+        "decoded_chars_raw": 8603,
+        "chars_lf_including_frontmatter": 8603,
+        "chars_lf_body": 8257,
+        "frontmatter_chars_lf": 346,
+        "lines": 161
+      }
+    },
+    {
+      "path": "skills/vibe-apps/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 6687,
+        "chars_lf_including_frontmatter": 6687,
+        "chars_lf_body": 6243,
+        "frontmatter_chars_lf": 444,
+        "lines": 102
+      },
+      "current": {
+        "decoded_chars_raw": 6845,
+        "chars_lf_including_frontmatter": 6845,
+        "chars_lf_body": 6401,
+        "frontmatter_chars_lf": 444,
+        "lines": 102
+      }
+    },
+    {
+      "path": "skills/vibe-flow/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 13650,
+        "chars_lf_including_frontmatter": 13650,
+        "chars_lf_body": 13090,
+        "frontmatter_chars_lf": 560,
+        "lines": 247
+      },
+      "current": {
+        "decoded_chars_raw": 9768,
+        "chars_lf_including_frontmatter": 9768,
+        "chars_lf_body": 9221,
+        "frontmatter_chars_lf": 547,
+        "lines": 182
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/batch-supervisor.md",
+      "baseline": {
+        "decoded_chars_raw": 4220,
+        "chars_lf_including_frontmatter": 4220,
+        "chars_lf_body": 4220,
+        "frontmatter_chars_lf": 0,
+        "lines": 69
+      },
+      "current": {
+        "decoded_chars_raw": 4520,
+        "chars_lf_including_frontmatter": 4520,
+        "chars_lf_body": 4520,
+        "frontmatter_chars_lf": 0,
+        "lines": 69
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/collaboration.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 1080,
+        "chars_lf_including_frontmatter": 1080,
+        "chars_lf_body": 1080,
+        "frontmatter_chars_lf": 0,
+        "lines": 24
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/doc-fork.md",
+      "baseline": {
+        "decoded_chars_raw": 3103,
+        "chars_lf_including_frontmatter": 3103,
+        "chars_lf_body": 3103,
+        "frontmatter_chars_lf": 0,
+        "lines": 39
+      },
+      "current": {
+        "decoded_chars_raw": 3514,
+        "chars_lf_including_frontmatter": 3514,
+        "chars_lf_body": 3514,
+        "frontmatter_chars_lf": 0,
+        "lines": 45
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/planning.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 2492,
+        "chars_lf_including_frontmatter": 2492,
+        "chars_lf_body": 2492,
+        "frontmatter_chars_lf": 0,
+        "lines": 30
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/platform-porting.md",
+      "baseline": {
+        "decoded_chars_raw": 2988,
+        "chars_lf_including_frontmatter": 2988,
+        "chars_lf_body": 2988,
+        "frontmatter_chars_lf": 0,
+        "lines": 52
+      },
+      "current": {
+        "decoded_chars_raw": 3051,
+        "chars_lf_including_frontmatter": 3051,
+        "chars_lf_body": 3051,
+        "frontmatter_chars_lf": 0,
+        "lines": 52
+      }
+    },
+    {
+      "path": "skills/vibe-flow/references/role-reading.md",
+      "baseline": null,
+      "current": {
+        "decoded_chars_raw": 1632,
+        "chars_lf_including_frontmatter": 1632,
+        "chars_lf_body": 1632,
+        "frontmatter_chars_lf": 0,
+        "lines": 21
+      }
+    },
+    {
+      "path": "skills/vibe-scripts/SKILL.md",
+      "baseline": {
+        "decoded_chars_raw": 3091,
+        "chars_lf_including_frontmatter": 3091,
+        "chars_lf_body": 2757,
+        "frontmatter_chars_lf": 334,
+        "lines": 68
+      },
+      "current": {
+        "decoded_chars_raw": 3189,
+        "chars_lf_including_frontmatter": 3189,
+        "chars_lf_body": 2855,
+        "frontmatter_chars_lf": 334,
+        "lines": 68
+      }
+    }
+  ],
+  "local_markdown_links": [
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 8,
+      "target": "../vibe-flow/references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 8,
+      "target": "../vibe-flow/references/doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/scan-field/SKILL.md",
+      "line": 78,
+      "target": "链接",
+      "exists": false
+    },
+    {
+      "source": "skills/scan-field/SKILL.md",
+      "line": 78,
+      "target": "链接",
+      "exists": false
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 8,
+      "target": "../vibe-flow/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 8,
+      "target": "../vibe-flow/references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 19,
+      "target": "../vibe-apps-native/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 20,
+      "target": "../vibe-apps-web/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 28,
+      "target": "references/clean-mvvm.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 52,
+      "target": "references/evolution.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 98,
+      "target": "references/clean-mvvm.md#验证要求",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 102,
+      "target": "references/resource-check.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/references/python-ttk.md",
+      "line": 27,
+      "target": "../../vibe-apps/references/clean-mvvm.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/references/rust.md",
+      "line": 41,
+      "target": "../../vibe-apps/references/clean-mvvm.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/references/rust.md",
+      "line": 67,
+      "target": "../../vibe-apps/references/evolution.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/SKILL.md",
+      "line": 8,
+      "target": "../vibe-apps/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/SKILL.md",
+      "line": 8,
+      "target": "../vibe-flow/references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/SKILL.md",
+      "line": 12,
+      "target": "references/python-ttk.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-native/SKILL.md",
+      "line": 13,
+      "target": "references/rust.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 12,
+      "target": "../vibe-apps/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 12,
+      "target": "../vibe-flow/references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 90,
+      "target": "../vibe-apps/references/evolution.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 94,
+      "target": "../vibe-apps/SKILL.md#界面效果图先行",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 5,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 9,
+      "target": "role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 22,
+      "target": "role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 67,
+      "target": "../vendor/gsd/manager.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 67,
+      "target": "../vendor/gsd/context-budget.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 68,
+      "target": "../vendor/gastown/witness.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 68,
+      "target": "../vendor/gastown/handoff.go",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/collaboration.md",
+      "line": 11,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/collaboration.md",
+      "line": 12,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/low-coupling.md",
+      "line": 19,
+      "target": "../../vibe-apps/references/clean-mvvm.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 3,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 3,
+      "target": "collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 13,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 15,
+      "target": "../../vibe-apps/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 20,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 21,
+      "target": "collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 21,
+      "target": "../../clarify-needs/references/run-model.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 23,
+      "target": "collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 43,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 43,
+      "target": "collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 3,
+      "target": "../SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "target": "batch-supervisor.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "target": "collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "target": "doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "target": "planning.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 17,
+      "target": "low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 18,
+      "target": "low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 19,
+      "target": "doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 19,
+      "target": "../../living-blueprint/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 21,
+      "target": "../../vibe-apps/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 21,
+      "target": "../../vibe-apps/references/clean-mvvm.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 12,
+      "target": "references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 18,
+      "target": "references/planning.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 19,
+      "target": "references/low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 20,
+      "target": "references/batch-supervisor.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 21,
+      "target": "references/collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 22,
+      "target": "references/doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 23,
+      "target": "references/platform-porting.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 24,
+      "target": "../clarify-needs/references/run-model.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 87,
+      "target": "references/planning.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 95,
+      "target": "references/collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 127,
+      "target": "references/low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 128,
+      "target": "references/low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 129,
+      "target": "references/platform-porting.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 154,
+      "target": "references/batch-supervisor.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 154,
+      "target": "references/role-reading.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 156,
+      "target": "references/collaboration.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 168,
+      "target": "references/low-coupling.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 170,
+      "target": "references/doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 172,
+      "target": "references/doc-fork.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-scripts/references/templates.md",
+      "line": 33,
+      "target": "...",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-scripts/SKILL.md",
+      "line": 16,
+      "target": "../vibe-flow/SKILL.md",
+      "exists": true
+    },
+    {
+      "source": "skills/vibe-scripts/SKILL.md",
+      "line": 16,
+      "target": "../vibe-flow/references/role-reading.md",
+      "exists": true
+    }
+  ],
+  "missing_links": [
+    {
+      "source": "skills/scan-field/SKILL.md",
+      "line": 78,
+      "target": "链接",
+      "exists": false
+    },
+    {
+      "source": "skills/scan-field/SKILL.md",
+      "line": 78,
+      "target": "链接",
+      "exists": false
+    }
+  ],
+  "section_references": [
+    {
+      "source": "skills/clarify-needs/references/deep-needs-analysis.md",
+      "line": 86,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/references/run-model.md",
+      "line": 10,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/references/run-model.md",
+      "line": 12,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/references/run-model.md",
+      "line": 27,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/references/run-model.md",
+      "line": 117,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/SKILL.md",
+      "line": 29,
+      "text": "§2",
+      "numbers": [
+        2
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/SKILL.md",
+      "line": 75,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/SKILL.md",
+      "line": 93,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/SKILL.md",
+      "line": 114,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/clarify-needs/SKILL.md",
+      "line": 121,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/cut-scope/SKILL.md",
+      "line": 15,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/references/templates.md",
+      "line": 3,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/references/templates.md",
+      "line": 83,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/references/templates.md",
+      "line": 83,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 19,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 23,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 23,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 25,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 25,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 66,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 67,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/living-blueprint/SKILL.md",
+      "line": 72,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/scan-field/SKILL.md",
+      "line": 86,
+      "text": "§3",
+      "numbers": [
+        3
+      ]
+    },
+    {
+      "source": "skills/vibe-apps/references/clean-mvvm.md",
+      "line": 3,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 26,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 34,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 38,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-apps/SKILL.md",
+      "line": 100,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 22,
+      "text": "§2",
+      "numbers": [
+        2
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 22,
+      "text": "§4–§6",
+      "numbers": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 80,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 102,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 102,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-apps-web/SKILL.md",
+      "line": 102,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/batch-supervisor.md",
+      "line": 5,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/collaboration.md",
+      "line": 11,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/collaboration.md",
+      "line": 12,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/doc-fork.md",
+      "line": 3,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/doc-fork.md",
+      "line": 45,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/doc-fork.md",
+      "line": 45,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/low-coupling.md",
+      "line": 3,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/low-coupling.md",
+      "line": 18,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 3,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 13,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/planning.md",
+      "line": 20,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 3,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 12,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 43,
+      "text": "§2",
+      "numbers": [
+        2
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/platform-porting.md",
+      "line": 52,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 16,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 17,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 17,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 17,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 18,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 18,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 18,
+      "text": "§5",
+      "numbers": [
+        5
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 19,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/references/role-reading.md",
+      "line": 19,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 43,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 43,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 56,
+      "text": "§7",
+      "numbers": [
+        7
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 58,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 64,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 65,
+      "text": "§8",
+      "numbers": [
+        8
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 104,
+      "text": "§6",
+      "numbers": [
+        6
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 144,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 152,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 160,
+      "text": "§7",
+      "numbers": [
+        7
+      ]
+    },
+    {
+      "source": "skills/vibe-flow/SKILL.md",
+      "line": 170,
+      "text": "§4",
+      "numbers": [
+        4
+      ]
+    }
+  ],
+  "section_reference_note": "Numbers recorded for manual semantic target review; no word-matching behavior tests added.",
+  "manual_review": {
+    "valid_local_markdown_link_occurrences": 74,
+    "excluded_example_placeholder_occurrences": [
+      {
+        "source": "skills/scan-field/SKILL.md",
+        "line": 78,
+        "target": "链接",
+        "exists": false
+      },
+      {
+        "source": "skills/scan-field/SKILL.md",
+        "line": 78,
+        "target": "链接",
+        "exists": false
+      }
+    ],
+    "exclusion_reason": "scan-field/SKILL.md line 78 is inside a fenced Markdown output example; two (链接) are not actual resource references.",
+    "anchor_targets_checked": [
+      "skills/vibe-apps/references/clean-mvvm.md#验证要求",
+      "skills/vibe-apps/SKILL.md#界面效果图先行"
+    ],
+    "section_references_reviewed": 71,
+    "section_target": "vibe-flow SKILL.md sections 1 through 9 preserved; named surrounding scope/explicit link or role-reading header resolves cross-file references; batch-supervisor has no bare section 7 dependency.",
+    "diff_check_exit": 0,
+    "tracked_non_markdown_diff_paths": []
+  }
+}

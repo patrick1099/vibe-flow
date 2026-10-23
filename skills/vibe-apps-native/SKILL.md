@@ -1,11 +1,11 @@
 ---
 name: vibe-apps-native
-description: Build or modify native desktop personal apps and hardware control tools after the native route is selected; default Python with ttkbootstrap, or an explicitly selected pure Rust implementation with Slint. 原生 GUI、上位机、低内存桌面工具、ttkbootstrap、纯 Rust 桌面、Slint、照效果图实现原生界面。Load vibe-flow and vibe-apps before scaffolding; Web UI uses vibe-apps-web.
+description: Build or modify native desktop personal apps and hardware control tools after the native route is selected; default Python with ttkbootstrap, or an explicitly selected pure Rust implementation with Slint. 原生 GUI、上位机、低内存桌面工具、ttkbootstrap、纯 Rust 桌面、Slint、照效果图实现原生界面。For direct user work, load vibe-flow and vibe-apps before scaffolding; assigned roles follow vibe-flow/references/role-reading.md; Web UI uses vibe-apps-web.
 ---
 
 # vibe-apps-native：原生桌面实现
 
-先遵守 [vibe-apps](../vibe-apps/SKILL.md) 的路线优先级、共用边界、文档标记与资源验收。已选原生时只读当前语言参考：
+直接服务用户先按 [vibe-apps](../vibe-apps/SKILL.md) 确定路线并遵守共用边界、文档标记与资源验收；已分派角色按 [role-reading.md](../vibe-flow/references/role-reading.md) 只读适用公共部分，沿用已定路线/架构，不通读父入口。已选原生时只读当前语言参考：
 
 | 当前实现 | 动手前读 |
 |---|---|

@@ -5,7 +5,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 
 # vibe-apps：应用路线与共用边界
 
-先由 `vibe-flow` 判档。流程厚度、决策边界、低耦合、文档和收工 fork 归 `vibe-flow`，本 skill 只选应用路线、给共用约束；具体实现只加载选中的分支。
+直接服务用户先由 [vibe-flow](../vibe-flow/SKILL.md) 判档；已分派角色按 [role-reading.md](../vibe-flow/references/role-reading.md) 的清单读公共节与本文件适用部分，沿用派工结论，不通读父入口或重判档。流程厚度、决策边界、低耦合、文档和收工 fork 归 `vibe-flow`，本 skill 只选应用路线、给共用约束；具体实现只加载选中的分支。
 
 ## 路线选择（按顺序判断）
 
@@ -19,7 +19,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 | 原生桌面 | [vibe-apps-native](../vibe-apps-native/SKILL.md) |
 | Web 界面 | [vibe-apps-web](../vibe-apps-web/SKILL.md) |
 
-直接调用分支时也先遵守以上选择与共用边界；不需要把另一条分支全文加载进来。独立 Python CLI 即使要打包分发，仍用 `vibe-scripts`；其他语言的无界面项目沿用其项目规范，不强加 GUI。
+直接服务用户调用分支时先遵守以上选择与共用边界；已分派角色沿用已定路线，只读角色清单要求的共用部分；不需要把另一条分支全文加载进来。独立 Python CLI 即使要打包分发，仍用 `vibe-scripts`；其他语言的无界面项目沿用其项目规范，不强加 GUI。
 
 ## 架构讨论与共用边界
 

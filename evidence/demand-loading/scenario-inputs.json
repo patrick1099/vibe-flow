@@ -1,0 +1,23 @@
+{
+  "shared_protocol": "fork_turns=none; only next actions, actual reading list and questions; no implementation; read only permitted skill/worktree fixture paths; no writes/commits/external systems/company directories; each read must use real tools; final actual commands for audit. No expected answer or implementer conclusions supplied.",
+  "small": {
+    "entry": "skills/vibe-flow/SKILL.md",
+    "user": "把现有文件列表工具里“导出目录”按钮改成“导出文件夹”，其他逻辑不动。",
+    "raw_artifacts": "AGENTS.md：这是长期自用的原生Python+ttkbootstrap小工具；当前架构界面+纯逻辑模块分离；入口main.py；文档docs/BLUEPRINT.md和docs/CHANGELOG.md；已有用户约定沿用这套结构。ui.py相关原文：export_button = ttk.Button(toolbar, text=\"导出目录\", command=export_current_folder)。docs/BLUEPRINT.md相关原文：工具列出本地文件，可把当前列表导出CSV。此次不涉及新页面、布局、外部数据、配置默认值或变化轴。"
+  },
+  "new": {
+    "entry": "skills/vibe-flow/SKILL.md",
+    "user": "我想做一个离线桌面工具，把选中的几份CSV按相同列合并，重复行去掉，预览结果后导出新CSV，原文件别改。先把做法商量好。",
+    "raw_artifacts": "当前是空项目，没有已定语言、框架、架构或界面设计。只供本人在Windows本机使用；不接网络、不分发；输入已经有相同表头且UTF-8编码；去重按整行所有列完全相同；预览显示前100行、导出所有结果。"
+  },
+  "resume": {
+    "entry": "skills/vibe-flow/references/role-reading.md",
+    "user": "作为零上下文接任监工，按已经定下的计划接任 resume-2，上一批 resume-1，标识 scenario-new-supervisor。读取原始交接工件给出下一步行动、会读取/交给下层清单、会问主会话或用户什么。仅纸面推演启动，不运行状态写命令，不实际派工。",
+    "raw_artifacts": {
+      "AGENTS.md": "# CSV 合并工具隔离工件\n\n这是纸面推演工件，无真实运行项目。先读 HANDOFF.md 和 PLAN.md。\n",
+      "HANDOFF.md": "# HANDOFF\n\n## 已谈定\n\n- 用户：上述目标和PLAN架构已确认，CSV输入同表头UTF-8；导出全部结果到新文件；不得改输入。\n- 用户：主会话只处理真实用户决策和短简报，监工接批次2；宿主嵌套和路由曾实际验证。批次1监工及其所有子任务已由主会话确认停止，旧批次ready已通过。\n\n# 批次状态\n\n<!-- vibe-flow:batch:start -->\n```json\n{\"schema\":1,\"workspace\":\"C:\\\\Users\\\\huawei\\\\.codex\\\\worktrees\\\\vibe-flow-demand-loading\\\\evidence\\\\demand-loading\\\\scenario-resume-fixture\",\"batch\":\"resume-1\",\"supervisor\":\"prior-supervisor\",\"baseline\":\"isolated-paper-fixture\",\"outcome\":\"complete\",\"docs\":\"done\",\"tasks\":[{\"id\":\"t1\",\"state\":\"verified\",\"acceptance\":\"纯逻辑合并和整行去重\",\"evidence\":[\"prior-evidence.md\"]}],\"workers\":[{\"id\":\"prior-worker\",\"state\":\"done\"}],\"next\":[\"启动已定计划批次resume-2\"]}\n```\n<!-- vibe-flow:batch:end -->\n",
+      "PLAN.md": "# 已定计划\n\n目标：CSV选择、整行去重、100行预览、完整导出新文件。原文件不改。\n档位：好·轻（多职责UI与IO），已由用户确认。\n路线/架构：原生Python+ttkbootstrap；界面、纯数据逻辑、文件适配三项职责；不采用Clean MVVM；原型已经用户确认。此前方案审读完成，无新实质取舍。\n批次1已实现并独立验证纯数据合并，不能重复实现。\n批次2：t2 接入已定界面的文件选择/后台读取/预览/导出；t3 独立检查真实入口核心路径、失败提示、输入不改与完整输出；t4 文档收尾。每次一个短任务，上一任务结束再派下一个。\n允许范围：只有此隔离工件目录；本场景仅推演下一步，无写入、提交、发布或外部调用授权。实际执行时的交付为源码自用，无打包分发。UI原型/代码未提供，因为本场景只检查接任启动，不检查实际实现。\n",
+      "prior-evidence.md": "# 前批证据\n\n仅为本隔离场景给定的原始工件：纯数据逻辑与代表性输入已核验。本场景不据此宣称真实应用已验证。\n"
+    }
+  }
+}

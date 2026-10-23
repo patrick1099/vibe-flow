@@ -5,6 +5,8 @@ description: "Maintain BLUEPRINT.md (current behavior), CHANGELOG.md (why change
 
 # living-blueprint：活蓝图、变更记录与交接
 
+已分派文档角色先按 [role-reading.md](../vibe-flow/references/role-reading.md) 的文档清单读公共节与任务证据，不全读父入口；有效约定、机器区与最终清理权限按 [doc-fork.md](../vibe-flow/references/doc-fork.md)。
+
 四份文件各管一件，不重叠：
 
 | 文件 | 管什么 | 写法 |
