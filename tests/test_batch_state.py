@@ -156,6 +156,12 @@ class BatchStateTests(unittest.TestCase):
         self.record["workers"][0]["state"] = "stopped"
         with self.assertRaises(module.StateError):
             self.save(rev)
+        # Reconcile the old batch after an external host-stop check, then replace its owner.
+        self.record["supervisor"] = "s1"
+        reconciled = self.save(rev)["revision"]
+        self.record["supervisor"] = "s2"
+        self.save(reconciled)
+        self.assertEqual(module.read_handoff(self.handoff)[1]["supervisor"], "s2")
 
     def test_complete_and_short_status(self):
         self.finish()
