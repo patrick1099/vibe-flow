@@ -1,0 +1,20 @@
+{
+  "gsd": {
+    "repo": "open-gsd/gsd-core",
+    "ref": "next",
+    "files": {
+      "gsd-core/workflows/manager.md": "gsd/manager.md",
+      "gsd-core/references/context-budget.md": "gsd/context-budget.md",
+      "LICENSE": "gsd/LICENSE"
+    }
+  },
+  "gastown": {
+    "repo": "gastownhall/gastown",
+    "ref": "main",
+    "files": {
+      "internal/templates/roles/witness.md.tmpl": "gastown/witness.md",
+      "internal/cmd/handoff.go": "gastown/handoff.go",
+      "LICENSE": "gastown/LICENSE"
+    }
+  }
+}

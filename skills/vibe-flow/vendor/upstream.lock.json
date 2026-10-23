@@ -1,0 +1,24 @@
+{
+  "gsd": {
+    "repo": "open-gsd/gsd-core",
+    "ref": "next",
+    "commit": "8e5d649f5368b9b6797db9ad6972904d8c47c78c",
+    "synced_at": "2026-10-23",
+    "files": {
+      "gsd/manager.md": "a615e6c5b7eb2e395bc21a3fb427864d4a59b256b0b842d1ec229bb394c0e26e",
+      "gsd/context-budget.md": "0376465732822d601aaedf7073c5b8cae1cab110a256c7ef995405b6874d90c4",
+      "gsd/LICENSE": "3a160aec61eeb28e75e8017346ee190db07986a09c4bd72555cc706f1d99e27e"
+    }
+  },
+  "gastown": {
+    "repo": "gastownhall/gastown",
+    "ref": "main",
+    "commit": "ef70b0bf9e588dce00708e36564bfc06b51fac2c",
+    "synced_at": "2026-10-23",
+    "files": {
+      "gastown/witness.md": "2fa6dfec01582c98cf3741b6832b0df3f6e18ae3f584712dbad3bffdadc4f589",
+      "gastown/handoff.go": "bf5764374b23efeeffbf8edf9dcd8bdffb63238ac1c30816e2a4e70ed4f9c63a",
+      "gastown/LICENSE": "6141d15e761ef772bdd45fdd4036dfc1f97488011429e6643e1445afa9d22f4d"
+    }
+  }
+}

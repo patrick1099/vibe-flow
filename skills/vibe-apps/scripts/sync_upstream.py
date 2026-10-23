@@ -45,9 +45,10 @@ def _emit(ok, data=None, error=None):
     stream.write(json.dumps(envelope, ensure_ascii=False) + "\n")
 
 
-def run(check):
-    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    lock = json.loads(LOCK.read_text(encoding="utf-8")) if LOCK.exists() else {}
+def run(check, vendor=VENDOR):
+    manifest_path, lock_path = vendor / "upstream.json", vendor / "upstream.lock.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    lock = json.loads(lock_path.read_text(encoding="utf-8")) if lock_path.exists() else {}
     report = []
     for name, entry in manifest.items():
         repo, ref = entry["repo"], entry.get("ref", "main")
@@ -56,7 +57,7 @@ def run(check):
         files = {}
         for src, dst in entry["files"].items():
             body = _get(f"https://raw.githubusercontent.com/{repo}/{sha}/{src}")
-            target = VENDOR / dst
+            target = vendor / dst
             local = target.read_bytes() if target.exists() else None
             changed = local is None or _sha256(local) != _sha256(body)
             if changed and not check:
@@ -71,7 +72,7 @@ def run(check):
                           "synced_at": datetime.date.today().isoformat(),
                           "files": {d: f["sha256"] for d, f in files.items()}}
     if not check:
-        LOCK.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+        lock_path.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
                         newline="\n")
     outdated = [f"{e['name']}:{d}" for e in report for d, f in e["files"].items() if f["changed"]]
     return {"mode": "check" if check else "sync", "outdated" if check else "updated": outdated,
@@ -83,6 +84,7 @@ def main():
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="拉取 vendor/ 下登记的上游原文")
+    parser.add_argument("--vendor-dir", type=Path, default=VENDOR, help="要同步的 vendor 目录，默认本 skill 的 vendor")
     parser.add_argument("--check", action="store_true", help="只比对不写文件")
     try:
         args = parser.parse_args()
@@ -93,7 +95,7 @@ def main():
             sys.exit(2)
         raise
     try:
-        _emit(True, run(args.check))
+        _emit(True, run(args.check, args.vendor_dir))
     except (urllib.error.URLError, TimeoutError) as exc:
         _emit(False, error={"code": "E_IO", "message": f"联网失败: {exc}", "details": {},
                             "retryable": True, "suggestion": "检查网络或代理后重试"})
