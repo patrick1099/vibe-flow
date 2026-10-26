@@ -84,7 +84,7 @@ description: "Use at either end of building something: BEFORE creating or rewrit
 
 - `cut-scope`：对内剪枝已膨胀的**设计**；本 skill 对外比**同款**。见上「为什么有两头」。
 - `vibe-flow` §3「开工前先看有没有现成的」：那一步先查本机脚本登记册（`script-manager` 的 INDEX，有现成的就直接复用）；**查完仍要新建或重写，且过了上面的缩放闸，才路由到本 skill 的开口那头**。一个查自己有没有，一个查市面有没有。
-- ≠ 分支收尾并入（`superpowers-manual` 的 `finishing-a-development-branch`）。
+- ≠ 分支收尾并入。
 - **两头都只产结论 / 文档，不改项目代码与设计。**
 
 ## 反模式

@@ -1,6 +1,6 @@
 ---
 name: clarify-needs
-description: "Load BEFORE writing any code, when a vibe-coding request bundles a desired outcome together with a proposed solution, a preference, or a hard constraint; when stated \"requirements\" keep expanding or look bigger than the time/effort available; when it's unclear whether something is a goal, a means, a preference, or a real constraint; when the user hands you a tech solution but not the underlying why; or when returning to a project to check reality against docs/NEEDS.md. SELF-INVOKE ONLY when this piece of work is big and its requirement is genuinely unclear or tangled — a new project or tool, a whole new feature area, two or more tangled goals, requirements that keep expanding. Do NOT self-invoke for clear small changes (even on long-lived tools), throwaway micro-scripts, bug fixes, or direct questions (the user can still run it manually there). 中文触发：开新项目或大改动、动手前先厘清真实需求、别把手段当目标、别把偏好当约束、防需求膨胀、深挖/严格分析需求、回头看这项目做到哪了。Stack-independent."
+description: "Load BEFORE writing code to separate goals, means, preferences and real constraints, and keep docs/NEEDS.md. Use when a request bundles an outcome with a proposed solution or preference, requirements keep expanding, the why behind a tech solution is missing, or when checking a project against docs/NEEDS.md. SELF-INVOKE ONLY for big, genuinely unclear work (new project/tool, new feature area, tangled goals); not for clear small changes, micro-scripts, bug fixes or direct questions. 中文：动手前厘清真实需求、别把手段当目标、防需求膨胀、回头看做到哪了。"
 ---
 
 # clarify-needs：把真需求挖出来，别被方案和偏好带跑
@@ -111,7 +111,7 @@ vibe coder 抛来的"需求"，常把**目标、方案、偏好、约束混在�
 
 | 对象 | 它是什么 | clarify-needs 的不同 |
 |---|---|---|
-| 探方案（`vibe-flow` §4；要重仪式则 `superpowers-manual` 的 brainstorming） | 需求明确后探索方案、比取舍；技术取舍由 AI 和决策者定，只有此前没确认过的使用后果才问用户 | 它的**可选前置**；本 skill 只管需求，不拍方案 |
+| 探方案（`vibe-flow` §4） | 需求明确后探索方案、比取舍；技术取舍由 AI 和决策者定，只有此前没确认过的使用后果才问用户 | 它的**可选前置**；本 skill 只管需求，不拍方案 |
 | cut-scope | 事后、只读，砍已迭代多轮的**设计** | 开口就介入，挖**需求**、防膨胀 |
 | living-blueprint | 机器读的"现在是什么" | 人读的"你的哪些需求做了/没做" |
 | reality-check（旧） | 回头按**功能**盘点能干啥 | 回头按**需求**盘点（功能盘点已废） |

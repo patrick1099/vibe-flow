@@ -282,9 +282,8 @@ CLAUDE.md。Codex 原生读 AGENTS.md。
 
 ## 与重流程框架的关系
 
-skill 之间不自动串联，自动钩子只用于上面那道文档闸和压缩后读回。需要正式 spec/plan 落盘再按计划执行、TDD、工作树、并行子
-代理这类重仪式时，手动去调 [superpowers-manual](https://github.com/patrick1099/superpowers-manual)。
-本工作流不依赖它，没装也能走完全程。
+skill 之间不自动串联，自动钩子只用于上面那道文档闸和压缩后读回。本工作流不依赖正式 spec/plan、TDD、
+并行子代理这类重流程框架，单独装就能走完全程。
 
 插件同时支持 Claude Code 和 Codex，只有入口 skill 带 `agents/openai.yaml`。两端的文档闸分别接入
 各自的 hook 事件，共用一份判定逻辑；Codex 需使用支持插件钩子的版本并完成钩子信任，`vibe-flow` §8

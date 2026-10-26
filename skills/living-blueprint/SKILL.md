@@ -88,7 +88,7 @@ fork 和主 agent 一样泡过实现细节，最容易犯的错是把 how 写进
 
 | 对象 | 本 skill 的不同 |
 |---|---|
-| spec / plan（如 `superpowers-manual` 的 dated spec/plan） | 它们记每次改动「怎么做」；蓝图只留「当前是什么」，一处 what 一处 how。本 skill 不依赖那套流程 |
+| spec / plan（按日期落盘的设计/计划文档） | 它们记每次改动「怎么做」；蓝图只留「当前是什么」，一处 what 一处 how。本 skill 不依赖那套流程 |
 | ADR | 蓝图不记历史；历史归 CHANGELOG，且只记用户感觉得到的变化，不是每个架构决策都记 |
 | DESIGN.md（UI 设计系统） | 那是视觉规范；这是功能架构，所以文件叫 BLUEPRINT.md |
 | `NEEDS.md`（`clarify-needs`） | 那是人读的「你的哪些需求做了没做」；蓝图是「工具现在是什么」 |

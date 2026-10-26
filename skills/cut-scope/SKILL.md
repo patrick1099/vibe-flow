@@ -22,7 +22,7 @@ description: Use when a project has been through several rounds of iteration and
 
 ## 铁律：只读
 
-cut-scope **不编辑任何项目文件**。产出是一份「留 / 砍 / 降级」建议清单，交给用户；改不改、怎么改由用户决定（手动改 BLUEPRINT，或接 `superpowers-manual` 那套重流程）。
+cut-scope **不编辑任何项目文件**。产出是一份「留 / 砍 / 降级」建议清单，交给用户；改不改、怎么改由用户决定（手动改 BLUEPRINT）。
 
 ## 流程
 
