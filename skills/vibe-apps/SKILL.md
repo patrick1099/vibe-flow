@@ -31,6 +31,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 - **状态按职责归属**：领域状态在 domain；连接、会话、任务和退出流程由 application 管理；展示状态和命令在 ViewModel，默认不依赖 GUI；其他已选框架若需轻量绑定原语，允许范围按架构讨论明确。控件、窗口句柄和绑定在 View。ViewModel 可以映射业务状态，不成为第二个业务状态源。
 - **依赖向内**：典型命令链为 View → ViewModel → application → domain；纯计算可直接依赖 domain，不为层层转发造空用例；infrastructure 实现 application/domain 定义的 ports，由入口注入。application 不导入具体驱动/数据库/GUI，ViewModel 不持有控件、不直接做 IO。入口组装并触发生命周期，用例层执行恢复、停止和清理的业务顺序。小应用用模块表达，不要求多包或 DI 框架。
 - **通信按实际边界选**：进程内可直接调用或用事件/消息交回结果；跨进程、远程或 Web 通信记录实际协议契约。HTTP 与 Web 前端不得使用专有业务桥的规则只属于 Web 分支，不要求原生应用加 HTTP、序列化层或多语言桥。
+- **关窗即释放界面进程**（用户 2026-10-27 定，只管本应用自己起的桌面进程；浏览器访问/网站交付关网页不结束服务）：默认关窗就是整个进程退出，不做托盘、不留后台。用户要求关窗后继续工作的（设备监听、定时任务、给 CLI/AI 共用的服务）才拆成内核进程 + 界面进程，关窗只退出界面进程、不停业务，重开再启动界面连回内核。禁止隐藏窗口或藏到托盘而界面进程留着；内核不建普通窗口（有的机器上安全软件、输入法会往带窗口的进程注入模块，开销可达几十 MiB）。架构讨论遇到这类需求，或改已有项目的关窗/托盘/常驻行为时，读 [references/gui-lifecycle.md](references/gui-lifecycle.md)。
 - **变化轴与默认配置**：沿用 `vibe-flow` §5；多实现注册表仍在实际第二个成员或调用方按成员分支时建立；隔离实际外部依赖所需的 ports 不受成员数限制，不为未来换语言预建插件框架。
 
 ## 脚手架与文档
@@ -82,7 +83,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
   npx -y -p @google/design.md@<ver> designmd lint DESIGN.md && py -3 <本 skill 目录>/scripts/design_theme.py <ttk|slint> --design DESIGN.md
   ```
 
-  它直接读 DESIGN.md 源数据，超出支持范围的写法（ttk 用透明色、无单位尺寸、`lineHeight`、`components` 等）逐条报错、带行号，不静默丢；支持范围和参数看 `--ai-help`。产物提交进项目，主题和控件代码只引用产物里的值；`--check` 核对产物有没有落后于 DESIGN.md。token 写进 HTML 而不另建 `.css`：本机 Esafenet 会加密 python 写出的 `.css`，浏览器读到密文，效果图就丢了全部样式（2026-10-15 实测）。
+  它直接读 DESIGN.md 源数据，超出支持范围的写法（ttk 用透明色、无单位尺寸、`lineHeight`、`components` 等）逐条报错、带行号，不静默丢；支持范围和参数看 `--ai-help`。产物提交进项目，主题和控件代码只引用产物里的值；`--check` 核对产物有没有落后于 DESIGN.md。token 写进 HTML 而不另建 `.css`：有的机器上透明加密软件会加密写出的 `.css`，浏览器读到密文，效果图就丢了全部样式。
 - **Web 路线**：用 designmd 导出，整条成功后再把 `.tmp` 改名覆盖目标；失败就修 DESIGN.md，旧文件不动：
 
   ```

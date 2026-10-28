@@ -23,7 +23,7 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 
 ## 先确定 Web 交付方式
 
-- **桌面 Web 壳**：本机服务与 pywebview 窗口，默认 PyInstaller 打包；本机文件对话框、`sys._MEIPASS` 与 EXE 验收只用于此方式。
+- **桌面 Web 壳**：本机服务与 pywebview 窗口，默认 PyInstaller 打包；本机文件对话框、`sys._MEIPASS` 与 EXE 验收只用于此方式。关窗后不需要继续工作时，服务和窗口同进程，关窗整体退出；需要继续工作时，按 [vibe-apps「关窗即释放界面进程」](../vibe-apps/SKILL.md#架构讨论与共用边界) 把服务作为内核进程单独运行，pywebview 窗口单独一个进程，关窗时窗口进程及其 WebView2 子进程全部退出（本机样例 WebView2 一组约 450–550 MiB）。
 - **浏览器/网站交付**：浏览器访问服务，部署后端与静态资源；不要求 pywebview、PyInstaller 或桌面窗口。文件按实际上传/下载契约处理，不在服务器弹文件选择框冒充访问者电脑选文件。
 - 已有项目沿用实际交付方式；AGENTS 架构段的正文、脚手架与验收随实际方式裁剪，固定的只有共用标题。
 
@@ -147,6 +147,8 @@ mytool/
 **桌面 Web 壳**（下述本机绝对路径方案仅适用于此方式）：
 
 浏览器沙箱拿不到本地绝对路径，但业务又常需要。**统一做法**：在 `api/` 加一个 HTTP 端点（如 `/api/pick-path`），端点调用 application 的路径选择用例，用例通过自身定义的 picker port 请求文件选择能力，由桌面适配器在 GUI 允许的线程调 `create_file_dialog(FOLDER_DIALOG/...)`，开发态使用显式选择的 Tk 适配器。前端由 client 请求该端点，ViewModel 接收结果；窗口句柄和框架调用不进入 ViewModel/用例层。**不要**为此改用 pywebview 的 js_api 业务桥——那会让前端耦合壳、且没法用浏览器调。这是"通信一律走 HTTP"的唯一需要特殊处理点。
+
+服务与窗口拆成两个进程时，服务是内核，不能弹框，也不能为此自建 Tk 窗口：picker 适配器放在窗口进程，选中的路径作为普通请求参数交给内核；具体由窗口进程怎么接住前端的选择请求，按项目谈定。窗口没开就没有选择能力，依赖它的操作明确报错或取消。
 
 ## 前端边界怎么验证
 
