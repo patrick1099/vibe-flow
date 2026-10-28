@@ -1,0 +1,5 @@
+interface:
+  display_name: "Brainstorm"
+  short_description: "多 agent 头脑风暴：3 个 GPT 席 + 1 个 Opus 席盲出方案，Opus 主席收口，你拍板"
+policy:
+  allow_implicit_invocation: false

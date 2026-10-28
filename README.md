@@ -64,7 +64,7 @@
 默认省档，升到好档必须说得出理由。但省档只给一眼看得出的明确小改，**拿不准命没命中，按好档走**，
 并在回复里说一句。你一句话可以直接定档，优先于以上判据：「这个随便做一下」→ 省档；「这个要做好」→ 好档。
 
-## 九个 skill
+## 十个 skill
 
 | skill | 环节 | 触发 | 是否改文件 |
 |---|---|---|---|
@@ -77,6 +77,7 @@
 | `vibe-apps-web` | Web 界面：默认 Python + FastAPI；桌面 Web 壳加 pywebview，网站用浏览器 | 已选 Web 路线后 | 写应用 |
 | `cut-scope` | 回头剪枝：冷眼核对真实需求 vs 已膨胀的设计 | 手动，迭代多轮后 | 只读，只给方向 |
 | `scan-field` | 对外扫同款两头：开工前查市面有没有 / 完工后产原创度对比 | 手动，或由 vibe-flow 路由 | 只产结论 |
+| `brainstorm` | 多 agent 头脑风暴：3 个 GPT 席 + 1 个 Opus 席盲出方案，新开的 Opus 主席看匿名方案收口，你拍板 | **只能手动**（两端都锁死，AI 不自触发） | 只在 `.ai-room/brainstorm/` 留讨论记录 |
 
 应用先由 `vibe-apps` 选路线，再只加载选中的那个分支。新建本地工具、上位机默认原生 Python + ttkbootstrap；
 要浏览器访问或网站交付才走 Web（FastAPI，桌面壳再加 pywebview）。明确选纯 Rust 时走原生 Rust，界面固定用 Slint。
@@ -91,6 +92,8 @@ DESIGN.md 里有框架还原不了的写法，它直接报错指出哪一行，�
 `clarify-needs` 会自触发但带闸，只在这次要做的事够大、需求本身又不清时起（开新项目 / 新工具、
 新加一整块功能、多目标纠缠、需求越聊越多），明确的小改 / 改 bug / 纯问答不起。闸写在 description 里，是软约束；
 误伤了说一句「这个随便做一下」就跳过。`cut-scope` / `scan-field` 两个回头类 skill 是约定式手动。
+`brainstorm` 是硬手动：Claude Code 侧 `disable-model-invocation`，Codex 侧 `allow_implicit_invocation: false`，
+只有你打 `/vibe-flow:brainstorm`（Codex 里 `$brainstorm`）才跑。
 
 要做的东西有流程时，`clarify-needs` 会把「它跑起来是什么样」画成图：用 [D2](https://d2lang.com)
 写，`skills/clarify-needs/scripts/model_page.py` 渲染成本地网页自动打开，猜的地方标黄色虚线
@@ -101,7 +104,7 @@ DESIGN.md 里有框架还原不了的写法，它直接报错指出哪一行，�
 
 ## 按阶段和角色读取
 
-总入口保留 §1–§9 和九个 skill。新项目先讨论架构、小改直接做、用户决策、图与原型、验证及文档交接的要求保持不变。
+总入口保留 §1–§9 和全部 skill。新项目先讨论架构、小改直接做、用户决策、图与原型、验证及文档交接的要求保持不变。
 阶段细则按条件读取：[planning.md](skills/vibe-flow/references/planning.md) 用于新项目架构讨论或好档探方案，
 [collaboration.md](skills/vibe-flow/references/collaboration.md) 用于实质技术取舍和关键结果审读；好·重监工必读，并按其中密度执行关键步骤结果审。
 监工模板给出明确文件路径。
@@ -292,11 +295,27 @@ CLAUDE.md。Codex 原生读 AGENTS.md。
 skill 之间不自动串联，自动钩子只用于上面那道文档闸和压缩后读回。本工作流不依赖正式 spec/plan、TDD、
 并行子代理这类重流程框架，单独装就能走完全程。
 
-插件同时支持 Claude Code 和 Codex，只有入口 skill 带 `agents/openai.yaml`。两端的文档闸分别接入
+插件同时支持 Claude Code 和 Codex，入口 skill 和 `brainstorm` 带 `agents/openai.yaml`（后者用它关掉 Codex 的自动调用）。两端的文档闸分别接入
 各自的 hook 事件，共用一份判定逻辑；Codex 需使用支持插件钩子的版本并完成钩子信任，`vibe-flow` §8
 说明被拦后如何判断。
 
 ## 沿革
+
+0.29.0（2026-10-28）新增 `brainstorm`：只由你手动调用的多 agent 头脑风暴。起因是用户说「有些好档的项目，值得多个 agent
+去讨论」——原有外援只有「主 agent 出方案、决策者挑毛病」一种，审的人会被给定方案锚住，不会说整条路换掉。用户拍板：
+只管个人项目；只能手动调用（「我只想要我想要好的项目做 brainstorming」），但在不适合讨论的阶段被叫到时先直说一句；
+席位是 3 个 GPT + 1 个 Opus，主 agent 只出简报不参与；Opus 当主席出推荐；视角不固定，按当时题目派。
+开工前扫了同款（council-of-high-intelligence、cc-debate、the-council、Karpathy llm-council 的 skill 版），都按
+Codex + Gemini + Claude 各一个设计、不接 ai-room 和「已谈定」，故自做，吸收了：视角按题目条件派、对立两极分给不同
+模型家族、分歧不抹成共识并写推翻条件、FACT / ASSUMPTION 标签、匿名评审、限篇幅（模型偏爱长答案）、缺席不等于同意；
+「裁判偏向同模型一方」（Liang et al., EMNLP 2024）决定了主席必须是新开的 Opus 会话且只看匿名方案。
+随后派三个 codex 分别从流程成本、讨论质量、落地宿主三个视角审，采纳：第 2 轮交锋从必跑改为按需（默认 5 次调用，
+有会改变路线的分歧才 7 次；用户同意）；交锋开新会话不续用第 1 轮；视角写成「题目条件 → 优先检验的取舍 → 推翻条件」；
+简报把已谈定拆成硬约束 / 偏好 / 可重议假设；每位读者各自打乱匿名顺序、几席说同一句不算多票；首轮 ≤800 字、交锋
+每案 ≤120 字、主席 ≤800 字；劝退要同时满足「没有要重开的路线问题」和「只差按既定标准审查或执行」；超时只显式续接
+那一席一次；Codex 侧用 `allow_implicit_invocation: false` 锁手动；讨论记录放 `.ai-room/brainstorm/`。没采纳：在 skill
+里写死模型 ID（`models.toml` 是唯一出处）；为躲台账并发竞态把四席改串行（改去给 ai-room 台账加锁，见 ai-room 仓）。
+采纳的头脑风暴结论算已审方案，不再走决策者方案审。
 
 0.28.1（2026-10-28）补「修 bug 先复现」的两处边界。起因是用户问复现测试会不会「绑定 commit」、以前修好的 bug 再跑
 会不会报错。不会：修前失败只在修的当下确认一次，修好后它应一直通过，再失败就是回归。真会误报的是两种：测试绑了
