@@ -18,4 +18,4 @@
 | 独立验证者 | 本文件；验收计划/有效约定与必要原始产物；`../SKILL.md` §4 的两个公共小节及 §8 | 结构/配置验收读 §5 与 [low-coupling.md](low-coupling.md) 第3节；应用交付读 `vibe-apps/SKILL.md`“资源与交付验证”及所选分支相关验收；不默认读其他实现路线或全量运行时代码 |
 | 文档角色 | 本文件；有效约定/计划/当前文档与已交付证据；`../SKILL.md` §4 的两个公共小节及 §6；[doc-fork.md](doc-fork.md) 的责任归属与获派步骤；[living-blueprint](../../living-blueprint/SKILL.md) | 建文件/调结构才读其 templates；最终清理只按主会话明确派发的 ready 后清理范围，不因普通收尾删除 HANDOFF |
 
-`vibe-apps/SKILL.md` 均指 [应用共用入口](../../vibe-apps/SKILL.md)。已定路线无需重选，已定架构无需重谈；Clean MVVM 被选定且任务涉及其边界时，读取 [clean-mvvm.md](../../vibe-apps/references/clean-mvvm.md)。纯文案/样式小改不因此加载全套架构或原型流程。需要实际用户决定时由主会话按公共边界处理，普通执行问题留在监工层。
+`vibe-apps/SKILL.md` 均指 [应用共用入口](../../vibe-apps/SKILL.md)。已定路线无需重选，已定架构无需重谈；Clean 分层被选定且任务涉及其边界，或任务改动展示状态、后台结果时，读取 [clean-mvvm.md](../../vibe-apps/references/clean-mvvm.md) 对应小节。纯文案/样式小改不因此加载全套架构或原型流程。需要实际用户决定时由主会话按公共边界处理，普通执行问题留在监工层。

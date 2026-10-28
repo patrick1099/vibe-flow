@@ -1,6 +1,6 @@
 ---
 name: vibe-apps
-description: Route personal GUI apps to native desktop or Web UI before scaffolding, discuss a project-appropriate architecture (including Clean Architecture + MVVM), and apply the mockup-first UI flow (DESIGN.md + HTML mockup + screenshot comparison) and delivery checks. GUI、上位机、桌面工具、Web 界面、打包应用、界面效果图、DESIGN.md、照图实现；支持用户明确选择 Python 或纯 Rust（Slint）。Load after vibe-flow; standalone Python CLI scripts use vibe-scripts.
+description: Route personal GUI apps to native desktop or Web UI before scaffolding, discuss a project-appropriate architecture (Clean layering when warranted; presentation state follows the framework's own bindings), and apply the mockup-first UI flow (DESIGN.md + HTML mockup + screenshot comparison) and delivery checks. GUI、上位机、桌面工具、Web 界面、打包应用、界面效果图、DESIGN.md、照图实现；支持用户明确选择 Python 或纯 Rust（Slint）。Load after vibe-flow; standalone Python CLI scripts use vibe-scripts.
 ---
 
 # vibe-apps：应用路线与共用边界
@@ -23,13 +23,14 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 
 ## 架构讨论与共用边界
 
-新项目按 `vibe-flow` §4 先讨论架构，路线/框架选择不能代替职责与依赖讨论。结合业务复杂度、交互状态、设备/后台任务和维护成本给出推荐；简单工具可以选界面与纯逻辑分离，复杂应用重点考虑 **Clean Architecture + MVVM**。采用哪一种、具体分到什么程度，讨论谈定后再搭脚手架。
+新项目按 `vibe-flow` §4 先讨论架构，路线/框架选择不能代替职责与依赖讨论。结合业务复杂度、交互状态、设备/后台任务和维护成本给出推荐；简单工具可以选界面与纯逻辑分离，有业务规则、用例编排、设备或任务生命周期的应用重点考虑 **Clean 分层**。Clean 管业务分层与依赖方向，展示层怎么写另按下面的展示状态规则和框架能力选，两者不是套餐（用户 2026-10-28 定，不再默认 MVVM）。采用哪一种、具体分到什么程度，讨论谈定后再搭脚手架。
 
-选定 Clean MVVM 时读 [references/clean-mvvm.md](references/clean-mvvm.md)，执行其中的依赖、状态和验证契约；下面涉及 ViewModel/application/ports 的条款及分支骨架均在此选择下适用，不能反过来强制所有项目采用。既有项目普通修改沿用已定架构；迁移须明确职责与模块范围，纯样式/文案修改不发起迁移，不把局部符合报告成全项目符合。
+选定 Clean 分层，或改动涉及展示状态、后台结果时，读 [references/clean-mvvm.md](references/clean-mvvm.md) 对应小节，执行其中的依赖、状态和验证契约；分支骨架里的分层目录只在选定 Clean 时适用，不能反过来强制所有项目采用。既有项目普通修改沿用已定架构，包括按旧版 Clean + MVVM 起的项目（其中的 ViewModel 按展示状态理解，不改名不删）；迁移须明确职责与模块范围，纯样式/文案修改不发起迁移，不把局部符合报告成全项目符合。
 
 - **业务规则可独立测试**：输入显式传入、结果显式返回，不读取全局路径，不依赖 GUI、设备或网络；碰 IO 的实现放适配层。
-- **状态按职责归属**：领域状态在 domain；连接、会话、任务和退出流程由 application 管理；展示状态和命令在 ViewModel，默认不依赖 GUI；其他已选框架若需轻量绑定原语，允许范围按架构讨论明确。控件、窗口句柄和绑定在 View。ViewModel 可以映射业务状态，不成为第二个业务状态源。
-- **依赖向内**：典型命令链为 View → ViewModel → application → domain；纯计算可直接依赖 domain，不为层层转发造空用例；infrastructure 实现 application/domain 定义的 ports，由入口注入。application 不导入具体驱动/数据库/GUI，ViewModel 不持有控件、不直接做 IO。入口组装并触发生命周期，用例层执行恢复、停止和清理的业务顺序。小应用用模块表达，不要求多包或 DI 框架。
+- **状态按职责归属**：领域状态在 domain；连接、会话、任务和退出流程由 application 管理；展示状态（影响界面判断的值、请求代次、在途标记）归展示层，不成为第二个业务状态源。每项状态一个权威来源，不逐控件镜像：简单的局部草稿由控件或它绑定的变量持有，参与联动、异步预演、多步流程的才放进明确的展示状态。
+- **展示层按单向数据流**（所有 GUI 适用）：输入、用例结果和后台结果经一处 apply 进入展示状态，界面从状态投影；优先用框架自带绑定（Tk Variable、Slint 属性/`<=>`/global、自定义 Model），没有绑定的原生 JS 由 render 写 DOM。业务判断不写在控件回调里，回调可以直接调用例，耗时工作交后台。只对本次改动的代码：同一换算第二次出现就抽共用纯函数；出现请求序号比对、在途标记、晚到丢弃或多步对话框，就集中到一处状态转换并测事件序列。不建 BaseViewModel、通用绑定框架、Store/Dispatcher 或 Redux 式状态库。
+- **依赖向内**：domain/application 不导入 GUI 框架、具体驱动/数据库，以及本项目的展示层和 adapters；infrastructure 实现 application/domain 定义的 ports，由入口注入。纯计算可直接依赖 domain，不为层层转发造空用例。入口组装并触发生命周期，用例层执行恢复、停止和清理的业务顺序。小应用用模块表达，不要求多包或 DI 框架。
 - **通信按实际边界选**：进程内可直接调用或用事件/消息交回结果；跨进程、远程或 Web 通信记录实际协议契约。HTTP 与 Web 前端不得使用专有业务桥的规则只属于 Web 分支，不要求原生应用加 HTTP、序列化层或多语言桥。
 - **关窗即释放界面进程**（用户 2026-10-27 定，只管本应用自己起的桌面进程；浏览器访问/网站交付关网页不结束服务）：默认关窗就是整个进程退出，不做托盘、不留后台。用户要求关窗后继续工作的（设备监听、定时任务、给 CLI/AI 共用的服务）才拆成内核进程 + 界面进程，关窗只退出界面进程、不停业务，重开再启动界面连回内核。禁止隐藏窗口或藏到托盘而界面进程留着；内核不建普通窗口（有的机器上安全软件、输入法会往带窗口的进程注入模块，开销可达几十 MiB）。架构讨论遇到这类需求，或改已有项目的关窗/托盘/常驻行为时，读 [references/gui-lifecycle.md](references/gui-lifecycle.md)。
 - **变化轴与默认配置**：沿用 `vibe-flow` §5；多实现注册表仍在实际第二个成员或调用方按成员分支时建立；隔离实际外部依赖所需的 ports 不受成员数限制，不为未来换语言预建插件框架。
@@ -43,7 +44,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 ```markdown
 ## 架构约束（vibe-apps）
 实现选择：<已选路线、语言、GUI 框架与交付方式>。
-架构：<讨论谈定的结构与选择理由；若采用 Clean MVVM，列明实际依赖边界>。
+架构：<讨论谈定的结构与选择理由；若采用 Clean 分层，列明实际依赖边界；展示状态放在哪>。
 <实际模块归属、状态/线程所有者及验证方式；已有检查写命令与覆盖范围，尚无自动检查如实说明；存量迁移写明范围>。
 <选中分支的项目实际约束，如主线程/后台任务、或 Web HTTP 与离线资源规则>。
 ```
@@ -96,7 +97,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 
 ## 资源与交付验证
 
-按已选架构和本次改动规模验证。采用 Clean MVVM 时遵守 [验证要求](references/clean-mvvm.md#验证要求)：既有小改复用检查，不为小改新建测试框架；新项目或明确的边界迁移落实约定的检查方式，说明自动覆盖与人工核对范围。架构检查不能替代真实界面测试。
+按已选架构和本次改动规模验证。采用 Clean 分层或抽出了展示状态转换时遵守 [验证要求](references/clean-mvvm.md#验证要求)：既有小改复用检查，不为小改新建测试框架；新项目或明确的边界迁移落实约定的检查方式，说明自动覆盖与人工核对范围。架构检查不能替代真实界面测试。
 
 所有应用按 `vibe-flow` §8 走真实入口与核心用户路径；分发应用要运行交付产物，源码能跑不代表打包产物完整。界面观感按上面「界面：效果图先行」走，流程厚度仍按本次改动判档。
 
