@@ -64,7 +64,7 @@ description: Build or modify personal apps with a Web UI using Python, FastAPI a
 
 ## 业务规则不依赖当前用户或窗口
 
-数据显式传入，设备/存储 IO 由适配层处理；连接、会话与任务状态由 application 拥有，前端跨事件的展示状态归展示层（按需的 `state.mjs`），输入框草稿等 DOM 状态归 View。服务端业务校验是权威，前端可做输入格式与交互校验，不复制业务决策。逻辑分离降低换框架或交付方式的影响范围，实际可复用部分仍要核对依赖和行为契约。
+数据显式传入，设备/存储 IO 由适配层处理；连接、会话与任务状态由 application 拥有，前端跨事件的展示状态归展示层（按需的 `state.mjs`）；简单的局部草稿留在 DOM 由 View 持有，参与联动、异步预演或多步流程的草稿归展示状态。服务端业务校验是权威，前端可做输入格式与交互校验，不复制业务决策。逻辑分离降低换框架或交付方式的影响范围，实际可复用部分仍要核对依赖和行为契约。
 
 ```python
 def summarize():                  # ❌ 读全局 DATA_FILE、焊死单用户
@@ -133,7 +133,7 @@ mytool/
 ## 架构约束（vibe-apps）
 实现选择：Web 界面，Python + FastAPI + pywebview；交付 PyInstaller 桌面应用。
 架构：Clean 分层；core 为 domain，application 定义用例/ports，adapters 实现 IO，api 只做 HTTP↔用例转换。
-前端单向数据流：DOM 事件经注入的 client 请求后端，结果经 apply 进展示状态（跨事件状态在 web/state.mjs，不依赖 DOM/fetch），render 写 DOM；业务判断不写在事件处理里。内层不导入外层实现，入口负责组装。
+前端单向数据流：DOM 事件经注入的 client 请求后端，render 写 DOM；命中抽取条件的跨事件状态才建 web/state.mjs（状态 + apply，不依赖 DOM/fetch），否则结果直接交 render；业务判断不写在事件处理里。内层不导入外层实现，入口负责组装。
 在此写明已选架构的验证方式；有自动检查时列实际命令及覆盖范围，越界非零退出，未自动覆盖的边界如实记录。
 前端默认原生 HTML/JS + Tailwind 浏览器版 + DaisyUI，库文件放 web/vendor/ 本地引用，零构建无 npm；通信走 HTTP，不用 pywebview 专有桥。
 有 DESIGN.md 时，颜色只改 DESIGN.md 再导出 web/theme.css，不手改 theme.css。
