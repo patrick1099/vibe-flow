@@ -17,7 +17,6 @@ description: "For direct user requests, load FIRST before implementation or bran
 |---|---|
 | 新项目架构讨论；已定架构需要改变；好档探方案 | [references/planning.md](references/planning.md) 的对应部分 |
 | 增删换变化轴成员、改成员能力、收口注册表、成员各有外部依赖，或用到外部数据/默认运行策略，动手前 | [references/low-coupling.md](references/low-coupling.md) |
-| 已定多任务计划委托监工；监工接任 | [references/batch-supervisor.md](references/batch-supervisor.md) |
 | 委派、实质技术取舍或关键结果复核 | [references/collaboration.md](references/collaboration.md) |
 | 改动完成且验证过、交付前；未完要结束会话；被文档闸拦下（微脚本免） | [references/doc-fork.md](references/doc-fork.md) |
 | 新建用到宿主能力的项目，或换宿主平台 | [references/platform-porting.md](references/platform-porting.md) |
@@ -148,17 +147,15 @@ AI 决定并说明：已定架构内的库、模块细分、文件名、内部 A
 
 文档是连续工作的记忆，不是开工许可证。不要同时生成一套重复的需求、设计、计划文档。
 
-## 7. 计划内执行交给监工，必要时叫外援
+## 7. 计划内执行与外援
 
-**已确定的多任务实施计划默认用批次监工**；小改直接做，不强拆三层。主会话只管计划、§4 用户决策和短简报，不并行实施、逐项复核或接回普通排错；监工负责整批派工、重试、集成、验证和文档。先实际核验宿主嵌套与结果路由；缺能力就明确降为已验证方式，不把记录工具当调度实现。
-
-首次启动与交接按 [references/batch-supervisor.md](references/batch-supervisor.md) 的主会话部分；零上下文监工与执行角色按 [references/role-reading.md](references/role-reading.md) 加载。只有全部子任务已结束或确认停止才交接，不支持在途迁移；主会话用 `scripts/batch_state.py status` 看短状态，上行最多八行。
+已谈定的多任务计划由主会话直接实施，按下文与 [references/collaboration.md](references/collaboration.md) 派执行者、叫外援。**批次监工只在用户点名时用**（“你当监工”“交给监工”“用监工模式”）：加载同插件的 `supervisor` skill，主会话退出实施，只管计划、§4 用户决策和短简报。不点名不进，也不主动推荐。零上下文的实现、验证、文档角色按 [references/role-reading.md](references/role-reading.md) 加载。
 
 外援的触发、轻档/重档的复核密度与停止条件唯一见 [references/collaboration.md](references/collaboration.md)；有新实质取舍或需关键结果复核时按该文件调用 `ai-room`。角色、档位和评审结论由派工传递，已审方案不重复咨询。执行负责人复核产出；监工模式不退回主会话逐项复核。变更目标、范围或已确认行为才上报；危险的当前动作立即停止。
 
 ## 8. 实现与验证
 
-实现时始终保持轻量：先交付最小但完整、可实际使用的一条行为链；保留已有行为、规则和用户写下的意图，不为简化或解决冲突而静默删除——遇到会改变行为的冲突，指出来等用户决定；不默认要求 TDD、正式计划、工作树或子代理，仅在好档中风险确实高、或用户明确要求时单独采用（已谈定多任务计划的监工按 §7；收工派 fork 也不在此列）；修改范围与授权一致，不顺手重构无关代码。
+实现时始终保持轻量：先交付最小但完整、可实际使用的一条行为链；保留已有行为、规则和用户写下的意图，不为简化或解决冲突而静默删除——遇到会改变行为的冲突，指出来等用户决定；不默认要求 TDD、正式计划、工作树或子代理，仅在好档中风险确实高、或用户明确要求时单独采用（用户点名的监工模式按 `supervisor`；收工派 fork 也不在此列）；修改范围与授权一致，不顺手重构无关代码。
 
 **所有档都必须做一次与交付形态相符的实际使用检查**——只跑单测、不跑用户真实入口不算。此外按档追加：
 

@@ -13,7 +13,7 @@
 | 角色 | 开始前必读 | 仅命中才追加 |
 |---|---|---|
 | 直接服务用户的主会话 | `../SKILL.md`；当前项目入口和有效约定 | 按入口时机表；确定分派后不预读子分支 |
-| 批次监工/接任者 | 本文件；[batch-supervisor.md](batch-supervisor.md)；计划及 HANDOFF 有效约定/机器区；`../SKILL.md` §4 的“用户与 AI 的决策边界”“谈定就记下来”及 §6、§8 | **档位为好·重时必读 [collaboration.md](collaboration.md)，按其中密度执行关键步骤结果审**；其他档位在新实质技术取舍/关键结果审时读该文件；文档收尾读 [doc-fork.md](doc-fork.md)；需改变已定架构/方案读 [planning.md](planning.md) 相应部分，再向主会话报告用户决策 |
+| 批次监工/接任者（仅用户点名的 `supervisor` 模式） | 本文件；[supervisor.md](../../supervisor/references/supervisor.md)；计划及 HANDOFF 有效约定/机器区；`../SKILL.md` §4 的“用户与 AI 的决策边界”“谈定就记下来”及 §6、§8 | **档位为好·重时必读 [collaboration.md](collaboration.md)，按其中密度执行关键步骤结果审**；其他档位在新实质技术取舍/关键结果审时读该文件；文档收尾读 [doc-fork.md](doc-fork.md)；需改变已定架构/方案读 [planning.md](planning.md) 相应部分，再向主会话报告用户决策 |
 | 实现者 | 本文件；任务计划/有效约定；`../SKILL.md` §4 的两个公共小节及 §5、§8；已选实现 skill | 变化轴/外部数据命中时读 [low-coupling.md](low-coupling.md)；应用读 `vibe-apps/SKILL.md` 的“架构讨论与共用边界”，新建脚手架加“脚手架与文档”，新页面/布局大改加“界面：效果图先行”；只读选中原生/Web 与当前语言参考。新技术取舍先交监工，不能自行重开用户方案讨论 |
 | 独立验证者 | 本文件；验收计划/有效约定与必要原始产物；`../SKILL.md` §4 的两个公共小节及 §8 | 结构/配置验收读 §5 与 [low-coupling.md](low-coupling.md) 第3节；应用交付读 `vibe-apps/SKILL.md`“资源与交付验证”及所选分支相关验收；不默认读其他实现路线或全量运行时代码 |
 | 文档角色 | 本文件；有效约定/计划/当前文档与已交付证据；`../SKILL.md` §4 的两个公共小节及 §6；[doc-fork.md](doc-fork.md) 的责任归属与获派步骤；[living-blueprint](../../living-blueprint/SKILL.md) | 建文件/调结构才读其 templates；最终清理只按主会话明确派发的 ready 后清理范围，不因普通收尾删除 HANDOFF |

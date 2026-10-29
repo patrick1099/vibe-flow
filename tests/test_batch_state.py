@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-SCRIPT = Path(__file__).resolve().parents[1] / "skills/vibe-flow/scripts/batch_state.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "skills/supervisor/scripts/batch_state.py"
 spec = importlib.util.spec_from_file_location("batch_state", SCRIPT)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
