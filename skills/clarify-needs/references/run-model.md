@@ -121,6 +121,7 @@ py -3 <clarify-needs 目录>/scripts/model_page.py docs/model/run.d2 \
 - 文件放 `docs/model/`：第一层 `run.d2` → `run.html`；第二层 `build.d2` → `build.html`，或 `build.html` 片段 → `build.page.html`。
 - `NEEDS.md` 的当前需求区放一行链接指向第一层的页面。
 - 需求变了就覆盖更新，跟 NEEDS.md 一样不留废图。
+- 第二层搭建图旁存一份模块依赖快照 `build.deps.json`（`vibe-flow` 的 `scripts/dep_graph.py <项目根> --write-snapshot`），和图一起提交。图改了、或核对后确认不用改，就刷新它。搭建图的看图页会标「已对照代码依赖」或「N 处未确认」，刷新快照后重新渲染一次，标记才会更新。快照只记模块和依赖，对上了不代表数据流、职责也对得上。
 
 ## 降级
 

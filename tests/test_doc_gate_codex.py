@@ -418,5 +418,49 @@ class CodexDocGateTest(unittest.TestCase):
         self.assertIsNone(self.stop())
 
 
+    def model_change(self, fresh_docs=True):
+        core = self.project(name="model project")
+        self.write("model project/docs/model/build.d2", "core -> cli\n")
+        graph = ROOT / "skills/vibe-flow/scripts/dep_graph.py"
+        proc = subprocess.run([sys.executable, str(graph), str(core.parent.parent), "--write-snapshot"],
+                              capture_output=True, text=True, encoding="utf-8",
+                              env=dict(self.env, PYTHONIOENCODING="utf-8"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        core.write_text("import cli\ndef f(): return 1\n", encoding="utf-8")
+        self.patch(core)
+        if fresh_docs:
+            later = core.stat().st_mtime + 5
+            os.utime(core.parent.parent / "docs/CHANGELOG.md", (later, later))
+        return core
+
+    def test_model_drift_blocks_stop(self):
+        self.model_change()
+        out = self.stop()
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("搭建图核对", out["reason"])
+        self.assertIn("+ 边 core -> cli", out["reason"])
+        self.assertNotIn("[vibe-flow 文档闸]", out["reason"])
+        self.assertIsNone(self.stop())
+
+    def test_model_and_document_issues_share_ordered_block(self):
+        self.model_change(fresh_docs=False)
+        out = self.stop()
+        self.assertEqual(out["decision"], "block")
+        self.assertEqual(out["reason"].count("[vibe-flow 文档闸]"), 1)
+        self.assertEqual(out["reason"].count("[vibe-flow 搭建图核对]"), 1)
+        self.assertIn("\n\n[vibe-flow 搭建图核对]", out["reason"])
+        self.assertLess(out["reason"].index("[vibe-flow 文档闸]"), out["reason"].index("[vibe-flow 搭建图核对]"))
+
+    def test_model_active_stop_does_not_block(self):
+        self.model_change()
+        self.assertIsNone(self.stop(stop_hook_active=True))
+        self.assertIsNone(self.stop())
+
+    def test_model_interrupt_does_not_block(self):
+        self.model_change()
+        self.assertIsNone(self.run_gate(self.event("Interrupt")))
+        self.assertIsNone(self.stop())
+
+
 if __name__ == "__main__":
     unittest.main()

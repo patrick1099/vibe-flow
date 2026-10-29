@@ -13,6 +13,8 @@
 按主仓里同一相对路径判，见 merged_worktree_path。
 同一轮只拦一次（stop_hook_active，只防循环）。AI 判断这批不用记时跑提示里的回执命令（receipt.py），
 之后同一份代码快照不再提醒——后台任务完成把 AI 唤醒、本轮再结束时也不会重复拦。判断权留给 AI。
+有搭建图且本轮改过 Python / Rust 代码的项目，另核对模块依赖快照；依赖变化或可解析项目缺快照时提醒看图。
+解析失败或超时放行，这项检查不进入 evaluate，避免批量文档扫描启动解析进程。
 非 vibe 项目（无标记）一律不管。
 
 只用 stdlib。内部出错时退出码 1（非阻断、错误可见），绝不因闸本身的 bug 卡住会话。
@@ -43,6 +45,8 @@ APPS_MARK = "架构约束（vibe-apps）"
 HEADER_LINES = 15
 MAX_PY_SCAN = 60
 GIT_TIMEOUT = 8
+MODEL_TIMEOUT = 20
+DEP_GRAPH = Path(__file__).resolve().parents[1] / "skills" / "vibe-flow" / "scripts" / "dep_graph.py"
 # 一轮里补扫的 git 仓库上限：每个仓库要跑几次 git，Stop 钩子不能拖太久
 MAX_SCAN_REPOS = 6
 # 一次合并（checkout）把代码和文档写回主仓，前后差不过几秒；文档在这个窗口内就算和代码同批
@@ -265,7 +269,8 @@ def evaluate(paths, stop_at=None, moves=None):
     """
     projects = {}
     for raw in dict.fromkeys(paths):
-        if Path(raw).suffix.lower() in DOC_SUFFIXES:
+        if (Path(raw).suffix.lower() in DOC_SUFFIXES
+                or tuple(p.lower() for p in Path(raw).parts[-3:]) == ("docs", "model", "build.deps.json")):
             continue
         merged = merged_worktree_path(raw)
         if merged is None and (m := moved(raw, moves)):
@@ -293,6 +298,70 @@ def evaluate(paths, stop_at=None, moves=None):
                                                     DOC_SUFFIXES, SCAN_SUFFIXES):
             issues.append(("stale", proj, []))
     return issues
+
+
+def model_drift(paths, stop_at=None, moves=None):
+    """独立核对搭建图的依赖快照，返回 [(项目根, 完整差异输出或 None)]；None 表示缺快照。"""
+    if not DEP_GRAPH.is_file():
+        return []
+    projects = {}
+    for raw in dict.fromkeys(paths):
+        if Path(raw).suffix.lower() in DOC_SUFFIXES:
+            continue
+        merged = merged_worktree_path(raw)
+        if merged is None and (m := moved(raw, moves)):
+            merged = Path(m)
+        path = merged if merged is not None else raw
+        found = find_project(path, stop_at)
+        if not found:
+            continue
+        root, _, _, layout = found
+        if layout != "project" or not (Path(path).suffix.lower() in {".py", ".rs"}
+                                       or Path(path).name == "Cargo.toml"):
+            continue
+        projects.setdefault(_norm(root), root)
+
+    issues = []
+    for root in projects.values():
+        model = root / "docs" / "model"
+        if not any((model / name).is_file() for name in ("build.d2", "build.page.html")):
+            continue
+        has_snapshot = (model / "build.deps.json").exists()
+        command = [sys.executable, str(DEP_GRAPH), str(root)]
+        if has_snapshot:
+            command.append("--check-snapshot")
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
+                                    env=dict(os.environ, PYTHONIOENCODING="utf-8"), timeout=MODEL_TIMEOUT)
+        except (OSError, subprocess.SubprocessError, UnicodeError):
+            continue
+        if has_snapshot and result.returncode == 1:
+            issues.append((root, result.stdout))
+        elif not has_snapshot and result.returncode == 0:
+            issues.append((root, None))
+    return issues
+
+
+def render_model_reason(issues):
+    lines = ["[vibe-flow 搭建图核对] 本轮改了代码，下面项目的模块依赖和搭建图留底时的快照对不上："]
+    for root, output in issues:
+        if output is None:
+            lines.append(f"- {root}：有搭建图，还没有模块依赖快照。")
+        else:
+            lines.append(f"- {root}：")
+            lines.extend("    " + line for line in output.splitlines())
+    lines.append("对照 docs/model/ 里的搭建图，看这些模块和依赖的变化图上要不要改：要改就改图，"
+                 "并按 clarify-needs 的 run-model 重新渲染看图页；不用改就想清楚理由。")
+    for root, _ in issues:
+        lines.append(f'然后刷新快照："{sys.executable}" "{DEP_GRAPH}" "{root}" --write-snapshot'
+                     "（第一次建快照时，图的粒度和默认层数对不上就加 --depth N，层数会存进快照）；"
+                     "有看图页的再渲染一次，页面上的对照标记才会更新。")
+    lines += [
+        "同时被文档闸拦、要写回执的，先刷新快照、再写回执（回执指纹包含快照文件）。",
+        "回复里说一句图哪里变了，或者为什么不用改。这里只比模块之间的依赖，数据流和职责的变化它看不见；"
+        "别不看图就刷快照。",
+    ]
+    return "\n".join(lines)
 
 
 def receipt_command(bp):
@@ -368,8 +437,10 @@ def main():
         return 0
     stop_at = os.environ.get("VIBE_FLOW_DOC_GATE_HOME")
     issues = evaluate(paths, stop_at, moves)
-    if issues and not subagent_running(data.get("background_tasks")):
-        sys.stdout.write(json.dumps({"decision": "block", "reason": render_reason(issues)},
+    drift = model_drift(paths, stop_at, moves)
+    if (issues or drift) and not subagent_running(data.get("background_tasks")):
+        reasons = ([render_reason(issues)] if issues else []) + ([render_model_reason(drift)] if drift else [])
+        sys.stdout.write(json.dumps({"decision": "block", "reason": "\n\n".join(reasons)},
                                     ensure_ascii=False))
     return 0
 

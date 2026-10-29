@@ -10,6 +10,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -472,6 +473,212 @@ class DocGateTest(unittest.TestCase):
         self.assertIn(STALE, self.run_gate(rows)["reason"])
         set_mtime(changelog, code.stat().st_mtime + 5)
         self.assertIsNone(self.run_gate(rows))
+
+
+    def model_project(self, snapshot=True, diagram="build.d2", change=True):
+        core = self.toolkit(with_docs=True)
+        self.write("tk/docs/model/" + diagram, "cli -> core\n")
+        if snapshot:
+            graph = GATE.parents[1] / "skills/vibe-flow/scripts/dep_graph.py"
+            proc = subprocess.run([sys.executable, str(graph), str(core.parent), "--write-snapshot"],
+                                  capture_output=True, text=True, encoding="utf-8",
+                                  env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+        if change:
+            core.write_text("import cli\ndef f(): return 1\n", encoding="utf-8")
+        return core
+
+    def model_rows(self, core, fresh_docs=True):
+        rows = [human(), edit(core)]
+        if fresh_docs:
+            set_mtime(core.parent / "docs/CHANGELOG.md", core.stat().st_mtime + 5)
+        return rows
+
+    def gate_module(self):
+        sys.path.insert(0, str(GATE.parent))
+        try:
+            import doc_gate
+            return doc_gate
+        finally:
+            sys.path.pop(0)
+
+    def test_model_new_import_blocks_with_fresh_docs(self):
+        core = self.model_project()
+        out = self.run_gate(self.model_rows(core))
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("搭建图核对", out["reason"])
+        self.assertIn("+ 边 core -> cli", out["reason"])
+        self.assertNotIn("[vibe-flow 文档闸]", out["reason"])
+        graph = GATE.parents[1] / "skills/vibe-flow/scripts/dep_graph.py"
+        self.assertIn(f'"{sys.executable}" "{graph}" "{core.parent}" --write-snapshot', out["reason"])
+        self.assertIn("先刷新快照、再写回执", out["reason"])
+
+    def test_model_function_body_change_passes(self):
+        core = self.model_project(change=False)
+        core.write_text("def f(): return 42\n", encoding="utf-8")
+        self.assertIsNone(self.run_gate(self.model_rows(core)))
+
+    def test_model_missing_snapshot_blocks_supported_project(self):
+        core = self.model_project(snapshot=False)
+        out = self.run_gate(self.model_rows(core))
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("还没有模块依赖快照", out["reason"])
+
+    def test_model_missing_snapshot_unsupported_project_passes(self):
+        self.write("unsupported/docs/model/build.d2", "a -> b")
+        self.doc("unsupported/docs/BLUEPRINT.md")
+        cl = self.doc("unsupported/docs/CHANGELOG.md")
+        for filename, content in (("Cargo.toml", "[workspace]\n"), ("only.js", "let a = 1;\n")):
+            with self.subTest(filename=filename):
+                code = self.write("unsupported/" + filename, content)
+                rows = [human(), edit(code)]
+                set_mtime(cl, code.stat().st_mtime + 5)
+                self.assertIsNone(self.run_gate(rows))
+                code.unlink()
+
+    def test_model_css_only_does_not_run_comparison(self):
+        core = self.model_project()
+        css = self.write("tk/style.css", "body {}")
+        rows = [human(), edit(css)]
+        set_mtime(core.parent / "docs/CHANGELOG.md", css.stat().st_mtime + 5)
+        self.assertIsNone(self.run_gate(rows))
+        gate = self.gate_module()
+        with mock.patch.object(gate.subprocess, "run") as run:
+            self.assertEqual(gate.model_drift([str(css)], self.root), [])
+        run.assert_not_called()
+
+    def test_model_layered_page_triggers_comparison(self):
+        out = self.run_gate(self.model_rows(self.model_project(diagram="build.page.html")))
+        self.assertIn("搭建图核对", out["reason"])
+        self.assertIn("+ 边", out["reason"])
+
+    def test_model_and_documents_share_one_ordered_block(self):
+        out = self.run_gate(self.model_rows(self.model_project(), fresh_docs=False))
+        self.assertEqual(out["decision"], "block")
+        reason = out["reason"]
+        self.assertEqual(reason.count("[vibe-flow 文档闸]"), 1)
+        self.assertEqual(reason.count("[vibe-flow 搭建图核对]"), 1)
+        self.assertLess(reason.index("[vibe-flow 文档闸]"), reason.index("[vibe-flow 搭建图核对]"))
+        self.assertIn("\n\n[vibe-flow 搭建图核对]", reason)
+
+    def test_model_stop_hook_active_passes(self):
+        self.assertIsNone(self.run_gate(self.model_rows(self.model_project()), active=True))
+
+    def test_model_running_subagent_defers(self):
+        rows = self.model_rows(self.model_project())
+        self.assertIsNone(self.run_gate(rows, background_tasks=[{"task_type": "subagent"}]))
+        self.assertIn("搭建图核对", self.run_gate(rows, background_tasks=[])["reason"])
+
+    def test_model_snapshot_only_does_not_trigger_stale_documents(self):
+        core = self.model_project()
+        snapshot = core.parent / "docs/model/build.deps.json"
+        self.assertIsNone(self.run_gate([human(), edit(snapshot)]))
+        self.assertEqual(self.gate_module().evaluate([str(snapshot)], self.root), [])
+
+    def test_model_drift_keeps_evaluate_contract_and_no_subprocess(self):
+        core = self.model_project()
+        gate = self.gate_module()
+        with mock.patch.object(gate.subprocess, "run") as run:
+            issues = gate.evaluate([str(core)], self.root)
+        self.assertEqual([kind for kind, _, _ in issues], ["stale"])
+        self.assertTrue(all(len(issue) == 3 for issue in issues))
+        run.assert_not_called()
+
+    def test_model_corrupt_snapshot_passes(self):
+        core = self.model_project()
+        (core.parent / "docs/model/build.deps.json").write_text("broken JSON", encoding="utf-8")
+        self.assertIsNone(self.run_gate(self.model_rows(core)))
+
+    def test_model_syntax_error_passes_with_or_without_snapshot(self):
+        core = self.model_project()
+        core.write_text("def broken(:\n", encoding="utf-8")
+        rows = self.model_rows(core)
+        self.assertIsNone(self.run_gate(rows))
+        (core.parent / "docs/model/build.deps.json").unlink()
+        self.assertIsNone(self.run_gate(rows))
+
+    def test_model_process_failures_pass_silently(self):
+        core = self.model_project()
+        gate = self.gate_module()
+        for error in (OSError("cannot start"), subprocess.TimeoutExpired("dep_graph", 20)):
+            with self.subTest(error=type(error).__name__):
+                with mock.patch.object(gate.subprocess, "run", side_effect=error):
+                    self.assertEqual(gate.model_drift([str(core)], self.root), [])
+
+    def test_model_missing_parser_skips_entire_check(self):
+        core = self.model_project()
+        gate = self.gate_module()
+        with mock.patch.object(gate, "DEP_GRAPH", self.root / "absent.py"):
+            with mock.patch.object(gate.subprocess, "run") as run:
+                self.assertEqual(gate.model_drift([str(core)], self.root), [])
+        run.assert_not_called()
+
+    def test_model_project_deduplicated_and_full_stdout_preserved(self):
+        core = self.model_project()
+        gate = self.gate_module()
+        output = "summary\n  + 边 core -> cli\n\n  语言 rust → python\n"
+        result = subprocess.CompletedProcess([], 1, stdout=output, stderr="")
+        with mock.patch.object(gate.subprocess, "run", return_value=result) as run:
+            issues = gate.model_drift([str(core), str(core.parent / "cli.py"), str(core)], self.root)
+        self.assertEqual(issues, [(core.parent, output)])
+        run.assert_called_once()
+        args, kwargs = run.call_args
+        self.assertEqual(args[0], [sys.executable, str(gate.DEP_GRAPH), str(core.parent), "--check-snapshot"])
+        self.assertEqual(kwargs["timeout"], 20)
+        self.assertIn("\n".join("    " + line for line in output.splitlines()), gate.render_model_reason(issues))
+
+    def test_model_build_html_without_page_is_ignored(self):
+        core = self.model_project(diagram="build.html")
+        self.assertIsNone(self.run_gate(self.model_rows(core)))
+
+    def test_model_sibling_layout_is_ignored(self):
+        script = self.write("shared/tool.py", "# 结构: vibe-scripts/standard\n")
+        self.doc("shared/tool.BLUEPRINT.md")
+        cl = self.doc("shared/tool.CHANGELOG.md")
+        self.write("shared/docs/model/build.d2", "a -> b")
+        rows = [human(), edit(script)]
+        set_mtime(cl, script.stat().st_mtime + 5)
+        self.assertIsNone(self.run_gate(rows))
+
+    def test_model_removed_worktree_maps_to_main(self):
+        core = self.model_project()
+        for base in ("tk/.worktrees/gone", "tk/.claude/worktrees/gone"):
+            with self.subTest(base=base):
+                gone = self.root / base / "core.py"
+                out = self.run_gate([human(), edit(gone)])
+                self.assertIn("搭建图核对", out["reason"])
+                self.assertIn(str(core.parent), out["reason"])
+                self.assertNotIn(str(gone.parent), out["reason"])
+
+    def test_model_outside_worktree_moves_are_forwarded(self):
+        core = self.model_project()
+        (core.parent / ".git").mkdir()
+        add = tool("Bash", command=f"cd {core.parent} && git worktree add -b feat/x ../tk-gone HEAD")
+        gone = self.root / "tk-gone/core.py"
+        out = self.run_gate([add, human(), edit(gone)])
+        self.assertIn("搭建图核对", out["reason"])
+        self.assertIn(str(core.parent), out["reason"])
+        self.assertNotIn(str(gone.parent), out["reason"])
+
+    def test_model_rust_and_cargo_changes_trigger_check(self):
+        cargo = self.write("rust/Cargo.toml", '[package]\nname = "demo"\nversion = "0.1.0"\n')
+        self.write("rust/src/lib.rs", "mod a;\nmod b;\n")
+        a = self.write("rust/src/a.rs", "pub fn f() {}\n")
+        self.write("rust/src/b.rs", "pub fn f() {}\n")
+        self.doc("rust/docs/BLUEPRINT.md")
+        cl = self.doc("rust/docs/CHANGELOG.md")
+        self.write("rust/docs/model/build.d2", "a -> b")
+        graph = GATE.parents[1] / "skills/vibe-flow/scripts/dep_graph.py"
+        proc = subprocess.run([sys.executable, str(graph), str(cargo.parent), "--write-snapshot"],
+                              capture_output=True, text=True, encoding="utf-8",
+                              env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        a.write_text("use crate::b;\npub fn f() { b::f(); }\n", encoding="utf-8")
+        for changed in (a, cargo):
+            with self.subTest(changed=changed.name):
+                rows = [human(), edit(changed)]
+                set_mtime(cl, changed.stat().st_mtime + 5)
+                self.assertIn("搭建图核对", self.run_gate(rows)["reason"])
 
 
 if __name__ == "__main__":

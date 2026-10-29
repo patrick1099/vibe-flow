@@ -5,14 +5,15 @@ vibe-flow §8：好档里新增、拆分、合并模块或跨模块重构时，�
 支持：
 - 单 crate 的 Rust 项目：src/ 下的顶层模块；认 use、类型位置和函数体内的 crate:: 全路径调用、
   super::、bin 里的 <crate名>::，#[path] 引入的文件归声明它的模块；#[cfg(test)] 模块不算。
-- Python 项目：ast 解析 import（含函数内的 import），节点按 --depth 截断；tests/、test_*.py 不算。
+- Python 项目：ast 解析 import（含函数内的 import），节点按 --depth 截断；tests/、test_*.py 不算。默认层数：恰好一个顶层包时 2，否则 1；顶层单文件不算包。
 看不到：宏展开、动态导入（importlib、__import__）、经 re-export 转手的间接依赖。
-用法：py -3 dep_graph.py [项目目录] [--against REV] [--depth N] [--d2 OUT.d2]
-退出码：0 正常；1 与 --against 相比出现了新的环（或已有的环吞进了新模块）；2 用法或读取错误。
+用法：py -3 dep_graph.py [项目目录] [--against REV | --write-snapshot [PATH] | --check-snapshot [PATH]] [--depth N] [--d2 OUT.d2]
+退出码：0 正常（check：一致）；1 --against 出现新环或已有环吞进新模块，或 check 不一致；2 快照缺失或损坏、用法或读取错误。
 只用 stdlib。
 """
 import argparse
 import ast
+import json
 import posixpath
 import re
 import subprocess
@@ -196,8 +197,8 @@ def python_graph(files, depth):
         if parts and all(p.isidentifier() for p in parts):
             mods[".".join(parts)] = (rel, text)
     if depth is None:
-        tops = {m.split(".")[0] for m in mods}
-        depth = 2 if len(tops) == 1 and any("." in m for m in mods) else 1
+        tops = {m.split(".")[0] for m in mods if "." in m}
+        depth = 2 if len(tops) == 1 else 1
 
     def internal(name):
         while name:
@@ -309,22 +310,97 @@ def write_d2(path, nodes, edges, sccs, added):
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def snapshot_data(lang, nodes, edges, depth):
+    return {
+        "version": 1,
+        "language": lang,
+        "depth": depth,
+        "nodes": sorted(nodes),
+        "edges": [list(edge) for edge in sorted(edges)],
+    }
+
+
+def read_snapshot(path):
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as e:
+        raise ValueError(f"快照不存在 {path}，请先用 --write-snapshot 写入") from e
+    fields = {"version", "language", "depth", "nodes", "edges"}
+    if not isinstance(data, dict) or not fields <= data.keys():
+        raise ValueError(f"快照缺字段 {path}")
+    if type(data["version"]) is not int or data["version"] != 1:
+        raise ValueError(f"快照版本不是 1：{path}")
+    if (not isinstance(data["language"], str)
+            or (data["depth"] is not None and type(data["depth"]) is not int)
+            or not isinstance(data["nodes"], list)
+            or not all(isinstance(n, str) for n in data["nodes"])
+            or not isinstance(data["edges"], list)
+            or not all(isinstance(e, list) and len(e) == 2
+                       and all(isinstance(n, str) for n in e) for e in data["edges"])):
+        raise ValueError(f"快照字段格式错误 {path}")
+    return data
+
+
+def write_snapshot(path, data):
+    content = (json.dumps(data, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    try:
+        if path.read_bytes() == content:
+            return False
+    except FileNotFoundError:
+        pass
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    return True
+
+
+def check_snapshot(path, old, lang, nodes, edges):
+    added_nodes = set(nodes) - set(old["nodes"])
+    removed_nodes = set(old["nodes"]) - set(nodes)
+    old_edges = {tuple(e) for e in old["edges"]}
+    added_edges = set(edges) - old_edges
+    removed_edges = old_edges - set(edges)
+    if lang == old["language"] and not (added_nodes or removed_nodes or added_edges or removed_edges):
+        print(f"与快照一致 {path}：模块 {len(nodes)}  边 {len(edges)}")
+        return 0
+    print(f"与快照 {path} 不一致：模块 +{len(added_nodes)} -{len(removed_nodes)}  边 +{len(added_edges)} -{len(removed_edges)}")
+    if lang != old["language"]:
+        print(f"  语言 {old['language']} → {lang}")
+    for sign, group in (("+", added_nodes), ("-", removed_nodes)):
+        for node in sorted(group):
+            print(f"  {sign} 模块 {node}")
+    for sign, group in (("+", added_edges), ("-", removed_edges)):
+        for a, b in sorted(group):
+            print(f"  {sign} 边 {a} -> {b}")
+    return 1
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="模块依赖图与环；--against 对比某个提交")
     p.add_argument("root", nargs="?", default=".")
-    p.add_argument("--against", metavar="REV", help="与这个提交的依赖图对比")
-    p.add_argument("--depth", type=int, help="Python 节点按包路径截断的层数（默认：单一顶层包时 2，否则 1）")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--against", metavar="REV", help="与这个提交的依赖图对比")
+    mode.add_argument("--write-snapshot", nargs="?", const="", metavar="PATH", help="写模块依赖快照（默认：docs/model/build.deps.json）")
+    mode.add_argument("--check-snapshot", nargs="?", const="", metavar="PATH", help="比对模块依赖快照（默认：docs/model/build.deps.json）")
+    p.add_argument("--depth", type=int, help="Python 节点按包路径截断的层数（默认层数：恰好一个顶层包时 2，否则 1；顶层单文件不算包）")
     p.add_argument("--d2", metavar="OUT", help="另写一份 D2 图：环里的边红色，相对 --against 新增的边蓝色")
     args = p.parse_args(argv)
     root = Path(args.root).resolve()
+    snapshot_arg = args.check_snapshot if args.check_snapshot is not None else args.write_snapshot
+    snapshot_path = Path(snapshot_arg).resolve() if snapshot_arg else root / "docs/model/build.deps.json"
     try:
-        lang, nodes, edges = analyze(root, None, args.depth)
+        snapshot = read_snapshot(snapshot_path) if args.check_snapshot is not None else None
+        depth = snapshot["depth"] if snapshot is not None and args.depth is None else args.depth
+        lang, nodes, edges = analyze(root, None, depth)
         old = analyze(root, args.against, args.depth) if args.against else None
     except (OSError, ValueError, subprocess.CalledProcessError) as e:
         detail = e.stderr.decode("utf-8", "replace").strip() if isinstance(e, subprocess.CalledProcessError) and e.stderr else e
         sys.stderr.write(f"dep_graph: {detail}\n")
         return 2
     sccs = cycles(nodes, edges)
+    if snapshot is not None:
+        if args.d2:
+            write_d2(args.d2, nodes, edges, sccs, set(edges) - {tuple(e) for e in snapshot["edges"]})
+        return check_snapshot(snapshot_path, snapshot, lang, nodes, edges)
     print(f"语言 {lang}  模块 {len(nodes)}  边 {len(edges)}  环 {len(sccs)}")
     for c in sccs:
         inner = ", ".join(f"{a}→{b}" for a in c for b in c if (a, b) in edges)
@@ -351,6 +427,13 @@ def main(argv=None):
         status = 1 if new_sccs else 0
     if args.d2:
         write_d2(args.d2, nodes, edges, sccs, added)
+    if args.write_snapshot is not None:
+        try:
+            changed = write_snapshot(snapshot_path, snapshot_data(lang, nodes, edges, args.depth))
+        except OSError as e:
+            sys.stderr.write(f"dep_graph: {e}\n")
+            return 2
+        print(f"{'已写快照' if changed else '快照未变'} {snapshot_path}")
     return status
 
 

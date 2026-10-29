@@ -14,7 +14,8 @@ import sys
 import time
 import uuid
 
-from doc_gate import changed_in_repos, changed_since, evaluate, render_reason  # noqa: F401  changed_since 供测试核对共用
+from doc_gate import (changed_in_repos, changed_since, evaluate, model_drift,  # noqa: F401  changed_since 供测试核对共用
+                      render_model_reason, render_reason)
 
 SUCCESS = "Success. Updated the following files:"
 PATCH_HEADERS = ("*** Add File: ", "*** Update File: ", "*** Delete File: ", "*** Move to: ")
@@ -140,9 +141,12 @@ def main():
         paths = take_paths(data)
         if event == "Stop" and not data.get("stop_hook_active"):
             paths += changed_in_repos([cwd or data.get("cwd"), *paths], since)
-            issues = evaluate(paths, os.environ.get("VIBE_FLOW_DOC_GATE_HOME"))
-            if issues:
-                sys.stdout.write(json.dumps({"decision": "block", "reason": render_reason(issues)},
+            stop_at = os.environ.get("VIBE_FLOW_DOC_GATE_HOME")
+            issues = evaluate(paths, stop_at)
+            drift = model_drift(paths, stop_at)
+            if issues or drift:
+                reasons = ([render_reason(issues)] if issues else []) + ([render_model_reason(drift)] if drift else [])
+                sys.stdout.write(json.dumps({"decision": "block", "reason": "\n\n".join(reasons)},
                                             ensure_ascii=False))
     return 0
 

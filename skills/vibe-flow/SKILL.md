@@ -169,6 +169,8 @@ AI 决定并说明：已定架构内的库、模块细分、文件名、内部 A
 
 **依赖图前后对比**（好档里新增、拆分、合并模块或跨模块重构时）：开工前记下当前提交，交付前跑 `scripts/dep_graph.py <项目目录> --against <该提交>`（单 crate Rust、Python）。新出现的环（退出码 1）要么消掉，要么在完成报告里说明理由；新增边数和新环写进报告，要给用户看图时加 `--d2`。它只看内部模块之间的依赖方向和环，不替代已选架构的禁止导入测试；宏、动态导入和 re-export 转手看不到。
 
+**搭建图留底核对**（项目有 `docs/model/build.d2` 或分层片段 `build.page.html` 时）：图旁的模块依赖快照 `docs/model/build.deps.json` 随图一起提交，建图或改图后跑 `scripts/dep_graph.py <项目目录> --write-snapshot`（图比默认层数粗或细时加 `--depth N`，层数存进快照）。收工文档闸拿代码和快照比，对不上就拦一次：对照图判断要不要改，改图或想清楚不用改之后刷新快照，回复里说图哪里变了或为什么不用改。它只比模块之间的依赖，数据流和职责的变化看不见；不拿图上的箭头去对 import。细则见 [references/doc-fork.md](references/doc-fork.md) 第 2 节。
+
 **文档跟着改才算完成**：实施中只按 §4 即时记录；监工另管批次机器区，不整理其他文档。实现者只负责应用脚手架的架构约束段、DESIGN/效果图；需求梳理归 `clarify-needs`。本批验证后、汇报前（微脚本免），或未完要结束会话时，按 [references/doc-fork.md](references/doc-fork.md) 派文档任务、等其结束并核对代码未动；无可用子任务才由执行负责人按 `living-blueprint` 自行处理。监工模式不把文档收尾退给主会话。
 
 文档闸、压缩后读回、代码指纹与最终 HANDOFF 清理细则见 [references/doc-fork.md](references/doc-fork.md)。不触发闸不等于文档合格；不得为过闸写假条目或假回执。

@@ -3,7 +3,8 @@
 ## 已谈定
 
 - 2026-10-29 · 用户 · 批次监工拆成独立 skill `subagent-foreman`，点名才触发（0.30.0 拆出时叫 `supervisor`；0.31.0 按用户「supervisor 不够形象，监管者、子 agent 没体现好」改名，用户从候选里选定 `subagent-foreman`）：起因「是不是根本没触发过，分析一下为什么」——Claude 侧从没执行过 batch_state.py，病根是藏在 vibe-flow §7 后面、清单里看不到、又和宿主「别主动派 agent」冲突。用户选「拆成独立 skill，改成用户点名才触发」。采纳 codex 建议：软闸（两端都可被模型调用，description 只认明确提到监工，单说「派活/多 agent」不进）；vibe-flow 不再默认监工、也不主动推荐；脚本与 vendor 搬进新 skill，role-reading/collaboration/doc-fork 留在 vibe-flow。下方 2026-10-23 首版的分工与交接规则不变，只是入口改成点名。排除：硬手动（只认斜杠命令）；谈定多批计划时提一句；扩到公司固件。
-- 2026-10-29 · 用户（委托按主席推荐试行）· 搭建图与代码的新鲜度核对（未实现）：起因「架构图最好和 commit 绑定，才知道是不是真落后」。搭建图沿用 `docs/model/build.d2` 留底，不新建 ARCHITECTURE.d2。核对挂收工文档闸、不装 pre-commit：dep_graph 在 build.d2 旁存「模块依赖快照」随提交走，代码结构与快照对不上才拦一次；AI 改图或说明不用改后刷新快照，回复里讲图哪里变了；看图页标「已对照／N 处未确认」。不拿图上箭头对 import（图里多是数据流和存储）。只查模块间依赖，数据流/职责变化不报警；不拦未批准的依赖，D2 复议条件不变。下一步：worktree 里给 dep_graph 加存快照/比快照，用 session-sweep 历史回放验收（应只在 10-23 报一次）。推翻条件：依赖没变而职责/数据流变化让图反复落后 → 改为每批复核；常拦但图从不用改 → 撤掉；收工闸看不到的改动让图落后 → 修全局钩子壳后把同一命令挂到提交上。排除：路径 glob 模块表加 import 白名单提交闸；每批强制复核；图全由代码生成。来源：头脑风暴采纳（20261029-常驻架构图）。附带发现：全局 `core.hooksPath` 接力壳使所有仓库自带 pre-commit 静默不执行，未修。
+- 2026-10-29 · 用户 · Python 自动层数治本（0.32.0）：回放发现默认层数下 session-sweep 塌成 2 个节点、一次都不报——自动规则把顶层入口脚本也算成「顶层」。用户要治本，选修规则：只有目录型的包算顶层包，顶层单文件不算（与帮助文本一致，`--against` 同样受益）。修后默认层数回放只在 05c2809（10-23）报一次。排除：首次建快照由 AI 对照图手选 `--depth`（只修快照一处、`--against` 仍漏看包内模块、靠 AI 判对且判错无提醒）。快照里的 `depth` 字段保留，图的粒度与默认不同时显式给。
+- 2026-10-29 · 用户（委托按主席推荐试行）· 搭建图与代码的新鲜度核对（0.32.0 已实现，见下方交付说明）：起因「架构图最好和 commit 绑定，才知道是不是真落后」。搭建图沿用 `docs/model/build.d2` 留底，不新建 ARCHITECTURE.d2。核对挂收工文档闸、不装 pre-commit：dep_graph 在 build.d2 旁存「模块依赖快照」随提交走，代码结构与快照对不上才拦一次；AI 改图或说明不用改后刷新快照，回复里讲图哪里变了；看图页标「已对照／N 处未确认」。不拿图上箭头对 import（图里多是数据流和存储）。只查模块间依赖，数据流/职责变化不报警；不拦未批准的依赖，D2 复议条件不变。下一步：worktree 里给 dep_graph 加存快照/比快照，用 session-sweep 历史回放验收（应只在 10-23 报一次）。推翻条件：依赖没变而职责/数据流变化让图反复落后 → 改为每批复核；常拦但图从不用改 → 撤掉；收工闸看不到的改动让图落后 → 修全局钩子壳后把同一命令挂到提交上。排除：路径 glob 模块表加 import 白名单提交闸；每批强制复核；图全由代码生成。来源：头脑风暴采纳（20261029-常驻架构图）。附带发现：全局 `core.hooksPath` 接力壳使所有仓库自带 pre-commit 静默不执行，未修。
 - 2026-10-28 · 用户 · 防架构随迭代变耦合（0.28.0）：选 B、C——§5 加「替换就删旧入口」，§8 加「修 bug 先复现」（修前失败、修完跑全部测试；0.28.1 补：按外部可见行为写，需求有意变更时改测试并记 CHANGELOG、不悄悄删）和好档跨模块重构前后跑 `dep_graph.py --against` 对比依赖图（新环退出码 1，要消掉或说明理由）。serial-split 的清理（选项 a）不现在做，记进它自己的 HANDOFF，下次加功能时一起改。排除：开工前画定骨架让 AI 照搭；直接拿 cargo-modules 当闸（实测漏全部函数体调用边）；把依赖检查加重成测试闸（不满足 D2 复议条件）。
 - 2026-10-28 · 用户 · Clean 与展示层分开（0.27.0）：起因「MVVM 一般是 GUI 框架自带的，在不带绑定的框架里强制追求 MVVM 是否有必要」。Clean 分层保留为复杂应用重点候选；展示层不再默认 MVVM，按单向数据流（状态 + apply + render），优先框架自带绑定。D1 采纳 Opus：默认说法叫「展示状态」，ViewModel/Presenter 只用来认旧项目里的模块，新代码不用。D2 放轻：依赖检查默认一条禁止导入测试。三个 gpt-6-astra（反方/逐框架/AI 编码）与 Opus 5.5 两轮头脑风暴后定稿。排除：保留 MVVM 套餐；以「框架有没有绑定」作为准入条件；硬性要求自研依赖检查器。
 - 2026-10-28 · 用户 · D2 复议条件（「得记一下，未来好考虑要不要加」）：只有人工发现一次真实越界、而轻量禁止导入测试漏报（含 re-export 或动态导入绕过）时，才评估加回更强的依赖检查，优先复用现有工具；被现有测试拦住不算。同一条件写在 `vibe-apps/references/clean-mvvm.md`「验证要求」第 2 条，HANDOFF 清理时以那里为准。
@@ -27,23 +28,13 @@
 - 2026-10-15 · 用户 · serial-split 保持现状：运行中参数照旧置灰，不加 HEX 行的 ASCII 列。
 - 2026-10-15 · 用户 · 原生两条路分工：ttk 管开发敏捷，Slint 管内存和性能，默认仍 ttk；效果图大量落在 ttk 能力清单第二列时，一两句话说明后果、问用户换不换 Slint，不替他换。
 
-## 下一件：搭建图快照核对（2026-10-29 谈定，未开工）
+## 0.32.0 交付说明 · 2026-10-29：搭建图快照核对
 
-**在做**：让 `docs/model/build.d2` 落后于代码时能被机械发现。结论与边界只认「已谈定」里 2026-10-29「搭建图与代码的新鲜度核对」那条，不重新讨论；背景看 `.ai-room/brainstorm/20261029-常驻架构图/`（`chair.md` 主席纪要，`r1-S*.md` 四席原文，本地不进仓库）。
+已实现：`dep_graph.py --write-snapshot / --check-snapshot`（快照 `docs/model/build.deps.json`，只存模块与边，按内容比）；Python 自动层数改为顶层单文件不算包；收工文档闸 `model_drift()`（Claude、Codex 两端，独立于 `evaluate()`，project-state 的批量探测不受影响）；`model_page.py` 搭建图页的对照标记；`vibe-flow/SKILL.md`、`run-model.md`「留底」、`doc-fork.md` 第 2 节的规则文本。
 
-**下一步**（按顺序）：
-1. 在新 worktree 开分支（个人仓规矩），不在 main 上直接改。
-2. `skills/vibe-flow/scripts/dep_graph.py` 加两个能力：把当前模块节点与边写成快照文件（放 build.d2 旁，文件名自定，JSON 即可）；拿当前代码与快照比对，按内容比、不看 mtime，不一致非零退出并列出增删的模块和边。复用现有解析，单 crate Rust / Python 范围不扩。
-3. 回放验收：在 `C:/Users/huawei/Desktop/MyProjects/my-repos/session-sweep`（共 19 个提交，只读，不改它）从有 build.d2 起逐提交比对，报了就刷新快照。主席称应只在 10-23 那次报一次（主持未核实，以实测为准）；报得多就先分析误报来源再往下做。
-4. 挂收工文档闸：`hooks/doc_gate.py` 与 `hooks/doc_gate_codex.py`。本轮改了代码且项目有 build.d2 时跑比对；不一致拦一次，要求 AI 改图或写明不用改的理由后刷新快照，并在回复里说图哪里变了。
-5. 看图页标「已对照 / N 处未确认」：渲染脚本 `skills/clarify-needs/scripts/model_page.py`。
-6. 改规则文本：`skills/vibe-flow/SKILL.md`「依赖图前后对比」段（约 173 行）、`skills/clarify-needs/references/run-model.md`「留底」节、`skills/vibe-flow/references/doc-fork.md`。
-7. 测试：补 `tests/test_dep_graph.py`、`tests/test_doc_gate.py`（及 codex 版），跑 `py -3 -m unittest discover -s tests -q` 全量。
-8. 交付：`.claude-plugin/plugin.json` 与 `.codex-plugin/plugin.json` 同步升版，README「沿革」补一条，合回 main、推子仓、`hub sync --refresh`；提交身份用本仓配置（patrick1099），不带任何 AI 署名。
+验证：session-sweep 17 个提交回放（只读，`git archive` 到临时目录），默认层数与 `--depth 2` 都只在 05c2809 报一次，内容是新增 `session_sweep.retired` 及两条指向它的边；全量 274 项测试通过；Esafenet 基线 check 无脱密。回放脚本与报告在 worktree `C:/Users/huawei/.codex/worktrees/vibe-flow-build-snapshot/.ai-room/replay/`，不进仓库。
 
-**别碰**：不装 pre-commit；不修全局 `~/.githooks` 接力壳（会让公司仓沉睡的提交检查复活，用户未决定）；不做路径 glob 模块表或 import 白名单；不拿 build.d2 的箭头直接对 import（图里多是数据流和存储）；数据流/职责变化不做检测。
-
-**坑**：本机 Esafenet 下 `.py` 用 bash `cat` 读到的是密文，用 Read 工具或 python 读；改文件用 Claude 的 Edit/Write 工具，不用 PowerShell 落盘。
+未验证：闸在真实会话里还没被触发过；看图页标记没在浏览器里看过观感。「已谈定」里的推翻条件从这里开始观察。别碰的边界不变：不装 pre-commit，不修全局 `~/.githooks` 接力壳，不做 import 白名单，不拿图上箭头对 import。
 
 ## 0.25.0 交付说明 · 2026-10-23
 

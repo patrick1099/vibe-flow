@@ -3,6 +3,8 @@
 - .d2   流程图(靠连线表达先后与分岔),经 d2 渲染成 SVG
 - .html 分层结构图的 HTML 片段(靠嵌套与对齐表达层次),套上 ARCH_CSS 原样嵌入
 
+搭建图页会带代码依赖快照的对照标记。
+
 用法:
     py -3 model_page.py <图.d2|片段.html> --title 标题 [--anchor 真需求] [--layer run|build]
                         [--q "位置::要问的"]... [--out 页面.html] [--open]
@@ -19,6 +21,8 @@
 import argparse
 import base64
 import html
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -141,6 +145,15 @@ ol.qs li::before { content: counter(q); font-weight: 700; color: var(--amber); }
 .clear { padding: 12px 16px; background: var(--green-bg); border: 1px solid var(--green); border-radius: 8px; color: #1b4d2f; }
 footer { margin-top: 32px; font-size: 12px; color: var(--muted); }
 @media (max-width: 640px) { ol.qs li { flex-direction: column; gap: 2px; } }
+.comparison { margin: 16px 0; padding: 12px 16px; min-width: 0; overflow-wrap: anywhere;
+  background: var(--card); color: var(--muted); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.comparison-ok { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+.comparison-pending { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+.comparison span { margin-left: 8px; }
+.comparison details { margin-top: 6px; color: var(--ink); }
+.comparison summary { cursor: pointer; }
+.comparison pre { margin: 8px 0 0; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
 """
 
 
@@ -178,7 +191,53 @@ def read_fragment(path):
     return f'<div class="arch">\n{text}\n</div>'
 
 
-def build_page(title, layer, anchor, figure, flow, questions, source_name):
+def comparison_html(state, label, detail="", differences=()):
+    detail_html = f' <span>{html.escape(detail)}</span>' if detail else ""
+    diff_html = ""
+    if differences:
+        lines = html.escape("\n".join(differences))
+        diff_html = f'\n<details><summary>查看依赖差异</summary><pre>{lines}</pre></details>'
+    return (f'<div class="comparison comparison-{state}">\n'
+            f'<div><strong>{html.escape(label)}</strong>{detail_html}</div>'
+            f'{diff_html}\n</div>\n')
+
+
+def comparison_marker(source):
+    try:
+        source = source.resolve()
+        if (source.stem != "build" or source.suffix not in (".d2", ".html")
+                or source.parent.name != "model" or source.parent.parent.name != "docs"):
+            return ""
+        root = source.parents[2]
+        script = Path(__file__).resolve().parents[2] / "vibe-flow" / "scripts" / "dep_graph.py"
+        result = subprocess.run(
+            [sys.executable, str(script), str(root), "--check-snapshot",
+             str(source.with_name("build.deps.json"))],
+            capture_output=True, text=True, encoding="utf-8", timeout=30,
+            env={**os.environ, "PYTHONUTF8": "1"},
+        )
+        if result.returncode == 0:
+            counts = re.search(r"模块 (\d+)\s+边 (\d+)", result.stdout)
+            if not counts:
+                raise ValueError("无法读取对照结果中的模块和边数")
+            return comparison_html("ok", "已对照代码依赖",
+                                   f"模块 {counts[1]} · 边 {counts[2]}")
+        if result.returncode == 1:
+            differences = [line for line in result.stdout.splitlines()
+                           if line.startswith(("  + ", "  - ", "  语言"))]
+            return comparison_html("pending", f"{len(differences)} 处未确认",
+                                   differences=differences)
+        reason = result.stderr.strip() or f"对照失败（退出码 {result.returncode}）"
+    except subprocess.TimeoutExpired:
+        reason = "对照超时"
+    except Exception as exc:
+        reason = str(exc) or "对照失败"
+    reason = ("还没有模块依赖快照" if "快照不存在" in reason
+              else reason.splitlines()[0][:120])
+    return comparison_html("unchecked", "未对照", reason)
+
+
+def build_page(title, layer, anchor, figure, flow, questions, source_name, comparison=""):
     e = html.escape
     anchor_html = f'<div class="anchor"><b>真需求</b>{e(anchor)}</div>' if anchor else ""
     if questions:
@@ -196,19 +255,20 @@ def build_page(title, layer, anchor, figure, flow, questions, source_name):
                    '<span><i class="sw store"></i>文件 / 数据</span>']
     legend_html = "\n".join(legend)
     stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    css = CSS if comparison else CSS.partition(".comparison {")[0]
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}</title>
-<style>{CSS}{"" if flow else ARCH_CSS}</style>
+<style>{css}{"" if flow else ARCH_CSS}</style>
 </head>
 <body>
 <main>
 <h1>{e(title)}</h1>
 <p class="sub">{e(LAYERS[layer])}</p>
-{anchor_html}
+{comparison}{anchor_html}
 <div class="card">
 <div class="legend">
 {legend_html}
@@ -255,7 +315,8 @@ def main():
         fail(2, f"不认识的源文件类型 {suffix}:只收 .d2(流程)或 .html 片段(分层结构)")
     if out.resolve() == src.resolve():
         fail(2, "输出会覆盖源文件,请用 --out 指定别的路径")
-    page = build_page(a.title, a.layer, a.anchor, figure, flow, parse_questions(a.q), src.name)
+    page = build_page(a.title, a.layer, a.anchor, figure, flow, parse_questions(a.q),
+                      src.name, comparison_marker(src))
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding="utf-8")
     print(out.resolve())
