@@ -1,9 +1,9 @@
 ---
-name: supervisor
-description: "Batch supervisor mode for a personal project: the main session stops implementing and hands an agreed multi-task plan to ONE supervisor sub-agent, which dispatches short worker tasks, handles ordinary failures, verifies and finishes the docs; the main session only gets ≤8-line briefs and real user decisions. Use ONLY when the user explicitly names this mode — 你当监工 / 让子 agent 当监工派活 / 用监工模式做 / 批次监工 / 主会话别自己干、交给监工 / /vibe-flow:supervisor / $supervisor. Do NOT self-invoke for ordinary multi-step work, for a plain 派个子 agent 去做 (that is ai-room), for splitting work into steps, or when the user is discussing or reviewing this skill itself. 公司固件不用。"
+name: subagent-foreman
+description: "Sub-agent foreman (批次监工) mode for a personal project: the main session stops implementing and hands an agreed multi-task plan to ONE foreman sub-agent, which dispatches short worker tasks, handles ordinary failures, verifies and finishes the docs; the main session only gets ≤8-line briefs and real user decisions. Use ONLY when the user explicitly names this mode — 你当监工 / 让子 agent 当监工派活 / 用监工模式做 / 批次监工 / 主会话别自己干、交给监工 / /vibe-flow:subagent-foreman / $subagent-foreman. Do NOT self-invoke for ordinary multi-step work, for a plain 派个子 agent 去做 (that is ai-room), for splitting work into steps, or when the user is discussing or reviewing this skill itself. 公司固件不用。"
 ---
 
-# supervisor：批次监工（只在你点名时用）
+# subagent-foreman：批次监工（只在你点名时用）
 
 ## 什么时候用
 
@@ -17,7 +17,7 @@ description: "Batch supervisor mode for a personal project: the main session sto
 
 | 占位 | 指什么 | 里面用到的 |
 |---|---|---|
-| `<supervisor目录>` | 本 skill 目录 | [references/supervisor.md](references/supervisor.md)（监工执行与状态工具）、`scripts/batch_state.py`、`vendor/` |
+| `<subagent-foreman目录>` | 本 skill 目录 | [references/foreman.md](references/foreman.md)（监工执行与状态工具）、`scripts/batch_state.py`、`vendor/` |
 | `<vibe-flow目录>` | 同插件的 `skills/vibe-flow` | `SKILL.md`（公共闸）、`references/role-reading.md`、`references/collaboration.md`、`references/doc-fork.md` |
 
 ## 主会话：启动与交接
@@ -34,13 +34,13 @@ description: "Batch supervisor mode for a personal project: the main session sto
 
 启动提示（精确替换占位符，不把整个会话复制进去）：
 
-> 作为本批次实施监工，先按 <vibe-flow目录>/references/role-reading.md 的监工清单读取（仅列明的公共节，不通读父入口），再读 <supervisor目录>/references/supervisor.md、<HANDOFF> 的有效约定与批次区、<计划>，工作区 <绝对路径>，批次 <新ID>，上一批 <旧ID或首次>，你的标识 <宿主ID>，状态脚本 <supervisor目录>/scripts/batch_state.py。切批首次先查询旧批状态取得 revision，再保存新批；只有明确首次建批可 --init --expect missing，恢复时 missing 是损坏，禁止重新初始化。只实施本批次，负责派工、失败诊断/重试、集成、验证与文档。一次一个短执行任务；普通失败在本层解决，同一问题最多三次修复尝试，仍失败就记录 blocker、停止依赖任务，可继续独立任务。新技术取舍按 <vibe-flow目录>/references/collaboration.md 咨询；档位为好·重时必读该文件，按其中密度执行关键步骤结果审；跨用户决策边界才上报。只在子任务全结束后保存交接并退出；上行最多八行：批次状态、成果、必要决策、证据/HANDOFF 路径。不得将完整日志、源码或过程摘要上推；不得自行启动接任监工。档位 <省/好·轻/好·重>，架构/路线与范围 <已定结论>，已完成评审 <证据或不适用>。遵守原计划的修改、提交与发布授权。
+> 作为本批次实施监工，先按 <vibe-flow目录>/references/role-reading.md 的监工清单读取（仅列明的公共节，不通读父入口），再读 <subagent-foreman目录>/references/foreman.md、<HANDOFF> 的有效约定与批次区、<计划>，工作区 <绝对路径>，批次 <新ID>，上一批 <旧ID或首次>，你的标识 <宿主ID>，状态脚本 <subagent-foreman目录>/scripts/batch_state.py。切批首次先查询旧批状态取得 revision，再保存新批；只有明确首次建批可 --init --expect missing，恢复时 missing 是损坏，禁止重新初始化。只实施本批次，负责派工、失败诊断/重试、集成、验证与文档。一次一个短执行任务；普通失败在本层解决，同一问题最多三次修复尝试，仍失败就记录 blocker、停止依赖任务，可继续独立任务。新技术取舍按 <vibe-flow目录>/references/collaboration.md 咨询；档位为好·重时必读该文件，按其中密度执行关键步骤结果审；跨用户决策边界才上报。只在子任务全结束后保存交接并退出；上行最多八行：批次状态、成果、必要决策、证据/HANDOFF 路径。不得将完整日志、源码或过程摘要上推；不得自行启动接任监工。档位 <省/好·轻/好·重>，架构/路线与范围 <已定结论>，已完成评审 <证据或不适用>。遵守原计划的修改、提交与发布授权。
 
 ## 主会话看状态
 
 ```text
-python <supervisor目录>/scripts/batch_state.py status --handoff <HANDOFF> --workspace <工作区> --batch <ID> --json
-python <supervisor目录>/scripts/batch_state.py check --handoff <HANDOFF> --workspace <工作区> --batch <ID> --ready --json
+python <subagent-foreman目录>/scripts/batch_state.py status --handoff <HANDOFF> --workspace <工作区> --batch <ID> --json
+python <subagent-foreman目录>/scripts/batch_state.py check --handoff <HANDOFF> --workspace <工作区> --batch <ID> --ready --json
 ```
 
-`status` 只给计数、有限证据路径和下一步；`check --ready` 只检查记录，**不能查询、停止或撤销宿主 agent**。保存命令、记录格式与状态规则见 [references/supervisor.md](references/supervisor.md)，主会话不需要读它。
+`status` 只给计数、有限证据路径和下一步；`check --ready` 只检查记录，**不能查询、停止或撤销宿主 agent**。保存命令、记录格式与状态规则见 [references/foreman.md](references/foreman.md)，主会话不需要读它。

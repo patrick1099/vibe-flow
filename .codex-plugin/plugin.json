@@ -1,6 +1,6 @@
 {
   "name": "vibe-flow",
-  "version": "0.30.0",
+  "version": "0.31.0",
   "description": "轻量 vibe-coding 工作流、点名才用的批次监工与文档闸：小事要省，大事要好。",
   "skills": "./skills/",
   "hooks": "./hooks/codex.json"

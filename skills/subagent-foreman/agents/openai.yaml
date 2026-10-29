@@ -1,5 +1,5 @@
 interface:
-  display_name: "Supervisor"
+  display_name: "Subagent Foreman"
   short_description: "批次监工：主会话不实施，交给一个监工子 agent 派工、排错、验证与收尾（只在你点名时用）"
 policy:
   allow_implicit_invocation: true

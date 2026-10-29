@@ -78,7 +78,7 @@
 | `cut-scope` | 回头剪枝：冷眼核对真实需求 vs 已膨胀的设计 | 手动，迭代多轮后 | 只读，只给方向 |
 | `scan-field` | 对外扫同款两头：开工前查市面有没有 / 完工后产原创度对比 | 手动，或由 vibe-flow 路由 | 只产结论 |
 | `brainstorm` | 多 agent 头脑风暴：3 个 GPT 席 + 1 个 Opus 席盲出方案，新开的 Opus 主席看匿名方案收口，你拍板 | **只能手动**（两端都锁死，AI 不自触发） | 只在 `.ai-room/brainstorm/` 留讨论记录 |
-| `supervisor` | 批次监工：主会话不实施，把已谈定的多任务计划交给一个监工子 agent 派工、排错、验证和文档收尾，主会话只收短简报 | **只在你点名时**（「你当监工」「交给监工」「用监工模式」），AI 不自触发、vibe-flow 不推荐 | 监工按计划改；批次状态写 HANDOFF 机器区 |
+| `subagent-foreman` | 批次监工：主会话不实施，把已谈定的多任务计划交给一个监工子 agent 派工、排错、验证和文档收尾，主会话只收短简报 | **只在你点名时**（「你当监工」「交给监工」「用监工模式」），AI 不自触发、vibe-flow 不推荐 | 监工按计划改；批次状态写 HANDOFF 机器区 |
 
 应用先由 `vibe-apps` 选路线，再只加载选中的那个分支。新建本地工具、上位机默认原生 Python + ttkbootstrap；
 要浏览器访问或网站交付才走 Web（FastAPI，桌面壳再加 pywebview）。明确选纯 Rust 时走原生 Rust，界面固定用 Slint。
@@ -95,8 +95,8 @@ DESIGN.md 里有框架还原不了的写法，它直接报错指出哪一行，�
 误伤了说一句「这个随便做一下」就跳过。`cut-scope` / `scan-field` 两个回头类 skill 是约定式手动。
 `brainstorm` 是硬手动：Claude Code 侧 `disable-model-invocation`，Codex 侧 `allow_implicit_invocation: false`，
 只有你打 `/vibe-flow:brainstorm`（Codex 里 `$brainstorm`）才跑。
-`supervisor` 是软闸手动：两端都留着自动调用，好让「你当监工」这类自然语言能命中；description 只认明确点名监工模式，
-单说「派活」「派个子 agent」「多 agent 分工」不进（一次性委派走 ai-room）。也可以直接打 `/vibe-flow:supervisor`（Codex 里 `$supervisor`）。
+`subagent-foreman` 是软闸手动：两端都留着自动调用，好让「你当监工」这类自然语言能命中；description 只认明确点名监工模式，
+单说「派活」「派个子 agent」「多 agent 分工」不进（一次性委派走 ai-room）。也可以直接打 `/vibe-flow:subagent-foreman`（Codex 里 `$subagent-foreman`）。
 
 要做的东西有流程时，`clarify-needs` 会把「它跑起来是什么样」画成图：用 [D2](https://d2lang.com)
 写，`skills/clarify-needs/scripts/model_page.py` 渲染成本地网页自动打开，猜的地方标黄色虚线
@@ -207,9 +207,9 @@ fork 回来后怎么确认它没碰代码：`skills/vibe-flow/scripts/code_state
 [真实回执及采集记录](tests/fixtures/)来自隔离环境中的原生补丁工具，包含 `Exit code / Wall time / Output`
 前缀；解析器在整段输出中定位成功行，并排除非零退出码。
 
-## 批次监工（`supervisor`，点名才用）
+## 批次监工（`subagent-foreman`，点名才用）
 
-你说「你当监工」「交给监工」「用监工模式」时，`supervisor` 接手：先确认宿主能力，再把一个可独立验收的批次整体交给监工。
+你说「你当监工」「交给监工」「用监工模式」时，`subagent-foreman` 接手：先确认宿主能力，再把一个可独立验收的批次整体交给监工。
 没点名时，已谈定的多任务计划照常由主会话直接实施，vibe-flow 也不主动推荐这个模式。主会话负责计划、必要的用户决策、
 接收短简报和启动下一任监工；监工负责派工、日常排错与重试、集成、产出复核、验证和文档收尾；执行者只处理具体任务。
 普通失败在监工层解决，深入排错另派短任务。只有一两步的短活，它会提一句直接做更省，然后照监工模式继续，不停下等你再确认。只用于个人项目。
@@ -218,7 +218,7 @@ fork 回来后怎么确认它没碰代码：`skills/vibe-flow/scripts/code_state
 执行、验证和文档任务，保存交接，再由主会话核对宿主实际运行状态及记录。新监工不继承完整聊天，按计划、有效约定、
 HANDOFF 和实际工作区恢复。主会话只收最多八行的状态、成果、必要决策和证据路径，不逐项接回日志、代码与复核。
 
-批次状态复用 HANDOFF 的机器区，用 [batch_state.py](skills/supervisor/scripts/batch_state.py) 的 `save` 保存、
+批次状态复用 HANDOFF 的机器区，用 [batch_state.py](skills/subagent-foreman/scripts/batch_state.py) 的 `save` 保存、
 `status` 读取短摘要、`check --ready` 检查交接记录。保存会检查内容版本并原子替换，保留区外文字；损坏记录、项目不符或重复标识
 会以非零退出拒绝，切换批次须先检查旧批已可交接。记录中仍有运行任务时，交接检查不会通过。实现完成与验证通过分别记录；
 证据文件存在只满足机械条件，正确性仍须实际验收。
@@ -226,7 +226,7 @@ HANDOFF 和实际工作区恢复。主会话只收最多八行的状态、成果
 切换批次先用旧批 ID 查询 revision，再保存新批记录。文档任务结束前不交接，普通文档任务保留机器区；
 最终一批 ready 且宿主确认全部停止后，才由主会话派独立文档任务迁移有效约定、清理交接。HANDOFF 其他文字只留恢复入口。
 
-主会话的启动提示与交接见 [supervisor 入口](skills/supervisor/SKILL.md)，监工的执行、记录格式及命令见 [监工细则](skills/supervisor/references/supervisor.md)。
+主会话的启动提示与交接见 [subagent-foreman 入口](skills/subagent-foreman/SKILL.md)，监工的执行、记录格式及命令见 [监工细则](skills/subagent-foreman/references/foreman.md)。
 工具只提供工作流和机械记录闸，不能查询或停止宿主 agent，也不能阻止绕过脚本直接调用工具。每个平台须实际探测嵌套派工和结果路由；
 不支持时明确降为两层短汇报，或使用已验证的独立会话方式。
 
@@ -240,11 +240,11 @@ Claude / opencode 的生命周期尚未实测（Claude Code 官方文档已说�
 长期上下文与 token 收益、与两层短汇报的对照仍未量化。
 首版不做上下文百分比自动重启、在途迁移或跨父接管。
 
-借鉴的 GSD 与 Gas Town 原文保存在 [vendor](skills/supervisor/vendor/)，来源和锁定版本见该目录的 `upstream.json`、
+借鉴的 GSD 与 Gas Town 原文保存在 [vendor](skills/subagent-foreman/vendor/)，来源和锁定版本见该目录的 `upstream.json`、
 `upstream.lock.json` 及许可证。更新复用现有同步器：
 
 ```text
-python skills/vibe-apps/scripts/sync_upstream.py --vendor-dir skills/supervisor/vendor
+python skills/vibe-apps/scripts/sync_upstream.py --vendor-dir skills/subagent-foreman/vendor
 ```
 
 加 `--check` 只比对；同步器入口不变，上游方法按需从原文读取。
@@ -300,11 +300,16 @@ CLAUDE.md。Codex 原生读 AGENTS.md。
 skill 之间不自动串联，自动钩子只用于上面那道文档闸和压缩后读回。本工作流不依赖正式 spec/plan、TDD、
 并行子代理这类重流程框架，单独装就能走完全程。
 
-插件同时支持 Claude Code 和 Codex，入口 skill、`brainstorm` 和 `supervisor` 带 `agents/openai.yaml`（`brainstorm` 用它关掉 Codex 的自动调用）。两端的文档闸分别接入
+插件同时支持 Claude Code 和 Codex，入口 skill、`brainstorm` 和 `subagent-foreman` 带 `agents/openai.yaml`（`brainstorm` 用它关掉 Codex 的自动调用）。两端的文档闸分别接入
 各自的 hook 事件，共用一份判定逻辑；Codex 需使用支持插件钩子的版本并完成钩子信任，`vibe-flow` §8
 说明被拦后如何判断。
 
 ## 沿革
+
+0.31.0（2026-10-29）`supervisor` 改名 `subagent-foreman`。用户说「supervisor 这个名字不够形象。监管者，子 agent，没体现好」：
+名字既要看出它是个子 agent，又要看出它干的是工头的活（派活、自己不搬砖、主会话只听汇报）。候选还有 `foreman`（短，但看不出是子 agent）、
+`contractor`（总包，比喻贴切但不如工头直白）、`subagent-lead`（直白但没画面），用户选了 `subagent-foreman`。只改名：目录、斜杠命令、
+细则文件名（`references/foreman.md`）和占位 `<subagent-foreman目录>`；批次记录里的 `supervisor` 字段与 `batch_state.py` 不动，已有 HANDOFF 照常可读。
 
 0.30.0（2026-10-29）批次监工拆成独立 skill `supervisor`，只在你点名时用。起因是用户问「是不是根本没触发过，分析一下为什么」。
 翻 Claude 与 Codex 全部历史会话：Claude 侧 `batch_state.py` 实际执行 0 次，Codex 侧只有 10-19~10-23 的隔离实验和插件仓自身。

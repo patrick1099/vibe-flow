@@ -52,4 +52,4 @@ save 用内容版本检查及原子替换保存到 HANDOFF 机器区，保留区
 上游原文按需读，正文不复制上游流程：
 - [GSD manager](../vendor/gsd/manager.md)、[context budget](../vendor/gsd/context-budget.md)。
 - [Gas Town Witness](../vendor/gastown/witness.md)、[handoff 实现](../vendor/gastown/handoff.go)。
-- 来源、commit、哈希与许可证在 `../vendor/upstream.json`、`../vendor/upstream.lock.json` 及各目录 LICENSE。用已有同步器更新：`python <插件>/skills/vibe-apps/scripts/sync_upstream.py --vendor-dir <supervisor目录>/vendor`；加 `--check` 仅比对。
+- 来源、commit、哈希与许可证在 `../vendor/upstream.json`、`../vendor/upstream.lock.json` 及各目录 LICENSE。用已有同步器更新：`python <插件>/skills/vibe-apps/scripts/sync_upstream.py --vendor-dir <subagent-foreman目录>/vendor`；加 `--check` 仅比对。
