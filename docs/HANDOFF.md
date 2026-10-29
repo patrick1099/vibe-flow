@@ -26,6 +26,24 @@
 - 2026-10-15 · 用户 · serial-split 保持现状：运行中参数照旧置灰，不加 HEX 行的 ASCII 列。
 - 2026-10-15 · 用户 · 原生两条路分工：ttk 管开发敏捷，Slint 管内存和性能，默认仍 ttk；效果图大量落在 ttk 能力清单第二列时，一两句话说明后果、问用户换不换 Slint，不替他换。
 
+## 下一件：搭建图快照核对（2026-10-29 谈定，未开工）
+
+**在做**：让 `docs/model/build.d2` 落后于代码时能被机械发现。结论与边界只认「已谈定」首条，不重新讨论；背景看 `.ai-room/brainstorm/20261029-常驻架构图/`（`chair.md` 主席纪要，`r1-S*.md` 四席原文，本地不进仓库）。
+
+**下一步**（按顺序）：
+1. 在新 worktree 开分支（个人仓规矩），不在 main 上直接改。
+2. `skills/vibe-flow/scripts/dep_graph.py` 加两个能力：把当前模块节点与边写成快照文件（放 build.d2 旁，文件名自定，JSON 即可）；拿当前代码与快照比对，按内容比、不看 mtime，不一致非零退出并列出增删的模块和边。复用现有解析，单 crate Rust / Python 范围不扩。
+3. 回放验收：在 `C:/Users/huawei/Desktop/MyProjects/my-repos/session-sweep`（共 19 个提交，只读，不改它）从有 build.d2 起逐提交比对，报了就刷新快照。主席称应只在 10-23 那次报一次（主持未核实，以实测为准）；报得多就先分析误报来源再往下做。
+4. 挂收工文档闸：`hooks/doc_gate.py` 与 `hooks/doc_gate_codex.py`。本轮改了代码且项目有 build.d2 时跑比对；不一致拦一次，要求 AI 改图或写明不用改的理由后刷新快照，并在回复里说图哪里变了。
+5. 看图页标「已对照 / N 处未确认」：渲染脚本 `skills/clarify-needs/scripts/model_page.py`。
+6. 改规则文本：`skills/vibe-flow/SKILL.md`「依赖图前后对比」段（约 173 行）、`skills/clarify-needs/references/run-model.md`「留底」节、`skills/vibe-flow/references/doc-fork.md`。
+7. 测试：补 `tests/test_dep_graph.py`、`tests/test_doc_gate.py`（及 codex 版），跑 `py -3 -m unittest discover -s tests -q` 全量。
+8. 交付：`.claude-plugin/plugin.json` 与 `.codex-plugin/plugin.json` 同步升版，README「沿革」补一条，合回 main、推子仓、`hub sync --refresh`；提交身份用本仓配置（patrick1099），不带任何 AI 署名。
+
+**别碰**：不装 pre-commit；不修全局 `~/.githooks` 接力壳（会让公司仓沉睡的提交检查复活，用户未决定）；不做路径 glob 模块表或 import 白名单；不拿 build.d2 的箭头直接对 import（图里多是数据流和存储）；数据流/职责变化不做检测。
+
+**坑**：本机 Esafenet 下 `.py` 用 bash `cat` 读到的是密文，用 Read 工具或 python 读；改文件用 Claude 的 Edit/Write 工具，不用 PowerShell 落盘。
+
 ## 0.25.0 交付说明 · 2026-10-23
 
 批次监工工作流、HANDOFF 状态工具及 GSD / Gas Town 原文同步入口已实现，使用说明见 README「已确定计划的批次监工」及
