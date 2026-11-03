@@ -351,12 +351,15 @@ class CodexDocGateTest(unittest.TestCase):
         other = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
         self.assertEqual((manifest["name"], manifest["version"]), (other["name"], other["version"]))
         hooks = json.loads((ROOT / manifest["hooks"]).read_text(encoding="utf-8"))["hooks"]
-        self.assertEqual(set(hooks), {"UserPromptSubmit", "PostToolUse", "Stop", "Interrupt"})
-        self.assertEqual(hooks["PostToolUse"][0]["matcher"], "^apply_patch$")
+        self.assertEqual(set(hooks), {"UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "Interrupt",
+                                      "SessionStart", "SessionEnd"})
+        self.assertIn("Bash", hooks["PostToolUse"][0]["matcher"])
+        self.assertIn("apply_patch", hooks["PostToolUse"][0]["matcher"])
+        self.assertEqual(hooks["SessionStart"][0]["matcher"], "compact")
         for groups in hooks.values():
             handler = groups[0]["hooks"][0]
-            self.assertEqual(handler["commandWindows"], 'py -3 "${PLUGIN_ROOT}/hooks/doc_gate_codex.py"')
-            self.assertIn('"${PLUGIN_ROOT}/hooks/doc_gate_codex.py"', handler["command"])
+            self.assertTrue(handler["commandWindows"].startswith('py -3 "${PLUGIN_ROOT}/hooks/'))
+            self.assertTrue(handler["command"].startswith('python3 "${PLUGIN_ROOT}/hooks/'))
         claude = json.loads((ROOT / "hooks/hooks.json").read_text(encoding="utf-8"))
         self.assertEqual(set(claude["hooks"]), {"Stop", "SessionStart"})
         self.assertIn("/hooks/doc_gate.py", claude["hooks"]["Stop"][0]["hooks"][0]["command"])
@@ -460,6 +463,65 @@ class CodexDocGateTest(unittest.TestCase):
         self.model_change()
         self.assertIsNone(self.run_gate(self.event("Interrupt")))
         self.assertIsNone(self.stop())
+
+
+    def cross_repo(self):
+        core = self.project(name="other repo")
+        repo = core.parent.parent
+        git = ["git", "-C", str(repo), "-c", "user.name=test", "-c", "user.email=test@example.invalid"]
+        for args in (["init", "-q"], ["add", "."], ["commit", "-q", "-m", "fixture"]):
+            subprocess.run(git + args, check=True, capture_output=True)
+        return core
+
+    def shell_before(self, command, **fields):
+        data = self.event("PreToolUse", tool_name="Bash", tool_use_id="shell-1",
+                          tool_input={"command": command})
+        data.update(fields)
+        self.assertIsNone(self.run_gate(data))
+
+    def test_cross_repo_shell_write_is_found(self):
+        core = self.cross_repo()
+        self.prompt()
+        self.shell_before(f'python -c "open(r\'{core}\', \'w\').write(\'changed\')"')
+        core.write_text("changed\n", encoding="utf-8")
+        out = self.stop()
+        self.assertIn(str(core.parent.parent), out["reason"])
+        self.assertIsNone(self.stop())
+
+    def test_cross_repo_read_only_command_does_not_block(self):
+        core = self.cross_repo()
+        self.prompt()
+        self.shell_before(f'Get-Content "{core}"')
+        self.assertIsNone(self.stop())
+
+    def test_cross_repo_old_dirty_file_does_not_block(self):
+        core = self.cross_repo()
+        core.write_text("old dirty\n", encoding="utf-8")
+        os.utime(core, (self.long_ago, self.long_ago))
+        self.prompt()
+        self.shell_before(f'Get-Content "{core}"')
+        self.assertIsNone(self.stop())
+
+    def test_partial_shell_failure_still_checks_actual_changes(self):
+        core = self.cross_repo()
+        self.prompt()
+        self.shell_before(f'python "{core}"')
+        core.write_text("changed before failure\n", encoding="utf-8")
+        self.assertIsNotNone(self.stop())
+
+    def test_native_shell_event_cwd_discovers_other_repository(self):
+        core = self.cross_repo()
+        self.prompt()
+        self.shell_before('python relative_writer.py', cwd=str(core.parent.parent))
+        core.write_text("changed\n", encoding="utf-8")
+        self.assertIsNotNone(self.stop())
+
+    def test_interrupt_removes_shell_candidates(self):
+        core = self.cross_repo()
+        self.prompt()
+        self.shell_before(f'Get-Content "{core}"')
+        self.run_gate(self.event("Interrupt"))
+        self.assertEqual([p for p in self.state.rglob("*") if p.is_file()], [])
 
 
 if __name__ == "__main__":

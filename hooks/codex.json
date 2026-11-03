@@ -1,5 +1,5 @@
 {
-  "description": "Record the turn start and successful patches, then ask once per turn whether vibe documentation has caught up.",
+  "description": "Record native tool paths, check changed repositories at Stop, and restore agreed context after compaction.",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -15,13 +15,19 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^apply_patch$",
+        "matcher": "^(apply_patch|Bash|PowerShell|exec_command|shell_command|shell)$",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
             "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
+            "timeout": 10
           }
         ]
       }
@@ -45,6 +51,44 @@
             "type": "command",
             "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
             "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|PowerShell|exec_command|shell_command|shell)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/doc_gate_codex.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/hooks/compact_anchor_codex.py\"",
             "timeout": 3
           }
         ]

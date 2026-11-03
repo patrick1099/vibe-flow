@@ -30,7 +30,7 @@ from pathlib import Path
 _HERE = str(Path(__file__).resolve().parent)
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
-from locate import read_rows, touched, worktree_moves  # noqa: E402
+from locate import moved, read_rows, touched, worktree_moves  # noqa: E402
 
 LABEL = re.compile(r"^\*\*[^*]+\*\*")
 HEADING = re.compile(r"^(#{1,6})\s")
@@ -187,17 +187,12 @@ def render(projects, listed=()):
     return "\n".join(lines)
 
 
-def main():
-    data = json.loads(sys.stdin.read() or "{}")
-    if data.get("source") != "compact":
-        return 0
+def restore_context(data, rows, events=(), moves=None):
     cwd = data.get("cwd")
     if cwd and not os.path.isdir(cwd):
         cwd = None
-    transcript = data.get("transcript_path")
-    rows = read_rows(transcript) if transcript and os.path.isfile(transcript) else []
-    moves = worktree_moves(rows, cwd)
-    events = touched(rows, moves=moves, cwd=cwd)
+    moves = {**worktree_moves(rows, cwd), **(moves or {})}
+    events = touched(rows, moves=moves, cwd=cwd) + [(kind, moved(path, moves) or path) for kind, path in events]
     opened = [str(m) for m in moves.values()] + [wt for wt in moves if os.path.isdir(wt)]
     projects, listed = locate_projects(events, cwd, os.environ.get("VIBE_FLOW_DOC_GATE_HOME"), opened)
     if not projects and not listed:
@@ -206,6 +201,15 @@ def main():
                                                         "additionalContext": render(projects, listed)}},
                                 ensure_ascii=False))
     return 0
+
+
+def main():
+    data = json.loads(sys.stdin.read() or "{}")
+    if data.get("source") != "compact":
+        return 0
+    transcript = data.get("transcript_path")
+    rows = read_rows(transcript) if transcript and os.path.isfile(transcript) else []
+    return restore_context(data, rows)
 
 
 if __name__ == "__main__":

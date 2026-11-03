@@ -1,7 +1,7 @@
 """Codex 文档闸：UserPromptSubmit 记本轮开始时刻，PostToolUse 收集成功补丁，Stop 复用 doc_gate 判定。
 
 本轮改过的文件 = 成功的 apply_patch ＋ 本轮开始时的 cwd 和补丁所涉路径各自所在 git 仓库里，本轮开始后改过、暂存或
-删掉的文件（经 shell / Python 落盘的也算）。shell 命令里写出的路径这一侧还没接（PostToolUse 只挂了 apply_patch）。
+删掉的文件（经 shell / Python 落盘的也算）。原生 shell 输入里的路径只补充候选仓库，仍以实际 git 变动为准。
 状态只存文件路径和开始时刻，按 session / turn / tool_use_id 隔离；不解析不稳定的 transcript。
 内部错误退出 1、提示后放行，与原入口一致。Windows 用 py -3 调用。
 """
@@ -13,6 +13,8 @@ from pathlib import Path
 import sys
 import time
 import uuid
+
+from locate import native_shell_paths
 
 from doc_gate import (changed_in_repos, changed_since, evaluate, model_drift,  # noqa: F401  changed_since 供测试核对共用
                       render_model_reason, render_reason)
@@ -127,20 +129,42 @@ def take_paths(data):
     return sorted(paths)
 
 
+def record_candidates(data):
+    paths = native_shell_paths(data)
+    if paths:
+        _atomic_write(turn_dir(data) / (_digest(data.get("tool_use_id")) + ".candidates"),
+                      json.dumps(paths, ensure_ascii=False))
+
+
+def take_candidates(data):
+    out = []
+    for record in turn_dir(data).glob("*.candidates"):
+        values = json.loads(record.read_text(encoding="utf-8"))
+        if not isinstance(values, list) or not all(isinstance(p, str) for p in values):
+            raise ValueError("invalid doc-gate candidate record")
+        out += values
+        record.unlink()
+    return list(dict.fromkeys(out))
+
+
 def main():
     data = json.loads(sys.stdin.read() or "{}")
     event = data.get("hook_event_name")
     if event == "UserPromptSubmit":
         record_start(data)
+    elif event == "PreToolUse":
+        record_candidates(data)
     elif event == "PostToolUse":
+        record_candidates(data)
         paths = successful_paths(data)
         if paths:
             record_paths(data, paths)
     elif event in {"Stop", "Interrupt"}:
         since, cwd = take_start(data)
+        candidates = take_candidates(data)
         paths = take_paths(data)
         if event == "Stop" and not data.get("stop_hook_active"):
-            paths += changed_in_repos([cwd or data.get("cwd"), *paths], since)
+            paths += changed_in_repos([cwd or data.get("cwd"), *paths, *candidates], since)
             stop_at = os.environ.get("VIBE_FLOW_DOC_GATE_HOME")
             issues = evaluate(paths, stop_at)
             drift = model_drift(paths, stop_at)

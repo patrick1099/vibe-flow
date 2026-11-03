@@ -161,15 +161,16 @@ AI 平台（Claude Code、Codex……）是一条特殊的轴：用到 hooks、�
 你指出"我说过的被漏了"时，它按全部有效约定整体修正，不只改最新一句，也不让你把说清的再点一遍头。
 收工时 fork 把这一区分流进 NEEDS / BLUEPRINT / CHANGELOG。细则见入口 `vibe-flow` §4。
 
-Claude Code 上有个兜底：对话压缩后（手动、自动都算），`hooks/compact_anchor.py` 从当前目录往上找带「已谈定」区的
-HANDOFF，把原文注入给 AI，并提示去读 NEEDS.md 的当前需求区（只有 NEEDS 的项目也提醒）；同一目录几个脚本各有
-HANDOFF 时标明每份管哪个脚本；太长就只列路径、要求读完，不截断。它不拦压缩：
-HANDOFF 有没有改过判断不了该记的有没有漏记，拦了反而要你来提醒 AI。Codex 侧这一版没接。
+Claude Code 和 Codex 都会在对话压缩后读回「已谈定」。两端共用 `hooks/compact_anchor.py` 的项目选择和渲染：
+把原文注入给 AI，并提示去读 NEEDS.md 的当前需求区；同一目录几个脚本各有 HANDOFF 时标明各自范围，太长就列路径、
+要求完整读取。Claude 从会话记录找路径；Codex 由 `hooks/compact_anchor_codex.py` 记录原生工具事件中的路径和 worktree
+关系，在 `SessionStart(source=compact)` 时恢复。只在 shell 命令里提到的项目仍只列路径，不自动把它当作当前任务。
+它不拦压缩，也不能判断 HANDOFF 是否漏记了约定。
 
 这一条有闸，Claude Code 和 Codex 都能用。Claude Code 的 Stop hook（`hooks/doc_gate.py`）从
 本轮记录里找成功的 Write / Edit；Codex 入口（`hooks/doc_gate_codex.py`）在每轮开始时记下时刻，用
-PostToolUse 收集本轮成功的 `apply_patch` 文件，在 Stop 时检查。两边还会扫一遍当前 git 仓库里本轮开始后
-改过的文件，所以经 shell / Python 落盘的改动也算。两边共用 `doc_gate.py` 的项目识别、文档位置判定和提醒：
+PostToolUse 收集本轮成功的 `apply_patch` 文件，PreToolUse 收集 shell 中明确出现的候选仓库，在 Stop 时检查。
+两边会扫描候选 git 仓库里本轮开始后改过的文件，所以经 shell / Python 落盘的改动也算。两边共用 `doc_gate.py` 的项目识别、文档位置判定和提醒：
 缺文档、或两份文档都早于这批代码的最后一次修改时只拦一次，提示去派 fork；AI 判断这批不用记时，跑提示里
 给出的回执命令（`doc_gate.py receipt --blueprint <路径> --reason "<一句话>"`）写一条回执，之后同一状态不再提醒——
 后台任务完成把 AI 唤醒、本轮再结束一次，也不会把同一批改动重拦一遍。
@@ -196,10 +197,11 @@ hooks 功能被关闭或管理员禁用插件钩子时不会执行。当前在�
 机制和分发规则见 [Codex Hooks](https://learn.chatgpt.com/docs/hooks) 与
 [插件钩子文档](https://developers.openai.com/plugins/build/plugins#bundled-mcp-servers-and-lifecycle-hooks)。
 
-Codex 只在插件数据目录暂存本轮开始时刻和文件路径，按会话、回合和工具调用隔离，Stop 或 Interrupt 后
-清理本轮记录；不读取会话日志。用户原有的 git 改动不算成本轮修改：git 扫描只收修改时间晚于本轮开始的
-文件，未跟踪的新文件只收代码类后缀，跑工具产生的数据、日志不算。边界：别的 git 仓库里经 shell / Python
-落盘的改动看不到；Codex 也不收集其他 MCP 写文件工具；钩子装上之前就已开始的那一轮没有开始时刻，
+Codex 在插件数据目录暂存本轮开始时刻、路径与候选仓库，按会话、回合和工具调用隔离，Stop 或 Interrupt 后
+清理本轮记录；压缩恢复的路径与 worktree 关系按会话保留到 SessionEnd，不保存命令正文，也不依赖会话日志格式。用户原有的 git 改动不算成本轮修改：git 扫描只收修改时间晚于本轮开始的
+文件，未跟踪的新文件只收代码类后缀，跑工具产生的数据、日志不算。边界：命令未暴露目标路径的动态写入、其他
+MCP 写文件工具仍不可见；当前宿主把 exec_command 规范化为 Bash 时不传 workdir，仅相对路径可能找错候选仓库。
+钩子装上之前就已开始的那一轮没有开始时刻，
 不做 git 扫描。删掉的文件按所在目录的修改时间算，所以本轮之前删掉、还没提交的文件，若本轮同一目录
 又有文件增删，会被多算一次（多拦一次，不会漏拦）；要根治得在每条消息提交时跑 git 记基线，每条消息都
 变慢，没做。本闸只在主会话 Stop 检查。闸内部出错时提示错误并放行。
@@ -309,6 +311,11 @@ skill 之间不自动串联，自动钩子只用于上面那道文档闸和压�
 说明被拦后如何判断。
 
 ## 沿革
+
+0.33.0（2026-11-03）补齐压缩恢复与跨仓变动检查。压缩后的约定读回增加 Codex 原生事件适配，
+继续共用项目归属和渲染逻辑；shell 只记录候选位置，文档闸根据 git 实际变动判定。失败命令已发生的部分写入
+也会被检查，未变动的只读候选不触发。保留一次提醒、文档回执和搭建图快照语义。
+宿主验证与仍存在的覆盖边界见 [hooks 验证记录](docs/hooks-validation.md)。
 
 0.32.0（2026-10-29）搭建图快照核对。起因是用户说「架构图最好和 commit 绑定，才知道是不是真落后」。
 `dep_graph.py` 新增 `--write-snapshot` / `--check-snapshot`：把模块和模块间依赖存成 `docs/model/build.deps.json`，和图一起提交；

@@ -29,6 +29,7 @@ from pathlib import Path
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 READ_TOOLS = {"Read", "Grep", "Glob"}
 SHELL_TOOLS = {"Bash", "PowerShell"}
+CODEX_SHELL_TOOLS = SHELL_TOOLS | {"exec_command", "shell_command", "shell"}
 # Windows 盘符路径、Git Bash 的 /c/ 路径、~/ 开头的家目录路径；遇到空白、引号和 shell 元字符就截断
 PATH_HEAD = r"""(?:(?<![\w/])[A-Za-z]:[\\/]|(?<![\w.~/:])/[A-Za-z]/|(?<![\w/])~[\\/])"""
 PATH_IN_TEXT = re.compile(PATH_HEAD + r"""[^\s"'`<>|;&*?()\[\]{}$]*""")
@@ -241,7 +242,8 @@ def worktree_moves(rows, cwd=None, home=None):
             res = results.get(item.get("id"))
             if res is None or not res[0] or "fatal:" in res[1]:
                 continue
-            for base, toks in _segments((item.get("input") or {}).get("command"), cwd, home):
+            for base, toks in _segments((item.get("input") or {}).get("command"),
+                                        (item.get("input") or {}).get("_cwd") or cwd, home):
                 # git 必须是这一段的命令本身；echo/printf 等的参数里出现的不算执行过
                 head = toks[1:] if toks[0] == "&" else toks
                 if not head or Path(head[0].replace("\\", "/")).name.lower() not in ("git", "git.exe"):
@@ -304,7 +306,7 @@ def touched(rows, start=0, home=None, moves=None, cwd=None):
                 cmd = inp.get("command") or ""
                 targets = []
                 if ok:
-                    for base, toks in _segments(cmd, cwd, home):
+                    for base, toks in _segments(cmd, inp.get("_cwd") or cwd, home):
                         targets += _esafe_targets(toks, base, home)
                 keys = {os.path.normcase(t) for t in targets}
                 out += [("write", t) for t in dict.fromkeys(targets)]
@@ -340,3 +342,62 @@ def repos_of(paths, limit):
                 break
     return out
 
+
+
+def native_shell_paths(data):
+    """原生 shell 输入里的候选位置；只用于查 git 变动，不作为已写入证据。"""
+    if data.get("tool_name") not in CODEX_SHELL_TOOLS:
+        return []
+    inp = data.get("tool_input") or {}
+    command = inp.get("command", inp.get("cmd", ""))
+    if not isinstance(command, str):
+        return []
+    cwd = inp.get("workdir") or data.get("cwd")
+    out = [cwd] if cwd else []
+    out += paths_in_text(command)
+    for base, toks in _segments(command, cwd, None):
+        if base:
+            out.append(base)
+        out += _esafe_targets(toks, base, None)
+    return list(dict.fromkeys(out))
+
+
+def native_tool_rows(data, patch_paths=()):
+    """将宿主原生输入归一为 locate 已有的内部工具事件形状。"""
+    name = data.get("tool_name")
+    inp = data.get("tool_input") or {}
+    call_id = data.get("tool_use_id", "")
+    if name == "apply_patch":
+        rows = []
+        for n, path in enumerate(patch_paths):
+            tid = f"{call_id}/{n}"
+            rows += [{"type": "assistant", "message": {"content": [{"type": "tool_use", "id": tid,
+                      "name": "Write", "input": {"file_path": path}}]}},
+                     {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": tid}]}}]
+        return rows
+    if name not in CODEX_SHELL_TOOLS:
+        return []
+    command = inp.get("command", inp.get("cmd", ""))
+    if not isinstance(command, str):
+        return []
+    response = data.get("tool_response")
+    if isinstance(response, str):
+        try:
+            response = json.loads(response)
+        except ValueError:
+            pass
+    failed = response is None
+    text = response if isinstance(response, str) else ""
+    if isinstance(response, dict):
+        meta = response.get("metadata") or {}
+        failed = bool(response.get("is_error") or response.get("isError") or
+                      response.get("exit_code", meta.get("exit_code", 0)) != 0)
+        text = response.get("output", response.get("stdout", ""))
+    if isinstance(text, str):
+        failed = failed or any(int(code) != 0 for code in re.findall(r"^Exit code:\s*(-?\d+)\s*$", text, re.M))
+    else:
+        text = ""
+    return [{"type": "assistant", "message": {"content": [{"type": "tool_use", "id": call_id,
+             "name": "Bash", "input": {"command": command, "_cwd": inp.get("workdir") or data.get("cwd")}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": call_id,
+             "is_error": failed, "content": text}]}}]

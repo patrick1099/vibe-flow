@@ -2,6 +2,8 @@
 
 ## 已谈定
 
+- 2026-11-03 · 用户 · 本轮统一补齐审计出的 hooks 缺口。本仓负责压缩恢复、跨仓 shell 改动发现和宿主启动验证；保留已有文档闸、回执与依赖快照语义。真实宿主输入与隔离场景分别验收，不把脚本回归当宿主端到端证明。全局 Git、文件锁和访问检查由各自源仓处理。
+
 - 2026-10-29 · 用户 · 批次监工拆成独立 skill `subagent-foreman`，点名才触发（0.30.0 拆出时叫 `supervisor`；0.31.0 按用户「supervisor 不够形象，监管者、子 agent 没体现好」改名，用户从候选里选定 `subagent-foreman`）：起因「是不是根本没触发过，分析一下为什么」——Claude 侧从没执行过 batch_state.py，病根是藏在 vibe-flow §7 后面、清单里看不到、又和宿主「别主动派 agent」冲突。用户选「拆成独立 skill，改成用户点名才触发」。采纳 codex 建议：软闸（两端都可被模型调用，description 只认明确提到监工，单说「派活/多 agent」不进）；vibe-flow 不再默认监工、也不主动推荐；脚本与 vendor 搬进新 skill，role-reading/collaboration/doc-fork 留在 vibe-flow。下方 2026-10-23 首版的分工与交接规则不变，只是入口改成点名。排除：硬手动（只认斜杠命令）；谈定多批计划时提一句；扩到公司固件。
 - 2026-10-29 · 用户 · Python 自动层数治本（0.32.0）：回放发现默认层数下 session-sweep 塌成 2 个节点、一次都不报——自动规则把顶层入口脚本也算成「顶层」。用户要治本，选修规则：只有目录型的包算顶层包，顶层单文件不算（与帮助文本一致，`--against` 同样受益）。修后默认层数回放只在 05c2809（10-23）报一次。排除：首次建快照由 AI 对照图手选 `--depth`（只修快照一处、`--against` 仍漏看包内模块、靠 AI 判对且判错无提醒）。快照里的 `depth` 字段保留，图的粒度与默认不同时显式给。
 - 2026-10-29 · 用户（委托按主席推荐试行）· 搭建图与代码的新鲜度核对（0.32.0 已实现，见下方交付说明）：起因「架构图最好和 commit 绑定，才知道是不是真落后」。搭建图沿用 `docs/model/build.d2` 留底，不新建 ARCHITECTURE.d2。核对挂收工文档闸、不装 pre-commit：dep_graph 在 build.d2 旁存「模块依赖快照」随提交走，代码结构与快照对不上才拦一次；AI 改图或说明不用改后刷新快照，回复里讲图哪里变了；看图页标「已对照／N 处未确认」。不拿图上箭头对 import（图里多是数据流和存储）。只查模块间依赖，数据流/职责变化不报警；不拦未批准的依赖，D2 复议条件不变。下一步：worktree 里给 dep_graph 加存快照/比快照，用 session-sweep 历史回放验收（应只在 10-23 报一次）。推翻条件：依赖没变而职责/数据流变化让图反复落后 → 改为每批复核；常拦但图从不用改 → 撤掉；收工闸看不到的改动让图落后 → 修全局钩子壳后把同一命令挂到提交上。排除：路径 glob 模块表加 import 白名单提交闸；每批强制复核；图全由代码生成。来源：头脑风暴采纳（20261029-常驻架构图）。附带发现：全局 `core.hooksPath` 接力壳使所有仓库自带 pre-commit 静默不执行，未修。
@@ -32,7 +34,7 @@
 
 已实现：`dep_graph.py --write-snapshot / --check-snapshot`（快照 `docs/model/build.deps.json`，只存模块与边，按内容比）；Python 自动层数改为顶层单文件不算包；收工文档闸 `model_drift()`（Claude、Codex 两端，独立于 `evaluate()`，project-state 的批量探测不受影响）；`model_page.py` 搭建图页的对照标记；`vibe-flow/SKILL.md`、`run-model.md`「留底」、`doc-fork.md` 第 2 节的规则文本。
 
-验证：session-sweep 17 个提交回放（只读，`git archive` 到临时目录），默认层数与 `--depth 2` 都只在 05c2809 报一次，内容是新增 `session_sweep.retired` 及两条指向它的边；全量 274 项测试通过；Esafenet 基线 check 无脱密。回放脚本与报告在 worktree `C:/Users/huawei/.codex/worktrees/vibe-flow-build-snapshot/.ai-room/replay/`，不进仓库。
+验证：session-sweep 17 个提交回放（只读，`git archive` 到临时目录），默认层数与 `--depth 2` 都只在 05c2809 报一次，内容是新增 `session_sweep.retired` 及两条指向它的边；全量 274 项测试通过；Esafenet 基线 check 无脱密。回放脚本与报告在 worktree `<USER_HOME>/.codex/worktrees/vibe-flow-build-snapshot/.ai-room/replay/`，不进仓库。
 
 未验证：闸在真实会话里还没被触发过；看图页标记没在浏览器里看过观感。「已谈定」里的推翻条件从这里开始观察。别碰的边界不变：不装 pre-commit，不修全局 `~/.githooks` 接力壳，不做 import 白名单，不拿图上箭头对 import。
 
@@ -51,7 +53,7 @@ Claude / opencode 生命周期、长期上下文与 token 收益、两层短汇�
 
 ## 0.24.0 采用记录 · 2026-10-23
 
-- 工作树：`C:/Users/huawei/.codex/worktrees/vibe-flow-clean-mvvm`，分支 `feat/clean-mvvm-candidate`，从 `main` 的 `f0aac98` 独立建立；不是 Zig + Dear ImGui 候选，原候选保留。
+- 工作树：`<USER_HOME>/.codex/worktrees/vibe-flow-clean-mvvm`，分支 `feat/clean-mvvm-candidate`，从 `main` 的 `f0aac98` 独立建立；不是 Zig + Dear ImGui 候选，原候选保留。
 - 当前规则：新项目开始前讨论架构，按规模给推荐、理由、职责/状态/任务边界和验证方式，方向谈定后实现；已授权 AI 决定或方向已确认，不重复审批。Clean MVVM 是重点候选，选定后才套相应契约；小工具允许更简单结构，旧项目普通修改不自动迁移。
 - 已完成：同步总入口、架构图说明、应用共用入口、Clean MVVM reference、原生/Web 分支及 ttk/Slint 映射。按复核明确了 ViewModel 的 UI 线程所有权、幂等异步退出、向内但不必逐层转发的依赖、注册表的 IO 边界、Rust 可测试内层与 Web 开发测试工具；验证按改动规模安排，区分自动覆盖、人工核对和真实界面/设备验证。局部迁移须明确范围，不默认允许 View 绕过 ViewModel 调新用例。
 - 外部复核：2026-10-22 用户明确授权后，已通过 ai-room 完成 Claude 只读复核，结论是方向可用但不宜原样采用；本批据其执行细节问题及 2026-10-23 用户意见调整。本批没有再次外审。此前自动审批拒绝是授权前的历史情况，不是当前阻塞。
