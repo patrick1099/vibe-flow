@@ -185,13 +185,13 @@ PostToolUse 收集本轮成功的 `apply_patch` 文件，PreToolUse 收集 shell
 session-sweep 的文档探测都经同一个判定函数读它，session-sweep 不用改代码。
 
 认不认得出是 vibe 项目靠三种标记：`docs/BLUEPRINT.md`、脚本头部 `结构: vibe-scripts/standard`
-或 `toolkit`、AGENTS.md（或旧项目的 CLAUDE.md）里的「架构约束（vibe-apps）」段；没有标记的仓库
-（比如公司代码）一律不管。文档该放哪先看已有布局（旁挂文件、`docs/`、`AGENTS.md`），看不出来就
-把两个位置都列出来，不猜。
+或 `toolkit`、AGENTS.md（或旧项目的 CLAUDE.md）里的「架构约束（vibe-apps）」段。没有这些标记的目录默认跳过。
+
+文档放在仓库外时，可以在[本机绑定表](skills/vibe-flow/references/doc-fork.md#外置文档目录)登记一个代码子目录和它的文档目录。同一 Git 仓库的不同 worktree 共用登记，未登记的其他目录不受影响。改过登记范围的代码，仍查缺件和文档是否落后。Codex 收到明确的“更新交接”或 “wrap up”，或确认写过绑定目录中的 `HANDOFF.md`，会在收工时检查 `BLUEPRINT.md` 和 `CHANGELOG.md` 是否都在；只改交接不会因时间较新而迫使两份正文重写。
 
 Codex 的配置随插件分发：`.codex-plugin/plugin.json` 指向 `hooks/codex.json`，不用改用户的全局
 `config.toml`。新装或钩子定义变化后，须先在 Codex 中审阅并信任钩子（CLI 用 `/hooks`）；未信任、
-hooks 功能被关闭或管理员禁用插件钩子时不会执行。当前在桌面引擎 `0.155.0-alpha.16.3` 实测真实
+hooks 功能被关闭或管理员禁用插件钩子时不会执行。此前已在桌面引擎 `0.155.0-alpha.16.3` 实测真实
 `apply_patch` 回执。Windows 在 workspace-write + elevated 配置下，插件钩子以宿主用户运行，
 `py -3` 可正常启动；工具沙箱里找不到用户 Python 的限制不影响此入口。
 机制和分发规则见 [Codex Hooks](https://learn.chatgpt.com/docs/hooks) 与
@@ -272,7 +272,7 @@ python skills/vibe-apps/scripts/sync_upstream.py --vendor-dir skills/subagent-fo
 **同一件事的进度只记一处。** 进度和交接只写 HANDOFF；采用监工模式时，具体任务状态只在其中的机器批次区保存。不写进 pstate，也不写进平台原生记忆或 hub 金库——记忆只存
 长期结论和教训。pstate（project-state 插件）管另外两件：立项前的待续事项（聊过什么、要不要做；决定做并落进 Obsidian
 任务目录后转交）和会话互斥（改某个 Obsidian 任务前先认领它，防同一件事做两遍；撞上同一个文件由钩子拦下、问你等还是接手）。
-它的旧待办看板已停用。公司仓不建 vibe 文档，也不加锁。`03-悬着的事` 只是发现入口：从它那里捡起一件事，进度落回
+它的旧待办看板已停用。公司仓默认不建 vibe 文档，也不加锁；按子目录登记仓外文档不会启用文件锁。`03-悬着的事` 只是发现入口：从它那里捡起一件事，进度落回
 HANDOFF，不在它那里维护。
 
 Claude Code 默认只读 CLAUDE.md。想让它读项目的 AGENTS.md，要么启用内置的 agents-md 并把
@@ -311,6 +311,8 @@ skill 之间不自动串联，自动钩子只用于上面那道文档闸和压�
 说明被拦后如何判断。
 
 ## 沿革
+
+0.34.0（2026-11-04）增加仓外文档登记。源码与项目文档分开放时，原先从代码向上找到 Git 根就停，缺蓝图、变更记录也可能直接放行。现在可以只为实际需要的子目录绑定文档位置；未登记的公司仓继续沿用原行为。Codex 明确收工或更新已绑定的交接时，即使本轮只动文档也会核对缺件。
 
 0.33.0（2026-11-03）补齐压缩恢复与跨仓变动检查。压缩后的约定读回增加 Codex 原生事件适配，
 继续共用项目归属和渲染逻辑；shell 只记录候选位置，文档闸根据 git 实际变动判定。失败命令已发生的部分写入

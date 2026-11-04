@@ -52,8 +52,8 @@ class CodexDocGateTest(unittest.TestCase):
         return core
 
     def event(self, kind, **fields):
-        return dict(session_id="session-1", turn_id="turn-1", cwd=str(self.root),
-                    hook_event_name=kind, **fields)
+        return {"session_id": "session-1", "turn_id": "turn-1", "cwd": str(self.root),
+                "hook_event_name": kind, **fields}
 
     def run_gate(self, data, env=None, code=0):
         proc = subprocess.run([sys.executable, str(GATE)], input=json.dumps(data, ensure_ascii=False),
@@ -87,6 +87,81 @@ class CodexDocGateTest(unittest.TestCase):
         data = self.event("Stop", stop_hook_active=False)
         data.update(fields)
         return self.run_gate(data)
+
+    def bound_project(self):
+        repo = self.root / "firmware"
+        (repo / "tools/configurator").mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        docs = self.write("Vault with space/task/HANDOFF.md", "# 交接").parent
+        registry = self.write("bindings.json", json.dumps({"version": 1, "bindings": [
+            {"git_common_dir": str(repo / ".git"), "source": "tools/configurator", "documents": str(docs)}
+        ]}))
+        self.env["VIBE_FLOW_DOC_BINDINGS"] = str(registry)
+        return repo, docs
+
+    def test_explicit_handoff_checks_registered_docs_without_any_code_change(self):
+        repo, docs = self.bound_project()
+        self.prompt(prompt="更新handoff", cwd=str(repo))
+        reason = self.stop(cwd=str(repo))["reason"]
+        self.assertIn("BLUEPRINT.md", reason)
+        self.assertIn("CHANGELOG.md", reason)
+        self.assertIn(str(docs), reason)
+        self.assertIsNone(self.stop(cwd=str(repo)), "the turn was already consumed")
+        self.write("Vault with space/task/BLUEPRINT.md")
+        self.write("Vault with space/task/CHANGELOG.md")
+        self.prompt(prompt="收工", cwd=str(repo))
+        self.assertIsNone(self.stop(cwd=str(repo)))
+
+    def test_explicit_other_target_does_not_fall_back_to_registered_cwd(self):
+        repo, docs = self.bound_project()
+        other = self.write("Unrelated Vault/task/HANDOFF.md")
+        self.prompt(prompt=f"请更新 `{other}`", cwd=str(repo))
+        self.assertIsNone(self.stop(cwd=str(repo)))
+        self.prompt(prompt=f"请更新 `{docs / 'HANDOFF.md'}`", cwd=str(other.parent))
+        self.assertEqual(self.stop(cwd=str(other.parent))["decision"], "block")
+
+    def test_closeout_questions_quotes_and_readonly_shell_are_not_requests(self):
+        repo, docs = self.bound_project()
+        for prompt in ("先不要更新handoff", "为什么没有更新 HANDOFF.md？", "说明“收工”是什么意思",
+                       "Do not update the handoff.", "How do I update HANDOFF.md?", "'update handoff'"):
+            with self.subTest(prompt=prompt):
+                self.prompt(prompt=prompt, cwd=str(repo))
+                self.run_gate(self.event("PreToolUse", cwd=str(repo), tool_name="exec_command",
+                                         tool_use_id="read", tool_input={"cmd": f'Get-Content "{docs / "HANDOFF.md"}"'}))
+                self.assertIsNone(self.stop(cwd=str(repo)))
+
+    def test_successful_handoff_write_can_target_the_vault_without_an_intent(self):
+        repo, docs = self.bound_project()
+        self.prompt(prompt="处理一下", cwd=str(repo))
+        self.patch(docs / "HANDOFF.md", cwd=str(repo))
+        self.assertEqual(self.stop(cwd=str(repo))["decision"], "block")
+
+    def test_reading_a_reference_handoff_cannot_bypass_bound_closeout(self):
+        repo, _ = self.bound_project()
+        reference = self.write("Unrelated notes/HANDOFF.md")
+        self.prompt(prompt="更新handoff", cwd=str(repo))
+        self.run_gate(self.event("PreToolUse", cwd=str(repo), tool_name="exec_command", tool_use_id="read",
+                                 tool_input={"cmd": f'Get-Content "{reference}"'}))
+        out = self.stop(cwd=str(repo))
+        self.assertEqual(out["decision"], "block")
+        self.assertNotIn("Unrelated notes", out["reason"])
+
+    def test_explicit_handoff_from_elsewhere_can_use_an_exact_vault_candidate(self):
+        _, docs = self.bound_project()
+        self.prompt(prompt="请更新交接", cwd=str(self.root))
+        self.run_gate(self.event("PreToolUse", tool_name="exec_command", tool_use_id="lookup",
+                                 tool_input={"cmd": f'Get-Content "{docs / "HANDOFF.md"}"'}))
+        self.assertEqual(self.stop()["decision"], "block")
+
+    def test_closeout_is_turn_local_and_does_not_store_user_text(self):
+        repo, _ = self.bound_project()
+        self.prompt(prompt="Please update the handoff.", cwd=str(repo), turn_id="closing")
+        marker = next(self.state.rglob("turn-start"))
+        self.assertNotIn("Please update", marker.read_text(encoding="utf-8"))
+        self.prompt(prompt="private-ordinary-input", cwd=str(repo), turn_id="reading")
+        self.assertIsNone(self.stop(cwd=str(repo), turn_id="reading"))
+        self.assertIsNone(self.run_gate(self.event("Interrupt", cwd=str(repo), turn_id="closing")))
+        self.assertIsNone(self.stop(cwd=str(repo), turn_id="closing"))
 
     def test_missing_documents_block(self):
         self.patch(self.project(docs=False))

@@ -36,6 +36,29 @@
 - **看不到的**：没在本轮写过、命令里也没出现过的仓库；Codex 其他 MCP 写文件工具；命令正文不暴露目标路径的动态写入。Codex 原生 shell hook 当前不传独立 workdir 参数，仅相对路径也可能漏掉目标仓库。没有触发闸不代表文档已经合格。
 - Codex 的钩子随插件分发，无需改全局配置，但首次使用或定义变更后须在 Codex 中审阅并信任（CLI 用 `/hooks`）。
 
+### 外置文档目录
+
+代码与项目文档不在一起时，按需在本机 `~/.vibe-flow/doc-bindings.json` 登记。也可用 `VIBE_FLOW_DOC_BINDINGS` 指向另一份登记文件。没有登记时仍沿用原有仓内/旁挂布局，不扫描其他项目的文档。
+
+```json
+{
+  "version": 1,
+  "bindings": [
+    {
+      "git_common_dir": "D:/repos/example/.git",
+      "source": "tools/configurator",
+      "documents": "D:/notes/projects/example/task/T01"
+    }
+  ]
+}
+```
+
+`git_common_dir` 填目标仓运行 `git rev-parse --path-format=absolute --git-common-dir` 的结果；`source` 从工作树根目录起算，`documents` 填存放 `BLUEPRINT.md` 和 `CHANGELOG.md` 的绝对目录。同一仓库的各个 linked worktree 识别同一条登记，按当前工作树内的实际源码检查，兄弟目录不因此纳管。不要把本机私有路径登记到团队仓库。
+
+- 改了已登记范围的代码：缺任一文档会提醒；两份都比本批代码旧时，按原规则核对是否欠更新。纯内部改动确实不用改文档时，按提示给出回执：`doc_gate.py receipt --blueprint <外置蓝图绝对路径> --source <本工作树中已登记的源码目录绝对路径> --reason "<理由>"`。缺件不能用回执放过。
+- 只收工或写交接：Codex 收到明确指令（例如“更新交接”、`update handoff`），或确认本轮写过登记目录的 `HANDOFF.md`，会核对两份文档都存在。此项不把交接时间当成代码变动，也不会因为聊天中提到文件名就替整个仓库做收工检查。同一仓库有多项登记时，从相关代码子目录收工，或明确指到要更新的交接路径。
+- 宿主脚本只在满足条件时返回阻断。插件已启用且受信、手动用输入样本复现、宿主日志里实际收到了阻断，是三种不同的验证；不要把第一种写成最后一种。
+
 ## 3. 压缩后读回（Claude Code 与 Codex，SessionStart 且来源是 compact）
 
 Claude Code 从对话记录找路径；Codex 从原生工具事件记录中找路径和 worktree 关系。两端共用项目选择与渲染，把 HANDOFF 的「已谈定」原文注入给你，有 `NEEDS.md` 就提示去读当前需求区（只有 NEEDS 也提示）。

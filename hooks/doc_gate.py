@@ -34,6 +34,7 @@ _HERE = str(Path(__file__).resolve().parent)
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 import receipt  # noqa: E402
+from doc_bindings import BindingError, Registry  # noqa: E402
 from locate import (WRITE_TOOLS, content_items, is_human_prompt, last_prompt_index, moved,  # noqa: E402,F401
                     read_rows, repos_of, touched, worktree_moves)
 
@@ -257,7 +258,7 @@ def _mtime(p):
         return None
 
 
-def evaluate(paths, stop_at=None, moves=None):
+def evaluate(paths, stop_at=None, moves=None, *, closeout_cwd=None, closeout_targets=(), closeout_hints=()):
     """文档要晚于这批代码的最后一次变动才算跟上。
 
     只看磁盘 mtime、不看是谁写的，所以子 agent（fork）写的文档同样算数。删掉的代码按 changed_at
@@ -267,8 +268,29 @@ def evaluate(paths, stop_at=None, moves=None):
     路径认（merged_worktree_path），放在仓库外的按 moves（locate.worktree_moves 从对话里解析）认。
     stale 的项目若有与当前代码快照一致的回执（receipt.covers）就不报；缺文档一律照报。
     """
+    try:
+        registry = Registry.load()
+    except (BindingError, OSError) as exc:
+        # A broken opt-in registration must not disable the original project gate.
+        print(f"vibe-flow 文档关联配置无效（仍检查原有项目）：{exc}", file=sys.stderr)
+        registry = None
     projects = {}
-    for raw in dict.fromkeys(paths):
+
+    def group(found):
+        root, bp, cl, layout = found
+        key = (_norm(bp), _norm(cl), _norm(root) if layout == "external" else "")
+        return projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "layout": layout, "code": []})
+
+    paths = list(dict.fromkeys(paths))
+    handoffs = [p for p in paths if Path(p).name.casefold() == "handoff.md"]
+    if registry and (closeout_cwd or handoffs):
+        targets = [*closeout_targets, *handoffs] if closeout_cwd else handoffs
+        selected = registry.for_closeout(closeout_cwd, targets)
+        if closeout_cwd and not targets and not selected and closeout_hints:
+            selected = registry.for_closeout(None, closeout_hints)
+        for found in selected:
+            group(found)
+    for raw in paths:
         if (Path(raw).suffix.lower() in DOC_SUFFIXES
                 or tuple(p.lower() for p in Path(raw).parts[-3:]) == ("docs", "model", "build.deps.json")):
             continue
@@ -276,26 +298,25 @@ def evaluate(paths, stop_at=None, moves=None):
         if merged is None and (m := moved(raw, moves)):
             merged = Path(m)
         path, slack = (merged, MERGE_SLACK) if merged is not None else (raw, 0)
-        found = find_project(path, stop_at)
-        if not found:
-            continue
-        root, bp, cl, layout = found
-        key = (_norm(bp), _norm(cl))
-        projects.setdefault(key, {"root": root, "bp": bp, "cl": cl, "layout": layout, "code": []})
-        projects[key]["code"].append((path, slack))
+        found = (registry.for_code(path) if registry else None) or find_project(path, stop_at)
+        if found:
+            group(found)["code"].append((path, slack))
 
     now = time.time()
     issues = []
     for proj in projects.values():
         bp, cl = proj["bp"], proj["cl"]
-        missing = [x.name for x in (bp, cl) if not x.exists()]
+        missing = [x.name for x in (bp, cl) if not x.is_file()]
         if missing:
             issues.append(("missing", proj, missing))
             continue
+        if not proj["code"]:
+            continue  # A handoff is a completeness check, not a newer source file.
         code_at = max((at if (at := changed_at(c)) is not None else now) - slack for c, slack in proj["code"])
         docs_at = max(_mtime(bp) or 0, _mtime(cl) or 0)
         if docs_at < code_at and not receipt.covers(bp, cl, [c for c, _ in proj["code"]],
-                                                    DOC_SUFFIXES, SCAN_SUFFIXES):
+                                                     DOC_SUFFIXES, SCAN_SUFFIXES,
+                                                     source=proj["root"] if proj["layout"] == "external" else None):
             issues.append(("stale", proj, []))
     return issues
 
@@ -364,13 +385,14 @@ def render_model_reason(issues):
     return "\n".join(lines)
 
 
-def receipt_command(bp):
-    return (f'"{sys.executable}" "{Path(__file__).resolve()}" receipt --blueprint "{bp}" '
+def receipt_command(bp, source=None):
+    opt = f' --source "{source}"' if source is not None else ""
+    return (f'"{sys.executable}" "{Path(__file__).resolve()}" receipt --blueprint "{bp}"{opt} '
             '--reason "<一句话：为什么这批不用记>"')
 
 
 def render_reason(issues):
-    lines = ["[vibe-flow 文档闸] 本轮改了下面这些 vibe 项目的代码，文档还没跟上："]
+    lines = ["[vibe-flow 文档闸] 以下项目的配套文档需要核对："]
     for kind, proj, missing in issues:
         where = proj["root"]
         if kind == "missing" and proj["layout"] == "unknown":
@@ -384,7 +406,7 @@ def render_reason(issues):
                          "出生时两份一起建，CHANGELOG 第一条记为什么要做它。")
         else:
             lines.append(f"- {where}：BLUEPRINT 和 CHANGELOG 都还停在这批代码改动之前。"
-                         f"判断不用记时跑：{receipt_command(proj['bp'])}")
+                         f"判断不用记时跑：{receipt_command(proj['bp'], where if proj['layout'] == 'external' else None)}")
     lines += [
         "按 vibe-flow §8 收工：派一个继承本会话上下文的子 agent 维护文档（Claude Code 用 Agent 工具、"
         "subagent_type 为 fork；Codex 用 spawn_agent 并继承全部历史），任务写：加载 living-blueprint，"
@@ -410,10 +432,11 @@ def receipt_main(argv):
     ap = argparse.ArgumentParser(prog="doc_gate.py receipt",
                                  description="写一条「这批不用记」回执（见 receipt.py）")
     ap.add_argument("--blueprint", required=True, help="闸提示里给出的 BLUEPRINT 路径")
+    ap.add_argument("--source", help="外置文档对应的本工作树已登记源码目录")
     ap.add_argument("--reason", required=True, help="一句话：为什么这批不用记")
     args = ap.parse_args(argv)
     try:
-        record = receipt.write(args.blueprint, args.reason, DOC_SUFFIXES, SCAN_SUFFIXES)
+        record = receipt.write(args.blueprint, args.reason, DOC_SUFFIXES, SCAN_SUFFIXES, source=args.source)
     except (ValueError, receipt.Unverifiable) as e:
         sys.stderr.write(f"回执没写：{e}\n")
         return 2

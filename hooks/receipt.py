@@ -43,14 +43,20 @@ def store_dir():
     return Path(os.environ.get("VIBE_FLOW_RECEIPTS") or Path.home() / ".vibe-flow" / "doc-receipts")
 
 
-def _store_file(bp, cl):
+def _store_file(bp, cl, source=None):
     key = f"{_norm(bp)}|{_norm(cl)}"
+    if source is not None:
+        key += "|" + _norm(source)
     return store_dir() / (hashlib.sha256(key.encode("utf-8")).hexdigest()[:24] + ".json")
 
 
-def layout_of(bp):
+def layout_of(bp, source=None):
     """由 BLUEPRINT 路径反推 (根, CHANGELOG, 布局)：docs/BLUEPRINT.md → project；<脚本名>.BLUEPRINT.md → sibling。"""
     bp = Path(bp)
+    if source is not None:
+        from doc_bindings import Registry
+        root, _, cl, layout = Registry.load().resolve_source(source, bp)
+        return root, cl, layout
     if bp.name == "BLUEPRINT.md" and bp.parent.name == "docs":
         return bp.parent.parent, bp.parent / "CHANGELOG.md", "project"
     if bp.name.endswith(".BLUEPRINT.md"):
@@ -98,15 +104,28 @@ def _walk_files(root, doc_suffixes):
 
 def code_files(bp, doc_suffixes, scan_suffixes):
     root, _, layout = layout_of(bp)
+    return _files_for_layout(root, bp, layout, doc_suffixes, scan_suffixes)
+
+
+def _files_for_layout(root, bp, layout, doc_suffixes, scan_suffixes):
     if layout == "sibling":
         stem = Path(bp).name[: -len(".BLUEPRINT.md")]
         return [p for p in root.iterdir()
                 if p.is_file() and p.stem == stem and p.suffix.lower() not in doc_suffixes]
     files = _git_files(root, doc_suffixes, scan_suffixes)
     if files is None:
+        if layout == "external":
+            raise Unverifiable(f"不能核实已登记 Git 源目录：{root}")
         files = _walk_files(root, doc_suffixes)
     if len(files) > MAX_FILES:
         raise Unverifiable(f"{root} 下文件超过 {MAX_FILES} 个")
+    if layout == "external":
+        try:
+            for path in files:
+                if not path.resolve(strict=True).is_relative_to(root):
+                    raise Unverifiable(f"文件实际位置超出登记源码目录：{path}")
+        except (OSError, RuntimeError) as exc:
+            raise Unverifiable(f"无法核对登记源码的实际路径：{exc}") from exc
     return files
 
 
@@ -119,10 +138,10 @@ def _digest(p):
         raise Unverifiable(f"读不了 {p}：{e!r}")
 
 
-def snapshot(bp, doc_suffixes, scan_suffixes):
+def snapshot(bp, doc_suffixes, scan_suffixes, source=None):
     """返回 (指纹, 快照覆盖的规范化路径集合)。"""
-    root, cl, _ = layout_of(bp)
-    files = code_files(bp, doc_suffixes, scan_suffixes)
+    root, cl, layout = layout_of(bp, source)
+    files = _files_for_layout(root, bp, layout, doc_suffixes, scan_suffixes)
     h = hashlib.sha256()
     for p in sorted(files, key=lambda q: Path(q).relative_to(root).as_posix()):
         h.update(Path(p).relative_to(root).as_posix().encode("utf-8") + b"\0")
@@ -132,21 +151,21 @@ def snapshot(bp, doc_suffixes, scan_suffixes):
     return h.hexdigest(), {_norm(p) for p in files}
 
 
-def write(bp, reason, doc_suffixes, scan_suffixes):
+def write(bp, reason, doc_suffixes, scan_suffixes, source=None):
     """写回执：现算快照，按这对文档存一份。文档缺失时不写（缺文档不能被回执豁免）。"""
     bp = Path(bp)
-    root, cl, layout = layout_of(bp)
+    root, cl, layout = layout_of(bp, source)
     reason = (reason or "").strip()
     if not reason:
         raise ValueError("回执必须写理由")
-    missing = [x.name for x in (bp, cl) if not x.exists()]
+    missing = [x.name for x in (bp, cl) if not x.is_file()]
     if missing:
         raise ValueError(f"缺 {' / '.join(missing)}，缺文档不能用回执豁免，先建文档")
-    fp, files = snapshot(bp, doc_suffixes, scan_suffixes)
+    fp, files = snapshot(bp, doc_suffixes, scan_suffixes, source)
     record = {"blueprint": str(bp), "changelog": str(cl), "root": str(root), "layout": layout,
               "fingerprint": fp, "files": len(files), "reason": reason,
               "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    dest = _store_file(bp, cl)
+    dest = _store_file(bp, cl, source)
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_name(f"{dest.stem}.{os.getpid()}.tmp")
     tmp.write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -154,14 +173,16 @@ def write(bp, reason, doc_suffixes, scan_suffixes):
     return record
 
 
-def covers(bp, cl, code_paths, doc_suffixes, scan_suffixes):
+def covers(bp, cl, code_paths, doc_suffixes, scan_suffixes, source=None):
     """这对文档有回执、快照与回执一致、且待判定的代码都在快照里时返回 True；其余一律 False。"""
     try:
-        record = json.loads(_store_file(bp, cl).read_text(encoding="utf-8"))
+        record = json.loads(_store_file(bp, cl, source).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
+    if not isinstance(record, dict):
+        return False
     try:
-        fp, files = snapshot(bp, doc_suffixes, scan_suffixes)
+        fp, files = snapshot(bp, doc_suffixes, scan_suffixes, source)
     except (Unverifiable, ValueError, OSError):
         return False
     if fp != record.get("fingerprint"):
