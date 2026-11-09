@@ -5,6 +5,8 @@ description: "Sub-agent foreman (批次监工) mode for a personal project: the 
 
 # subagent-foreman：批次监工（只在你点名时用）
 
+首次安装、换机器、换宿主或依赖缺失时，先读[安装与适配](../../SETUP.md)；环境已就绪时直接按下文使用。
+
 ## 什么时候用
 
 - **只在用户明确要监工模式时。** 没点名不进；`vibe-flow` 也不主动推荐它。单说“派活 / 多 agent 分工 / 派个子 agent”不算：一次性委派走 `ai-room`，平时的执行与外援按 vibe-flow 的 collaboration.md。

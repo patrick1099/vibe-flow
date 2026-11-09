@@ -5,6 +5,8 @@ description: "For direct user requests, load FIRST before implementation or bran
 
 # Vibe Flow：轻量 vibe-coding 主流程
 
+首次安装、换机器、换宿主或依赖缺失时，先读[安装与适配](../../SETUP.md)；环境已就绪时直接按下文使用。
+
 ## 核心原则
 
 先明确需求，再判本次改动：**小事要省，大事要好。** 本入口只负责公共闸和路由；不命中的阶段不提、不预读子 skill。公共规则以本文及其 references 为唯一出处，分支只给适用栈的落法。
