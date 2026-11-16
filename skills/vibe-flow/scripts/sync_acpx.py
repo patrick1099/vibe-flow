@@ -8,7 +8,7 @@ import sys
 import tarfile
 import urllib.request
 
-DEST = Path(__file__).resolve().parents[1] / "vendor/acpx"
+DEST = Path(__file__).resolve().parents[3] / "vendor/acpx"
 
 
 def main(argv=None):

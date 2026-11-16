@@ -19,7 +19,7 @@ acpx config show
 
 当前已核适配器版本：`@agentclientprotocol/codex-acp@2.6.0`、`@agentclientprotocol/claude-agent-acp@0.107.0`。按本机能力验证后安装；OpenCode 使用本机已验证的 `opencode acp`，不要将模型 ID 假定为所有供应商通用。
 
-原始文档在 [vendor/acpx/SKILL.md](../vendor/acpx/SKILL.md)，MIT 许可见 [LICENSE](../vendor/acpx/LICENSE)，包版本、原始 URL 和文件来源见 [SOURCE.json](../vendor/acpx/SOURCE.json)。这份原文保留上游链接，源包外相对链接需去上游仓库查看。刷新入口：
+原始文档在 [vendor/acpx/SKILL.md](../../../vendor/acpx/SKILL.md)，MIT 许可见 [LICENSE](../../../vendor/acpx/LICENSE)，包版本、原始 URL 和文件来源见 [SOURCE.json](../../../vendor/acpx/SOURCE.json)。原文位于插件根 vendor/，不在 skills 发现范围内，也不作为独立可调用 skill。此资料只通过配置选中的接入页按需读取。这份原文保留上游链接，源包外相对链接需去上游仓库查看。刷新入口：
 
 ```text
 python skills/vibe-flow/scripts/sync_acpx.py --dry-run

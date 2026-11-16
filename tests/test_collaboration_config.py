@@ -164,5 +164,34 @@ class CollaborationConfigTest(unittest.TestCase):
                     self.assertNotRegex(text,r"GPT|Opus|codex|claude|acpx")
 
 
+class UpstreamDocumentLocationTest(unittest.TestCase):
+    def test_vendor_not_discoverable_as_plugin_skill(self):
+        manifest = json.loads((ROOT / ".codex-plugin/plugin.json").read_text(encoding="utf-8"))
+        discovery_root = ROOT / manifest["skills"]
+        discovered = [p.relative_to(ROOT).as_posix() for p in discovery_root.rglob("SKILL.md")]
+        self.assertFalse(any("vendor/acpx/" in p for p in discovered), discovered)
+        self.assertFalse((ROOT / "skills/vibe-flow/vendor/acpx/SKILL.md").exists())
+        self.assertTrue((ROOT / "vendor/acpx/SKILL.md").is_file())
+
+    def test_vendor_matches_pinned_npm_original_hashes(self):
+        import hashlib
+        expected = {
+            "SKILL.md": "6cb199adee79a742e2fa43cb5f4aebf8e6222ade1d5b501fc13308e6f3c2daf4",
+            "LICENSE": "5c3dd08185d6d0a0045a45b9aea2fd9d85343f7ed5dbe23915e6f15e7b814f2d",
+        }
+        for name, digest in expected.items():
+            with self.subTest(file=name):
+                self.assertEqual(hashlib.sha256((ROOT / "vendor/acpx" / name).read_bytes()).hexdigest(), digest)
+
+    def test_sync_destination_is_plugin_root_vendor(self):
+        spec = importlib.util.spec_from_file_location("sync_acpx", ROOT / "skills/vibe-flow/scripts/sync_acpx.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual(module.DEST, ROOT / "vendor/acpx")
+        source = json.loads((module.DEST / "SOURCE.json").read_text(encoding="utf-8"))
+        self.assertEqual(source["package"], "acpx")
+        self.assertEqual(source["version"], "0.22.0")
+
+
 if __name__ == "__main__":
     unittest.main()
