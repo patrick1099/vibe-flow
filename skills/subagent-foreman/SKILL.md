@@ -1,6 +1,6 @@
 ---
 name: subagent-foreman
-description: "Sub-agent foreman (批次监工) mode for a personal project: the main session stops implementing and hands an agreed multi-task plan to ONE foreman sub-agent, which dispatches short worker tasks, handles ordinary failures, verifies and finishes the docs; the main session only gets ≤8-line briefs and real user decisions. Use ONLY when the user explicitly names this mode — 你当监工 / 让子 agent 当监工派活 / 用监工模式做 / 批次监工 / 主会话别自己干、交给监工 / /vibe-flow:subagent-foreman / $subagent-foreman. Do NOT self-invoke for ordinary multi-step work, for a plain 派个子 agent 去做 (that is ai-room), for splitting work into steps, or when the user is discussing or reviewing this skill itself. 公司固件不用。"
+description: "Sub-agent foreman (批次监工) mode for a personal project: the main session stops implementing and hands an agreed multi-task plan to ONE foreman sub-agent, which dispatches short worker tasks, handles ordinary failures, verifies and finishes the docs; the main session only gets ≤8-line briefs and real user decisions. Use ONLY when the user explicitly names this mode — 你当监工 / 让子 agent 当监工派活 / 用监工模式做 / 批次监工 / 主会话别自己干、交给监工 / /vibe-flow:subagent-foreman / $subagent-foreman. Do NOT self-invoke for ordinary multi-step work, for a plain 派个子 agent 去做 (follow the confirmed collaboration agreement), for splitting work into steps, or when the user is discussing or reviewing this skill itself. 公司固件不用。"
 ---
 
 # subagent-foreman：批次监工（只在你点名时用）
@@ -9,7 +9,7 @@ description: "Sub-agent foreman (批次监工) mode for a personal project: the 
 
 ## 什么时候用
 
-- **只在用户明确要监工模式时。** 没点名不进；`vibe-flow` 也不主动推荐它。单说“派活 / 多 agent 分工 / 派个子 agent”不算：一次性委派走 `ai-room`，平时的执行与外援按 vibe-flow 的 collaboration.md。
+- **只在用户明确要监工模式时。** 没点名不进；`vibe-flow` 也不主动推荐它。单说“派活 / 多 agent 分工 / 派个子 agent”不算：一次性委派按已确认的协作配置与执行约定，平时的执行与外援按 vibe-flow 的 collaboration.md。
 - **只用于个人项目。** 批次状态保存在项目的 `HANDOFF.md` 里，公司固件 / 产品仓不建 vibe 文档，被叫到那里就直说用不了。
 - **小活只提一句成本。** 只有一两步短活时说一句“这件直接做更省”，随后照点名的监工模式继续，不停下等确认，也不要求他证明值得。
 
@@ -37,6 +37,8 @@ description: "Sub-agent foreman (批次监工) mode for a personal project: the 
 启动提示（精确替换占位符，不把整个会话复制进去）：
 
 > 作为本批次实施监工，先按 <vibe-flow目录>/references/role-reading.md 的监工清单读取（仅列明的公共节，不通读父入口），再读 <subagent-foreman目录>/references/foreman.md、<HANDOFF> 的有效约定与批次区、<计划>，工作区 <绝对路径>，批次 <新ID>，上一批 <旧ID或首次>，你的标识 <宿主ID>，状态脚本 <subagent-foreman目录>/scripts/batch_state.py。切批首次先查询旧批状态取得 revision，再保存新批；只有明确首次建批可 --init --expect missing，恢复时 missing 是损坏，禁止重新初始化。只实施本批次，负责派工、失败诊断/重试、集成、验证与文档。一次一个短执行任务；普通失败在本层解决，同一问题最多三次修复尝试，仍失败就记录 blocker、停止依赖任务，可继续独立任务。新技术取舍按 <vibe-flow目录>/references/collaboration.md 咨询；档位为好·重时必读该文件，按其中密度执行关键步骤结果审；跨用户决策边界才上报。只在子任务全结束后保存交接并退出；上行最多八行：批次状态、成果、必要决策、证据/HANDOFF 路径。不得将完整日志、源码或过程摘要上推；不得自行启动接任监工。档位 <省/好·轻/好·重>，架构/路线与范围 <已定结论>，已完成评审 <证据或不适用>。遵守原计划的修改、提交与发布授权。
+
+启动监工前沿用本次已确认的 [协作配置与执行约定](../vibe-flow/references/collaboration-config.md)，把监工与下层执行者的 agent、模型、思考程度、组织方式及权限写清。点名监工不等于同意任意组合；已经授权的部分不重问。调用、续接与取消用所选工具原生命令，不能用状态记录脚本代替实际调度。
 
 ## 主会话看状态
 

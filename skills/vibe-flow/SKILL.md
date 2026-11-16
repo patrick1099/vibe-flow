@@ -1,6 +1,6 @@
 ---
 name: vibe-flow
-description: "For direct user requests, load FIRST before implementation or branch skills; delegated roles use references/role-reading.md. Apply whenever the user asks to build, write, change, fix, or extend a personal script, tool, app, plugin, or automation (not company firmware / product code). Sizes this one change (small and clear → act directly; wide-impact, costly-if-wrong, or genuinely unclear → thorough), then routes to the right skill. 中文触发：帮我写/做/改/修一个脚本、小工具、应用、插件、自动化；给这个工具加个功能；这个脚本有 bug；动手写代码之前先加载本 skill。"
+description: "For direct user requests, load FIRST before implementation or branch skills; delegated roles use references/role-reading.md. Apply whenever the user asks to build, write, change, fix, or extend a personal script, tool, app, plugin, or automation (not company firmware / product code). Sizes this one change (small and clear → brief confirmation then act; wide-impact, costly-if-wrong, or genuinely unclear → thorough), then routes to the right skill. 中文触发：帮我写/做/改/修一个脚本、小工具、应用、插件、自动化；给这个工具加个功能；这个脚本有 bug；动手写代码之前先加载本 skill。"
 ---
 
 # Vibe Flow：轻量 vibe-coding 主流程
@@ -19,7 +19,7 @@ description: "For direct user requests, load FIRST before implementation or bran
 |---|---|
 | 新项目架构讨论；已定架构需要改变；好档探方案 | [references/planning.md](references/planning.md) 的对应部分 |
 | 增删换变化轴成员、改成员能力、收口注册表、成员各有外部依赖，或用到外部数据/默认运行策略，动手前 | [references/low-coupling.md](references/low-coupling.md) |
-| 委派、实质技术取舍或关键结果复核 | [references/collaboration.md](references/collaboration.md) |
+| 每项任务开工前确认协作设置；委派、实质技术取舍或关键结果复核 | [references/collaboration.md](references/collaboration.md) |
 | 改动完成且验证过、交付前；未完要结束会话；被文档闸拦下（微脚本免） | [references/doc-fork.md](references/doc-fork.md) |
 | 新建用到宿主能力的项目，或换宿主平台 | [references/platform-porting.md](references/platform-porting.md) |
 | 要画用户运行模型或好档搭建图，画之前 | [run-model.md](../clarify-needs/references/run-model.md) |
@@ -33,6 +33,8 @@ description: "For direct user requests, load FIRST before implementation or bran
 | “可以 / 继续 / 按这个做”且方案已经谈定 | 视为继续实现，不再重复索要批准 |
 
 回答“能不能实现”时，先给结论和关键限制。只有用户要求继续做，或上下文已经明确授权改动，才进入实现。
+
+每项实施任务开始前，读取 [协作配置与执行约定](references/collaboration-config.md)，集中确认角色、agent、模型、思考程度与组织方式，并写入本次 Markdown 执行约定。配置只给建议；本次已指定、授权沿用或委托 AI 决定的部分不重复问。未确认前不派发。明确的小改也用简短约定，不强行增加多轮问答。
 
 ## 2. 判档（承重环节，判一次）
 
@@ -153,7 +155,7 @@ AI 决定并说明：已定架构内的库、模块细分、文件名、内部 A
 
 已谈定的多任务计划由主会话直接实施，按下文与 [references/collaboration.md](references/collaboration.md) 派执行者、叫外援。**批次监工只在用户点名时用**（“你当监工”“交给监工”“用监工模式”）：加载同插件的 `subagent-foreman` skill，主会话退出实施，只管计划、§4 用户决策和短简报。不点名不进，也不主动推荐。零上下文的实现、验证、文档角色按 [references/role-reading.md](references/role-reading.md) 加载。
 
-外援的触发、轻档/重档的复核密度与停止条件唯一见 [references/collaboration.md](references/collaboration.md)；有新实质取舍或需关键结果复核时按该文件调用 `ai-room`。角色、档位和评审结论由派工传递，已审方案不重复咨询。执行负责人复核产出；监工模式不退回主会话逐项复核。变更目标、范围或已确认行为才上报；危险的当前动作立即停止。
+外援的触发、轻档/重档的复核密度与停止条件唯一见 [references/collaboration.md](references/collaboration.md)；有新实质取舍或需关键结果复核时按本次已确认的执行约定使用配置所选工具。角色、档位和评审结论由派工传递，已审方案不重复咨询。执行负责人复核产出；监工模式不退回主会话逐项复核。变更目标、范围或已确认行为才上报；危险的当前动作立即停止。
 
 ## 8. 实现与验证
 

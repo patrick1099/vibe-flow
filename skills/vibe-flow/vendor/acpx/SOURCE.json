@@ -1,0 +1,10 @@
+{
+  "package": "acpx",
+  "version": "0.22.0",
+  "source": "https://registry.npmjs.org/acpx/-/acpx-0.22.0.tgz",
+  "repository": "https://github.com/openclaw/acpx",
+  "files": {
+    "SKILL.md": "package/skills/acpx/SKILL.md",
+    "LICENSE": "package/LICENSE"
+  }
+}

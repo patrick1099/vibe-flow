@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "tools": {
+    "acpx": {
+      "executable": "acpx",
+      "version": "0.22.0",
+      "docs": "${PLUGIN_ROOT}/skills/vibe-flow/references/acpx.md"
+    }
+  },
+  "agents": {
+    "primary": {
+      "tool": "acpx",
+      "selector": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "medium",
+      "mode": "read-only"
+    },
+    "review": {
+      "tool": "acpx",
+      "selector": "codex",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "mode": "read-only"
+    },
+    "worker": {
+      "tool": "acpx",
+      "selector": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "medium",
+      "mode": "agent"
+    },
+    "deliberate": {
+      "tool": "acpx",
+      "selector": "codex",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "mode": "read-only"
+    },
+    "alternate-review": {
+      "tool": "acpx",
+      "selector": "claude",
+      "model": "opus",
+      "effort": "high",
+      "mode": "plan",
+      "availability": "unverified: OAuth authentication must be completed; confirm advertised model/effort/mode before use"
+    }
+  },
+  "roles": {
+    "owner": {
+      "agent": "primary"
+    },
+    "reviewer": {
+      "agent": "review"
+    },
+    "implementer": {
+      "agent": "worker"
+    },
+    "S1": {
+      "agent": "deliberate"
+    },
+    "S2": {
+      "agent": "deliberate"
+    },
+    "S3": {
+      "agent": "deliberate"
+    },
+    "S4": {
+      "agent": "alternate-review"
+    },
+    "chair": {
+      "agent": "alternate-review"
+    }
+  },
+  "organizations": {
+    "single": {
+      "mode": "single",
+      "roles": [
+        "owner"
+      ]
+    },
+    "review-execute": {
+      "mode": "serial",
+      "roles": [
+        "owner",
+        "reviewer",
+        "implementer"
+      ]
+    },
+    "brainstorm": {
+      "mode": "parallel",
+      "roles": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "chair"
+      ],
+      "chair": "chair"
+    }
+  }
+}
