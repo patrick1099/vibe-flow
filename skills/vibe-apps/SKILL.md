@@ -59,7 +59,7 @@ description: Route personal GUI apps to native desktop or Web UI before scaffold
 
 **何时走**：新应用、新页面、布局大改，在框架确定后、写主要界面之前。小改沿用项目已有的 DESIGN.md 和界面，不重画。流程厚度仍按 `vibe-flow` 判档。
 
-已有用户确认的界面时，先复用设计体系和相关样例。用户选用 OpenDesign，或确认的设计存放在那里时，按 [OpenDesign 原型流程](references/open-design.md) 选择最短交付路径。
+先沿用用户指定或项目已有的设计。新建上位机且没有指定其他风格时，使用已安装的 [本机「工业上位机 UI」预设](references/design-presets.md)，直接读取规范和样例出图。用户需要在 OpenDesign 生成、保存、预览或验证继承时，再走 [OpenDesign 原型流程](references/open-design.md)。其他保存在 OpenDesign 的已确认设计也可按该流程取用。
 
 1. **最小 DESIGN.md**：项目根放 `DESIGN.md`（沿用上游约定，别的 agent 能自己找到），只写本次用到的 token（颜色、字体、字号、间距、圆角）和一段说明层次与风格的正文；已有就复用、按需补。**格式以 `vendor/design-md/spec.md` 为准**（上游原文，这里不复述）。风格起点可从 [awesome-design-md](https://github.com/voltagent/awesome-design-md) 挑一份改。
    - **颜色名用 DaisyUI 的语义名**：`primary` `secondary` `accent` `neutral` `base-100` `base-200` `base-300` `base-content` `info` `success` `warning` `error`，以及各自的 `*-content`（放在该色上的文字色）。原生框架要的而这套没有的角色（输入框、选中行、边框、禁用等）按需补具名 token；怎么对到框架的槽位写在语言参考里，不一对一硬套。
